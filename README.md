@@ -46,6 +46,7 @@ bot.startPolling()
 - [Threading and lifecycle](#threading-and-lifecycle)
 - [Project layout](#project-layout)
 - [Building and testing](#building-and-testing)
+- [License](#license)
 
 ## Features
 
@@ -817,3 +818,9 @@ MAX_BOT_TOKEN=your-token ./gradlew :examples:run
 ```bash
 MAX_BOT_TOKEN=your-token ./gradlew :examples:run -PmainClass=ru.securitytrip.maxapi.examples.JavaEchoBot
 ```
+
+## License
+
+Copyright 2026 SecurityTrip
+
+Licensed under the [Apache License, Version 2.0](LICENSE).

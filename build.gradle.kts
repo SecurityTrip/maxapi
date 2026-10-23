@@ -67,6 +67,12 @@ tasks.named<Jar>("javadocJar") {
     from(tasks.dokkaGeneratePublicationHtml.flatMap { it.outputDirectory })
 }
 
+tasks.withType<Jar>().configureEach {
+    from(rootProject.file("LICENSE")) {
+        into("META-INF")
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
 }
@@ -96,6 +102,7 @@ publishing {
                     license {
                         name.set("Apache License 2.0")
                         url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                        distribution.set("repo")
                     }
                 }
             }
