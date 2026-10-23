@@ -768,6 +768,9 @@ src/main/kotlin/ru/securitytrip/maxapi/
   bot/      MaxBot, handler contexts, long polling, WebhookHandler
 src/test/   tests (Kotlin and Java) against a mock HTTP server
 examples/   echo bot in Kotlin and Java
+api/        public API dump checked by the binary compatibility validator
+spec/       Max Bot API specification the library is checked against
+docs/       module and package descriptions for the API reference
 ```
 
 The `client` and `model` packages do not depend on `bot`, so the client can be used on its own.
@@ -790,6 +793,19 @@ reached). Coverage report (Kover), written to `build/reports/kover/html/index.ht
 ./gradlew koverHtmlReport
 ```
 
+The public API is recorded in [api/maxapi.api](api/maxapi.api), and `./gradlew check` fails when
+it changes. After an intended change, update the dump and commit it together with the code, so the
+change is visible in review:
+
+```bash
+./gradlew apiDump
+```
+
+The library is checked against the API specification in [spec/schema.yaml](spec/schema.yaml):
+`SpecConformanceTest` compares its operations, update, attachment, button and markup types and enums
+with the client and the models. To support a new version of Max Bot API, replace that file and run the
+tests: the failures list what has to be added.
+
 When writing tests as `fun name() = runBlocking { ... }`, declare the return type explicitly:
 `fun name(): Unit = runBlocking { ... }`. Otherwise a test whose last expression returns a value
 (e.g. `assertIs<T>(...)`) gets a non-`Unit` return type, and JUnit silently skips it.
@@ -802,7 +818,8 @@ the package descriptions in [docs/module.md](docs/module.md):
 ```
 
 The result is in `build/dokka/html/index.html`. The same HTML is packaged into the `-javadoc.jar`
-artifact.
+artifact, and every stable release publishes it to
+[securitytrip.github.io/maxapi](https://securitytrip.github.io/maxapi/).
 
 Run the examples against a real bot:
 
@@ -830,7 +847,7 @@ when a GitHub release is published. Every push and pull request is checked by th
    signatures:
 
    ```bash
-   gpg --quick-gen-key "SecurityTrip <your-email>" ed25519 sign 3y
+   gpg --quick-gen-key "SecurityTrip <your-email>" rsa4096 sign 3y
    gpg --list-secret-keys --keyid-format=long          # note the key id
    gpg --keyserver keyserver.ubuntu.com --send-keys <key-id>
    gpg --armor --export-secret-keys <key-id>           # value for GPG_SIGNING_KEY
@@ -843,13 +860,22 @@ when a GitHub release is published. Every push and pull request is checked by th
    | `MAVEN_CENTRAL_USERNAME`     | username of the user token                     |
    | `MAVEN_CENTRAL_PASSWORD`     | password of the user token                     |
    | `GPG_SIGNING_KEY`            | the armored secret key, including BEGIN/END    |
-   | `GPG_SIGNING_KEY_PASSWORD`   | the key passphrase (empty if it has none)      |
+   | `GPG_SIGNING_KEY_PASSWORD`   | the key passphrase (omit if it has none)       |
+
+5. Enable GitHub Pages for the API reference: **Settings → Pages → Build and deployment → Source:
+   GitHub Actions**.
 
 ### Publishing a version
 
-Create a GitHub release with a tag like `v1.2.3` (or `v1.2.3-rc1`). The workflow takes the version
-from the tag, builds and tests it, signs the artifacts and publishes them; Maven Central releases
-them after validation. They usually appear in search within an hour.
+1. Move the entries under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) to a new
+   `## [1.2.3] - YYYY-MM-DD` section, update the links at the bottom, and merge that to `master`.
+   The workflow refuses to publish a version without its section.
+2. Create a GitHub release with the tag `v1.2.3` (or `v1.2.3-rc1`, marked as a pre-release).
+
+The workflow takes the version from the tag, builds and tests it, signs the artifacts and publishes
+them; Maven Central releases them after validation, and they usually appear in search within an hour.
+It then replaces the release notes with the changelog section and, for stable releases, publishes the
+API reference to GitHub Pages.
 
 If publishing fails after the release was created, fix the cause and run the Release workflow by
 hand (**Actions → Release → Run workflow**) with the same version. A version that reached Maven Central

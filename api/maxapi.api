@@ -1,0 +1,2675 @@
+public final class ru/securitytrip/maxapi/bot/BotConfig {
+	public static final field Companion Lru/securitytrip/maxapi/bot/BotConfig$Companion;
+	public fun <init> ()V
+	public fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;)V
+	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun builder ()Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun getMaxErrorBackoff ()Ljava/time/Duration;
+	public final fun getMinPollInterval ()Ljava/time/Duration;
+	public final fun getParallelism ()I
+	public final fun getPollLimit ()I
+	public final fun getPollTimeoutSeconds ()I
+	public final fun getQueueCapacity ()I
+}
+
+public final class ru/securitytrip/maxapi/bot/BotConfig$Builder {
+	public fun <init> ()V
+	public final fun build ()Lru/securitytrip/maxapi/bot/BotConfig;
+	public final fun maxErrorBackoff (Ljava/time/Duration;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun minPollInterval (Ljava/time/Duration;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun parallelism (I)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun pollLimit (I)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun pollTimeoutSeconds (I)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun queueCapacity (I)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+}
+
+public final class ru/securitytrip/maxapi/bot/BotConfig$Companion {
+	public final fun builder ()Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+}
+
+public final class ru/securitytrip/maxapi/bot/BotStartedContext : ru/securitytrip/maxapi/bot/UpdateContext {
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getPayload ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+}
+
+public final class ru/securitytrip/maxapi/bot/CallbackContext : ru/securitytrip/maxapi/bot/UpdateContext {
+	public final fun answer (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun answer (Lru/securitytrip/maxapi/model/message/CallbackAnswer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun answerBlocking (Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun answerBlocking (Lru/securitytrip/maxapi/model/message/CallbackAnswer;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun editMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun editMessage$default (Lru/securitytrip/maxapi/bot/CallbackContext;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun editMessageBlocking (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun editMessageBlocking (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public static synthetic fun editMessageBlocking$default (Lru/securitytrip/maxapi/bot/CallbackContext;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun getCallback ()Lru/securitytrip/maxapi/model/message/Callback;
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun getPayload ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+}
+
+public abstract interface class ru/securitytrip/maxapi/bot/ErrorHandler {
+	public abstract fun handle (Ljava/lang/Throwable;Lru/securitytrip/maxapi/model/update/Update;)V
+}
+
+public abstract interface class ru/securitytrip/maxapi/bot/Handler {
+	public abstract fun handle (Ljava/lang/Object;)V
+}
+
+public final class ru/securitytrip/maxapi/bot/MaxBot : java/io/Closeable {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/bot/BotConfig;)V
+	public synthetic fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/bot/BotConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lru/securitytrip/maxapi/client/MaxClient;)V
+	public fun <init> (Lru/securitytrip/maxapi/client/MaxClient;Lru/securitytrip/maxapi/bot/BotConfig;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/client/MaxClient;Lru/securitytrip/maxapi/bot/BotConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun getClient ()Lru/securitytrip/maxapi/client/MaxClient;
+	public final fun getConfig ()Lru/securitytrip/maxapi/bot/BotConfig;
+	public final fun getUsername ()Ljava/lang/String;
+	public final fun onBotStarted (Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onBotStarted (Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onCallback (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onCallback (Ljava/lang/String;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onCallback (Ljava/util/function/Predicate;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onCallback (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onCallback (Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onCallback (Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onCommand (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onCommand (Ljava/lang/String;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onError (Lkotlin/jvm/functions/Function3;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onError (Lru/securitytrip/maxapi/bot/ErrorHandler;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onMessage (Ljava/util/function/Predicate;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onMessage (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onMessage (Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onMessage (Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onUpdate (Ljava/lang/Class;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun onUpdate (Ljava/lang/Class;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun processUpdate (Lru/securitytrip/maxapi/model/update/Update;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun processUpdateBlocking (Lru/securitytrip/maxapi/model/update/Update;)V
+	public final fun setUsername (Ljava/lang/String;)V
+	public final fun setWebhook (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun setWebhook$default (Lru/securitytrip/maxapi/bot/MaxBot;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun setWebhookBlocking (Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun setWebhookBlocking (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public static synthetic fun setWebhookBlocking$default (Lru/securitytrip/maxapi/bot/MaxBot;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun start ()Lkotlinx/coroutines/Job;
+	public final fun startBlocking ()V
+	public final fun startPolling (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun stop ()V
+	public final fun subscribedUpdateTypes ()Ljava/util/Set;
+	public final fun webhookHandler ()Lru/securitytrip/maxapi/bot/WebhookHandler;
+	public final fun webhookHandler (Ljava/lang/String;)Lru/securitytrip/maxapi/bot/WebhookHandler;
+	public static synthetic fun webhookHandler$default (Lru/securitytrip/maxapi/bot/MaxBot;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/bot/WebhookHandler;
+}
+
+public final class ru/securitytrip/maxapi/bot/MessageContext : ru/securitytrip/maxapi/bot/UpdateContext {
+	public final fun getCommand ()Ljava/lang/String;
+	public final fun getCommandArgs ()Ljava/lang/String;
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun getMessageId ()Ljava/lang/String;
+	public final fun getText ()Ljava/lang/String;
+	public final fun replyToMessage (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun replyToMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun replyToMessageBlocking (Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/Message;
+}
+
+public class ru/securitytrip/maxapi/bot/UpdateContext {
+	public final fun blocking ()Lru/securitytrip/maxapi/java/MaxBlockingClient;
+	public final fun getBot ()Lru/securitytrip/maxapi/bot/MaxBot;
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getClient ()Lru/securitytrip/maxapi/client/MaxClient;
+	public final fun getUpdate ()Lru/securitytrip/maxapi/model/update/Update;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun reply (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun reply (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun reply (Lru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun replyBlocking (Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun replyBlocking (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun sendAction (Lru/securitytrip/maxapi/model/chat/SenderAction;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendActionBlocking (Lru/securitytrip/maxapi/model/chat/SenderAction;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public fun toString ()Ljava/lang/String;
+	public final fun typing (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class ru/securitytrip/maxapi/bot/WebhookHandler {
+	public static final field Companion Lru/securitytrip/maxapi/bot/WebhookHandler$Companion;
+	public static final field SECRET_HEADER Ljava/lang/String;
+	public final fun handle (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun handle ([BLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun handleAsync (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun handleAsync ([BLjava/lang/String;)Z
+	public final fun handleBlocking (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun handleBlocking ([BLjava/lang/String;)Z
+	public final fun verifySecret (Ljava/lang/String;)Z
+}
+
+public final class ru/securitytrip/maxapi/bot/WebhookHandler$Companion {
+}
+
+public final class ru/securitytrip/maxapi/client/ForbiddenException : ru/securitytrip/maxapi/client/MaxApiException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public class ru/securitytrip/maxapi/client/MaxApiException : ru/securitytrip/maxapi/client/MaxException {
+	public static final field ATTACHMENT_NOT_READY Ljava/lang/String;
+	public fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun getErrorCode ()Ljava/lang/String;
+	public final fun getErrorMessage ()Ljava/lang/String;
+	public final fun getHttpStatus ()I
+	public final fun getResponseBody ()Ljava/lang/String;
+	public final fun isAttachmentNotReady ()Z
+}
+
+public final class ru/securitytrip/maxapi/client/MaxClient : java/io/Closeable {
+	public static final field Companion Lru/securitytrip/maxapi/client/MaxClient$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Lru/securitytrip/maxapi/client/MaxClientConfig;)V
+	public final fun addMembers (JLjava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun answerOnCallback (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun answerOnCallback (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun answerOnCallback$default (Lru/securitytrip/maxapi/client/MaxClient;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun async ()Lru/securitytrip/maxapi/java/MaxAsyncClient;
+	public final fun blocking ()Lru/securitytrip/maxapi/java/MaxBlockingClient;
+	public fun close ()V
+	public static final fun create (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClient;
+	public static final fun create (Lru/securitytrip/maxapi/client/MaxClientConfig;)Lru/securitytrip/maxapi/client/MaxClient;
+	public final fun deleteAdmins (JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun deleteComment (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun deleteMessage (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun editChat (JLru/securitytrip/maxapi/model/chat/ChatPatch;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun editComment (Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun editMessage (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun editMyCommands (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getAdmins (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getChat (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getCommentById (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getComments (Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getComments$default (Lru/securitytrip/maxapi/client/MaxClient;Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getConfig ()Lru/securitytrip/maxapi/client/MaxClientConfig;
+	public final fun getMembers (JLjava/util/Collection;Ljava/lang/Long;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getMembers$default (Lru/securitytrip/maxapi/client/MaxClient;JLjava/util/Collection;Ljava/lang/Long;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getMembership (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getMessageById (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getMessages (Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getMessages$default (Lru/securitytrip/maxapi/client/MaxClient;Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getMyInfo (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getPinnedMessage (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getSubscriptions (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getUpdates (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getUpdates$default (Lru/securitytrip/maxapi/client/MaxClient;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/Collection;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getUploadUrl (Lru/securitytrip/maxapi/model/attachment/UploadType;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getVideoAttachmentDetails (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun leaveChat (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun pinMessage (JLjava/lang/String;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun pinMessage$default (Lru/securitytrip/maxapi/client/MaxClient;JLjava/lang/String;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun postAdmins (JLjava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun removeMember (JJLjava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun removeMember$default (Lru/securitytrip/maxapi/client/MaxClient;JJLjava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun sendAction (JLru/securitytrip/maxapi/model/chat/SenderAction;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun sendComment$default (Lru/securitytrip/maxapi/client/MaxClient;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun sendMessage$default (Lru/securitytrip/maxapi/client/MaxClient;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun sendMessageToChat (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendMessageToChat (JLru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendMessageToUser (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendMessageToUser (JLru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun subscribe (Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun subscribe$default (Lru/securitytrip/maxapi/client/MaxClient;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+	public final fun unpinMessage (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun unsubscribe (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun upload (Lru/securitytrip/maxapi/model/attachment/UploadType;Lru/securitytrip/maxapi/client/UploadSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun uploadAudio (Lru/securitytrip/maxapi/client/UploadSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun uploadFile (Lru/securitytrip/maxapi/client/UploadSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun uploadImage (Lru/securitytrip/maxapi/client/UploadSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun uploadVideo (Lru/securitytrip/maxapi/client/UploadSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class ru/securitytrip/maxapi/client/MaxClient$Companion {
+	public final fun create (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClient;
+	public final fun create (Lru/securitytrip/maxapi/client/MaxClientConfig;)Lru/securitytrip/maxapi/client/MaxClient;
+}
+
+public final class ru/securitytrip/maxapi/client/MaxClientConfig {
+	public static final field Companion Lru/securitytrip/maxapi/client/MaxClientConfig$Companion;
+	public static final field DEFAULT_BASE_URL Ljava/lang/String;
+	public static final field DEFAULT_USER_AGENT Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun builder (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+	public final fun getAttachmentReadyDelay ()Ljava/time/Duration;
+	public final fun getAttachmentReadyRetries ()I
+	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getHttpClient ()Lokhttp3/OkHttpClient;
+	public final fun getRetryPolicy ()Lru/securitytrip/maxapi/client/RetryPolicy;
+	public final fun getToken ()Ljava/lang/String;
+	public final fun getUserAgent ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/client/MaxClientConfig$Builder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun attachmentReadyDelay (Ljava/time/Duration;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+	public final fun attachmentReadyRetries (I)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+	public final fun baseUrl (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+	public final fun build ()Lru/securitytrip/maxapi/client/MaxClientConfig;
+	public final fun httpClient (Lokhttp3/OkHttpClient;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+	public final fun retryPolicy (Lru/securitytrip/maxapi/client/RetryPolicy;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+	public final fun userAgent (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+}
+
+public final class ru/securitytrip/maxapi/client/MaxClientConfig$Companion {
+	public final fun builder (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+}
+
+public class ru/securitytrip/maxapi/client/MaxException : java/lang/RuntimeException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ru/securitytrip/maxapi/client/MaxJson {
+	public static final field INSTANCE Lru/securitytrip/maxapi/client/MaxJson;
+	public static final fun createMapper ()Lcom/fasterxml/jackson/databind/ObjectMapper;
+	public static final fun parseUpdate (Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/Update;
+	public static final fun parseUpdate ([B)Lru/securitytrip/maxapi/model/update/Update;
+}
+
+public final class ru/securitytrip/maxapi/client/MaxNetworkException : ru/securitytrip/maxapi/client/MaxException {
+	public fun <init> (Ljava/lang/String;Ljava/io/IOException;)V
+}
+
+public final class ru/securitytrip/maxapi/client/NotFoundException : ru/securitytrip/maxapi/client/MaxApiException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class ru/securitytrip/maxapi/client/RetryPolicy {
+	public static final field Companion Lru/securitytrip/maxapi/client/RetryPolicy$Companion;
+	public static final field DEFAULT Lru/securitytrip/maxapi/client/RetryPolicy;
+	public static final field NONE Lru/securitytrip/maxapi/client/RetryPolicy;
+	public fun <init> ()V
+	public fun <init> (I)V
+	public fun <init> (ILjava/time/Duration;)V
+	public fun <init> (ILjava/time/Duration;Ljava/time/Duration;)V
+	public fun <init> (ILjava/time/Duration;Ljava/time/Duration;D)V
+	public synthetic fun <init> (ILjava/time/Duration;Ljava/time/Duration;DILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getInitialDelay ()Ljava/time/Duration;
+	public final fun getMaxDelay ()Ljava/time/Duration;
+	public final fun getMaxRetries ()I
+	public final fun getMultiplier ()D
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/client/RetryPolicy$Companion {
+}
+
+public final class ru/securitytrip/maxapi/client/TooManyRequestsException : ru/securitytrip/maxapi/client/MaxApiException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/time/Duration;)V
+	public final fun getRetryAfter ()Ljava/time/Duration;
+}
+
+public final class ru/securitytrip/maxapi/client/UnauthorizedException : ru/securitytrip/maxapi/client/MaxApiException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class ru/securitytrip/maxapi/client/UploadSource {
+	public static final field Companion Lru/securitytrip/maxapi/client/UploadSource$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Lokhttp3/RequestBody;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFileName ()Ljava/lang/String;
+	public static final fun of (Ljava/io/File;)Lru/securitytrip/maxapi/client/UploadSource;
+	public static final fun of (Ljava/io/InputStream;Ljava/lang/String;)Lru/securitytrip/maxapi/client/UploadSource;
+	public static final fun of (Ljava/io/InputStream;Ljava/lang/String;J)Lru/securitytrip/maxapi/client/UploadSource;
+	public static final fun of (Ljava/nio/file/Path;)Lru/securitytrip/maxapi/client/UploadSource;
+	public static final fun of ([BLjava/lang/String;)Lru/securitytrip/maxapi/client/UploadSource;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/client/UploadSource$Companion {
+	public final fun of (Ljava/io/File;)Lru/securitytrip/maxapi/client/UploadSource;
+	public final fun of (Ljava/io/InputStream;Ljava/lang/String;)Lru/securitytrip/maxapi/client/UploadSource;
+	public final fun of (Ljava/io/InputStream;Ljava/lang/String;J)Lru/securitytrip/maxapi/client/UploadSource;
+	public final fun of (Ljava/nio/file/Path;)Lru/securitytrip/maxapi/client/UploadSource;
+	public final fun of ([BLjava/lang/String;)Lru/securitytrip/maxapi/client/UploadSource;
+	public static synthetic fun of$default (Lru/securitytrip/maxapi/client/UploadSource$Companion;Ljava/io/InputStream;Ljava/lang/String;JILjava/lang/Object;)Lru/securitytrip/maxapi/client/UploadSource;
+}
+
+public final class ru/securitytrip/maxapi/dsl/BuildersKt {
+	public static final fun keyboard (Lkotlin/jvm/functions/Function1;)Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequest;
+	public static final fun message (Lkotlin/jvm/functions/Function1;)Lru/securitytrip/maxapi/model/message/NewMessageBody;
+}
+
+public final class ru/securitytrip/maxapi/dsl/Buttons {
+	public static final field INSTANCE Lru/securitytrip/maxapi/dsl/Buttons;
+	public static final fun callback (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/CallbackButton;
+	public static final fun clipboard (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/ClipboardButton;
+	public static final fun link (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/LinkButton;
+	public static final fun message (Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/MessageButton;
+	public static final fun openApp (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/OpenAppButton;
+	public static final fun openApp (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/OpenAppButton;
+	public static final fun openApp (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/keyboard/OpenAppButton;
+	public static synthetic fun openApp$default (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/OpenAppButton;
+	public static final fun requestContact (Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/RequestContactButton;
+	public static final fun requestGeoLocation (Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/RequestGeoLocationButton;
+	public static final fun requestGeoLocation (Ljava/lang/String;Z)Lru/securitytrip/maxapi/model/keyboard/RequestGeoLocationButton;
+	public static synthetic fun requestGeoLocation$default (Ljava/lang/String;ZILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/RequestGeoLocationButton;
+}
+
+public final class ru/securitytrip/maxapi/dsl/KeyboardBuilder {
+	public fun <init> ()V
+	public final fun build ()Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequest;
+	public final fun row (Ljava/util/List;)Lru/securitytrip/maxapi/dsl/KeyboardBuilder;
+	public final fun row (Lkotlin/jvm/functions/Function1;)Lru/securitytrip/maxapi/dsl/KeyboardBuilder;
+	public final fun row ([Lru/securitytrip/maxapi/model/keyboard/Button;)Lru/securitytrip/maxapi/dsl/KeyboardBuilder;
+}
+
+public abstract interface annotation class ru/securitytrip/maxapi/dsl/MaxDsl : java/lang/annotation/Annotation {
+}
+
+public final class ru/securitytrip/maxapi/dsl/MessageBuilder {
+	public fun <init> ()V
+	public final fun attach (Lru/securitytrip/maxapi/model/attachment/AttachmentRequest;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun build ()Lru/securitytrip/maxapi/model/message/NewMessageBody;
+	public final fun clearAttachments ()Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun format (Lru/securitytrip/maxapi/model/markup/TextFormat;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun forward (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun html (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun keyboard (Lkotlin/jvm/functions/Function1;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun keyboardRow ([Lru/securitytrip/maxapi/model/keyboard/Button;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun markdown (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun notify (Z)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun replyTo (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun text (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+}
+
+public final class ru/securitytrip/maxapi/dsl/RowBuilder {
+	public final fun button (Lru/securitytrip/maxapi/model/keyboard/Button;)V
+	public final fun callback (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun clipboard (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun link (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun message (Ljava/lang/String;)V
+	public final fun openApp (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
+	public static synthetic fun openApp$default (Lru/securitytrip/maxapi/dsl/RowBuilder;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
+	public final fun requestContact (Ljava/lang/String;)V
+	public final fun requestGeoLocation (Ljava/lang/String;Z)V
+	public static synthetic fun requestGeoLocation$default (Lru/securitytrip/maxapi/dsl/RowBuilder;Ljava/lang/String;ZILjava/lang/Object;)V
+}
+
+public final class ru/securitytrip/maxapi/java/MaxAsyncClient {
+	public final fun addMembers (JLjava/util/List;)Ljava/util/concurrent/CompletableFuture;
+	public final fun answerOnCallback (Ljava/lang/String;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun answerOnCallback (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;)Ljava/util/concurrent/CompletableFuture;
+	public final fun answerOnCallback (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;Ljava/lang/Boolean;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun answerOnCallback$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;Ljava/lang/Boolean;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun deleteAdmins (JJ)Ljava/util/concurrent/CompletableFuture;
+	public final fun deleteComment (Ljava/lang/String;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun deleteMessage (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun editChat (JLru/securitytrip/maxapi/model/chat/ChatPatch;)Ljava/util/concurrent/CompletableFuture;
+	public final fun editComment (Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;)Ljava/util/concurrent/CompletableFuture;
+	public final fun editMessage (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/concurrent/CompletableFuture;
+	public final fun editMyCommands (Ljava/util/List;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getAdmins (J)Ljava/util/concurrent/CompletableFuture;
+	public final fun getChat (J)Ljava/util/concurrent/CompletableFuture;
+	public final fun getClient ()Lru/securitytrip/maxapi/client/MaxClient;
+	public final fun getCommentById (Ljava/lang/String;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getComments (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getComments (Ljava/lang/String;Ljava/util/Collection;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getComments (Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getComments (Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getComments (Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun getComments$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMembers (J)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMembers (JLjava/util/Collection;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMembers (JLjava/util/Collection;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMembers (JLjava/util/Collection;Ljava/lang/Long;Ljava/lang/Integer;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun getMembers$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;JLjava/util/Collection;Ljava/lang/Long;Ljava/lang/Integer;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMembership (J)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMessageById (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMessages ()Ljava/util/concurrent/CompletableFuture;
+	public final fun getMessages (Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMessages (Ljava/lang/Long;Ljava/util/Collection;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMessages (Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMessages (Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMessages (Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun getMessages$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getMyInfo ()Ljava/util/concurrent/CompletableFuture;
+	public final fun getPinnedMessage (J)Ljava/util/concurrent/CompletableFuture;
+	public final fun getSubscriptions ()Ljava/util/concurrent/CompletableFuture;
+	public final fun getUpdates ()Ljava/util/concurrent/CompletableFuture;
+	public final fun getUpdates (Ljava/lang/Integer;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getUpdates (Ljava/lang/Integer;Ljava/lang/Integer;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getUpdates (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getUpdates (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/Collection;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun getUpdates$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/Collection;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getUploadUrl (Lru/securitytrip/maxapi/model/attachment/UploadType;)Ljava/util/concurrent/CompletableFuture;
+	public final fun getVideoAttachmentDetails (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun leaveChat (J)Ljava/util/concurrent/CompletableFuture;
+	public final fun pinMessage (JLjava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun pinMessage (JLjava/lang/String;Ljava/lang/Boolean;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun pinMessage$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;JLjava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun postAdmins (JLjava/util/List;)Ljava/util/concurrent/CompletableFuture;
+	public final fun removeMember (JJ)Ljava/util/concurrent/CompletableFuture;
+	public final fun removeMember (JJLjava/lang/Boolean;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun removeMember$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;JJLjava/lang/Boolean;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendAction (JLru/securitytrip/maxapi/model/chat/SenderAction;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun sendComment$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun sendMessage$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendMessageToChat (JLjava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendMessageToChat (JLru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendMessageToUser (JLjava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendMessageToUser (JLru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/concurrent/CompletableFuture;
+	public final fun subscribe (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun subscribe (Ljava/lang/String;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun subscribe (Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun subscribe$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun unpinMessage (J)Ljava/util/concurrent/CompletableFuture;
+	public final fun unsubscribe (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun upload (Lru/securitytrip/maxapi/model/attachment/UploadType;Lru/securitytrip/maxapi/client/UploadSource;)Ljava/util/concurrent/CompletableFuture;
+	public final fun uploadAudio (Lru/securitytrip/maxapi/client/UploadSource;)Ljava/util/concurrent/CompletableFuture;
+	public final fun uploadFile (Lru/securitytrip/maxapi/client/UploadSource;)Ljava/util/concurrent/CompletableFuture;
+	public final fun uploadImage (Lru/securitytrip/maxapi/client/UploadSource;)Ljava/util/concurrent/CompletableFuture;
+	public final fun uploadVideo (Lru/securitytrip/maxapi/client/UploadSource;)Ljava/util/concurrent/CompletableFuture;
+}
+
+public final class ru/securitytrip/maxapi/java/MaxBlockingClient {
+	public final fun addMembers (JLjava/util/List;)Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;
+	public final fun answerOnCallback (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun answerOnCallback (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun answerOnCallback (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;Ljava/lang/Boolean;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public static synthetic fun answerOnCallback$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;Ljava/lang/Boolean;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun deleteAdmins (JJ)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun deleteComment (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun deleteMessage (Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun editChat (JLru/securitytrip/maxapi/model/chat/ChatPatch;)Lru/securitytrip/maxapi/model/chat/Chat;
+	public final fun editComment (Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun editMessage (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun editMyCommands (Ljava/util/List;)Lru/securitytrip/maxapi/model/user/BotCommandsInfo;
+	public final fun getAdmins (J)Lru/securitytrip/maxapi/model/chat/ChatMembersList;
+	public final fun getChat (J)Lru/securitytrip/maxapi/model/chat/Chat;
+	public final fun getClient ()Lru/securitytrip/maxapi/client/MaxClient;
+	public final fun getCommentById (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/CommentMessage;
+	public final fun getComments (Ljava/lang/String;)Ljava/util/List;
+	public final fun getComments (Ljava/lang/String;Ljava/util/Collection;)Ljava/util/List;
+	public final fun getComments (Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;)Ljava/util/List;
+	public final fun getComments (Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;)Ljava/util/List;
+	public final fun getComments (Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;)Ljava/util/List;
+	public static synthetic fun getComments$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;Ljava/lang/String;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;ILjava/lang/Object;)Ljava/util/List;
+	public final fun getMembers (J)Lru/securitytrip/maxapi/model/chat/ChatMembersList;
+	public final fun getMembers (JLjava/util/Collection;)Lru/securitytrip/maxapi/model/chat/ChatMembersList;
+	public final fun getMembers (JLjava/util/Collection;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/chat/ChatMembersList;
+	public final fun getMembers (JLjava/util/Collection;Ljava/lang/Long;Ljava/lang/Integer;)Lru/securitytrip/maxapi/model/chat/ChatMembersList;
+	public static synthetic fun getMembers$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;JLjava/util/Collection;Ljava/lang/Long;Ljava/lang/Integer;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ChatMembersList;
+	public final fun getMembership (J)Lru/securitytrip/maxapi/model/chat/ChatMember;
+	public final fun getMessageById (Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun getMessages ()Ljava/util/List;
+	public final fun getMessages (Ljava/lang/Long;)Ljava/util/List;
+	public final fun getMessages (Ljava/lang/Long;Ljava/util/Collection;)Ljava/util/List;
+	public final fun getMessages (Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;)Ljava/util/List;
+	public final fun getMessages (Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;)Ljava/util/List;
+	public final fun getMessages (Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;)Ljava/util/List;
+	public static synthetic fun getMessages$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;Ljava/lang/Long;Ljava/util/Collection;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;ILjava/lang/Object;)Ljava/util/List;
+	public final fun getMyInfo ()Lru/securitytrip/maxapi/model/user/BotInfo;
+	public final fun getPinnedMessage (J)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun getSubscriptions ()Ljava/util/List;
+	public final fun getUpdates ()Lru/securitytrip/maxapi/model/update/UpdateList;
+	public final fun getUpdates (Ljava/lang/Integer;)Lru/securitytrip/maxapi/model/update/UpdateList;
+	public final fun getUpdates (Ljava/lang/Integer;Ljava/lang/Integer;)Lru/securitytrip/maxapi/model/update/UpdateList;
+	public final fun getUpdates (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/update/UpdateList;
+	public final fun getUpdates (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/Collection;)Lru/securitytrip/maxapi/model/update/UpdateList;
+	public static synthetic fun getUpdates$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/Collection;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/UpdateList;
+	public final fun getUploadUrl (Lru/securitytrip/maxapi/model/attachment/UploadType;)Lru/securitytrip/maxapi/model/attachment/UploadEndpoint;
+	public final fun getVideoAttachmentDetails (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/VideoAttachmentDetails;
+	public final fun leaveChat (J)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun pinMessage (JLjava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun pinMessage (JLjava/lang/String;Ljava/lang/Boolean;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public static synthetic fun pinMessage$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;JLjava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun postAdmins (JLjava/util/List;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun removeMember (JJ)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun removeMember (JJLjava/lang/Boolean;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public static synthetic fun removeMember$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;JJLjava/lang/Boolean;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun sendAction (JLru/securitytrip/maxapi/model/chat/SenderAction;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;)Lru/securitytrip/maxapi/model/message/CommentMessage;
+	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;)Lru/securitytrip/maxapi/model/message/CommentMessage;
+	public static synthetic fun sendComment$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/CommentMessage;
+	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;)Lru/securitytrip/maxapi/model/message/Message;
+	public static synthetic fun sendMessage$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun sendMessageToChat (JLjava/lang/String;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun sendMessageToChat (JLru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun sendMessageToUser (JLjava/lang/String;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun sendMessageToUser (JLru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun subscribe (Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun subscribe (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun subscribe (Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public static synthetic fun subscribe$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;Ljava/lang/String;Ljava/lang/String;Ljava/util/Collection;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun unpinMessage (J)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun unsubscribe (Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun upload (Lru/securitytrip/maxapi/model/attachment/UploadType;Lru/securitytrip/maxapi/client/UploadSource;)Lru/securitytrip/maxapi/model/attachment/AttachmentRequest;
+	public final fun uploadAudio (Lru/securitytrip/maxapi/client/UploadSource;)Lru/securitytrip/maxapi/model/attachment/AudioAttachmentRequest;
+	public final fun uploadFile (Lru/securitytrip/maxapi/client/UploadSource;)Lru/securitytrip/maxapi/model/attachment/FileAttachmentRequest;
+	public final fun uploadImage (Lru/securitytrip/maxapi/client/UploadSource;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest;
+	public final fun uploadVideo (Lru/securitytrip/maxapi/client/UploadSource;)Lru/securitytrip/maxapi/model/attachment/VideoAttachmentRequest;
+}
+
+public abstract interface class ru/securitytrip/maxapi/model/ApiEnum {
+	public abstract fun getValue ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/ErrorResponse {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/ErrorResponse;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/ErrorResponse;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/ErrorResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Ljava/lang/String;
+	public final fun getError ()Ljava/lang/String;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/SimpleQueryResult {
+	public fun <init> (ZLjava/lang/String;)V
+	public synthetic fun <init> (ZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (ZLjava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/SimpleQueryResult;ZLjava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getSuccess ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class ru/securitytrip/maxapi/model/attachment/Attachment {
+	public abstract fun getType ()Ljava/lang/String;
+}
+
+public abstract class ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public abstract fun getType ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/AudioAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;Ljava/lang/String;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/AudioAttachment;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/AudioAttachment;Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/AudioAttachment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;
+	public final fun getTranscription ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/AudioAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public static final field Companion Lru/securitytrip/maxapi/model/attachment/AudioAttachmentRequest$Companion;
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/UploadedInfo;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/UploadedInfo;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/UploadedInfo;)Lru/securitytrip/maxapi/model/attachment/AudioAttachmentRequest;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/AudioAttachmentRequest;Lru/securitytrip/maxapi/model/attachment/UploadedInfo;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/AudioAttachmentRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/UploadedInfo;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun ofToken (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/AudioAttachmentRequest;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/AudioAttachmentRequest$Companion {
+	public final fun ofToken (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/AudioAttachmentRequest;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/ContactAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;)Lru/securitytrip/maxapi/model/attachment/ContactAttachment;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/ContactAttachment;Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/ContactAttachment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;)Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHash ()Ljava/lang/String;
+	public final fun getMaxInfo ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getVcfInfo ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/ContactAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequestPayload;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequestPayload;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequestPayload;)Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequest;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequest;Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequestPayload;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequestPayload;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/ContactAttachmentRequestPayload {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Long;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Long;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequestPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequestPayload;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/ContactAttachmentRequestPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContactId ()Ljava/lang/Long;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getVcfInfo ()Ljava/lang/String;
+	public final fun getVcfPhone ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/FileAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/FileAttachmentPayload;Ljava/lang/String;J)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/FileAttachmentPayload;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/FileAttachmentPayload;Ljava/lang/String;J)Lru/securitytrip/maxapi/model/attachment/FileAttachment;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/FileAttachment;Lru/securitytrip/maxapi/model/attachment/FileAttachmentPayload;Ljava/lang/String;JILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/FileAttachment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFilename ()Ljava/lang/String;
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/FileAttachmentPayload;
+	public final fun getSize ()J
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/FileAttachmentPayload {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/FileAttachmentPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/FileAttachmentPayload;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/FileAttachmentPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getToken ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/FileAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public static final field Companion Lru/securitytrip/maxapi/model/attachment/FileAttachmentRequest$Companion;
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/UploadedInfo;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/UploadedInfo;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/UploadedInfo;)Lru/securitytrip/maxapi/model/attachment/FileAttachmentRequest;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/FileAttachmentRequest;Lru/securitytrip/maxapi/model/attachment/UploadedInfo;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/FileAttachmentRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/UploadedInfo;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun ofToken (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/FileAttachmentRequest;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/FileAttachmentRequest$Companion {
+	public final fun ofToken (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/FileAttachmentRequest;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> (Lru/securitytrip/maxapi/model/keyboard/Keyboard;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/keyboard/Keyboard;
+	public final fun copy (Lru/securitytrip/maxapi/model/keyboard/Keyboard;)Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachment;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachment;Lru/securitytrip/maxapi/model/keyboard/Keyboard;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/keyboard/Keyboard;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public fun <init> (Ljava/util/List;)V
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequestPayload;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequestPayload;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequestPayload;)Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequest;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequest;Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequestPayload;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequestPayload;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequestPayload {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequestPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequestPayload;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequestPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButtons ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/LocationAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> (DD)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun copy (DD)Lru/securitytrip/maxapi/model/attachment/LocationAttachment;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/LocationAttachment;DDILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/LocationAttachment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLatitude ()D
+	public final fun getLongitude ()D
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/LocationAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public fun <init> (DD)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun copy (DD)Lru/securitytrip/maxapi/model/attachment/LocationAttachmentRequest;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/LocationAttachmentRequest;DDILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/LocationAttachmentRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLatitude ()D
+	public final fun getLongitude ()D
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getToken ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/PhotoAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachment;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/PhotoAttachment;Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload {
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;JLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPhotoId ()J
+	public final fun getToken ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public static final field Companion Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest$Companion;
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest;Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun ofToken (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest;
+	public static final fun ofUrl (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest$Companion {
+	public final fun ofToken (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest;
+	public final fun ofUrl (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequest;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPhotos ()Ljava/util/Map;
+	public final fun getToken ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/PhotoToken {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/PhotoToken;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/PhotoToken;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/PhotoToken;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getToken ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/ShareAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/ShareAttachment;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/ShareAttachment;Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/ShareAttachment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getImageUrl ()Ljava/lang/String;
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getToken ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/ShareAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public static final field Companion Lru/securitytrip/maxapi/model/attachment/ShareAttachmentRequest$Companion;
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;)Lru/securitytrip/maxapi/model/attachment/ShareAttachmentRequest;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/ShareAttachmentRequest;Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/ShareAttachmentRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/ShareAttachmentPayload;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun ofUrl (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/ShareAttachmentRequest;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/ShareAttachmentRequest$Companion {
+	public final fun ofUrl (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/ShareAttachmentRequest;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/StickerAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload;II)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload;II)Lru/securitytrip/maxapi/model/attachment/StickerAttachment;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/StickerAttachment;Lru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload;IIILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/StickerAttachment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHeight ()I
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload;
+	public fun getType ()Ljava/lang/String;
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/StickerAttachmentPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/StickerAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public static final field Companion Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequest$Companion;
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequestPayload;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequestPayload;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequestPayload;)Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequest;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequest;Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequestPayload;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequestPayload;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun ofCode (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequest;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/StickerAttachmentRequest$Companion {
+	public final fun ofCode (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequest;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/StickerAttachmentRequestPayload {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequestPayload;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequestPayload;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/StickerAttachmentRequestPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/UnknownAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProperties ()Ljava/util/Map;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/UploadEndpoint {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/UploadEndpoint;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/UploadEndpoint;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/UploadEndpoint;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getToken ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/UploadType : java/lang/Enum, ru/securitytrip/maxapi/model/ApiEnum {
+	public static final field AUDIO Lru/securitytrip/maxapi/model/attachment/UploadType;
+	public static final field FILE Lru/securitytrip/maxapi/model/attachment/UploadType;
+	public static final field IMAGE Lru/securitytrip/maxapi/model/attachment/UploadType;
+	public static final field VIDEO Lru/securitytrip/maxapi/model/attachment/UploadType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/UploadType;
+	public static fun values ()[Lru/securitytrip/maxapi/model/attachment/UploadType;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/UploadedInfo {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/UploadedInfo;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/UploadedInfo;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/UploadedInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getToken ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/VideoAttachment : ru/securitytrip/maxapi/model/attachment/Attachment {
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;Lru/securitytrip/maxapi/model/attachment/VideoThumbnail;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;Lru/securitytrip/maxapi/model/attachment/VideoThumbnail;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/attachment/VideoThumbnail;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;Lru/securitytrip/maxapi/model/attachment/VideoThumbnail;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Lru/securitytrip/maxapi/model/attachment/VideoAttachment;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/VideoAttachment;Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;Lru/securitytrip/maxapi/model/attachment/VideoThumbnail;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/VideoAttachment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDuration ()Ljava/lang/Integer;
+	public final fun getHeight ()Ljava/lang/Integer;
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/MediaAttachmentPayload;
+	public final fun getThumbnail ()Lru/securitytrip/maxapi/model/attachment/VideoThumbnail;
+	public fun getType ()Ljava/lang/String;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/VideoAttachmentDetails {
+	public fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/model/attachment/VideoUrls;Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;III)V
+	public synthetic fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/model/attachment/VideoUrls;Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;IIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/attachment/VideoUrls;
+	public final fun component3 ()Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun copy (Ljava/lang/String;Lru/securitytrip/maxapi/model/attachment/VideoUrls;Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;III)Lru/securitytrip/maxapi/model/attachment/VideoAttachmentDetails;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/VideoAttachmentDetails;Ljava/lang/String;Lru/securitytrip/maxapi/model/attachment/VideoUrls;Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;IIIILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/VideoAttachmentDetails;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDuration ()I
+	public final fun getHeight ()I
+	public final fun getThumbnail ()Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentPayload;
+	public final fun getToken ()Ljava/lang/String;
+	public final fun getUrls ()Lru/securitytrip/maxapi/model/attachment/VideoUrls;
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/VideoAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
+	public static final field Companion Lru/securitytrip/maxapi/model/attachment/VideoAttachmentRequest$Companion;
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/UploadedInfo;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/UploadedInfo;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/UploadedInfo;)Lru/securitytrip/maxapi/model/attachment/VideoAttachmentRequest;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/VideoAttachmentRequest;Lru/securitytrip/maxapi/model/attachment/UploadedInfo;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/VideoAttachmentRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lru/securitytrip/maxapi/model/attachment/UploadedInfo;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun ofToken (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/VideoAttachmentRequest;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/VideoAttachmentRequest$Companion {
+	public final fun ofToken (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/VideoAttachmentRequest;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/VideoThumbnail {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/VideoThumbnail;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/VideoThumbnail;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/VideoThumbnail;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/attachment/VideoUrls {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/attachment/VideoUrls;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/VideoUrls;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/VideoUrls;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHls ()Ljava/lang/String;
+	public final fun getMp4p1080 ()Ljava/lang/String;
+	public final fun getMp4p144 ()Ljava/lang/String;
+	public final fun getMp4p240 ()Ljava/lang/String;
+	public final fun getMp4p360 ()Ljava/lang/String;
+	public final fun getMp4p480 ()Ljava/lang/String;
+	public final fun getMp4p720 ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ActionRequestBody {
+	public fun <init> (Lru/securitytrip/maxapi/model/chat/SenderAction;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/chat/SenderAction;
+	public final fun copy (Lru/securitytrip/maxapi/model/chat/SenderAction;)Lru/securitytrip/maxapi/model/chat/ActionRequestBody;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/ActionRequestBody;Lru/securitytrip/maxapi/model/chat/SenderAction;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ActionRequestBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAction ()Lru/securitytrip/maxapi/model/chat/SenderAction;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/Chat {
+	public fun <init> (JLru/securitytrip/maxapi/model/chat/ChatType;Lru/securitytrip/maxapi/model/chat/ChatStatus;Ljava/lang/String;Lru/securitytrip/maxapi/model/chat/Image;JILjava/lang/Long;Ljava/util/Map;ZLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/UserWithPhoto;Ljava/lang/Integer;Lru/securitytrip/maxapi/model/message/Message;)V
+	public synthetic fun <init> (JLru/securitytrip/maxapi/model/chat/ChatType;Lru/securitytrip/maxapi/model/chat/ChatStatus;Ljava/lang/String;Lru/securitytrip/maxapi/model/chat/Image;JILjava/lang/Long;Ljava/util/Map;ZLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/UserWithPhoto;Ljava/lang/Integer;Lru/securitytrip/maxapi/model/message/Message;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component10 ()Z
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component13 ()Lru/securitytrip/maxapi/model/user/UserWithPhoto;
+	public final fun component14 ()Ljava/lang/Integer;
+	public final fun component15 ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/chat/ChatType;
+	public final fun component3 ()Lru/securitytrip/maxapi/model/chat/ChatStatus;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lru/securitytrip/maxapi/model/chat/Image;
+	public final fun component6 ()J
+	public final fun component7 ()I
+	public final fun component8 ()Ljava/lang/Long;
+	public final fun component9 ()Ljava/util/Map;
+	public final fun copy (JLru/securitytrip/maxapi/model/chat/ChatType;Lru/securitytrip/maxapi/model/chat/ChatStatus;Ljava/lang/String;Lru/securitytrip/maxapi/model/chat/Image;JILjava/lang/Long;Ljava/util/Map;ZLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/UserWithPhoto;Ljava/lang/Integer;Lru/securitytrip/maxapi/model/message/Message;)Lru/securitytrip/maxapi/model/chat/Chat;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/Chat;JLru/securitytrip/maxapi/model/chat/ChatType;Lru/securitytrip/maxapi/model/chat/ChatStatus;Ljava/lang/String;Lru/securitytrip/maxapi/model/chat/Image;JILjava/lang/Long;Ljava/util/Map;ZLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/UserWithPhoto;Ljava/lang/Integer;Lru/securitytrip/maxapi/model/message/Message;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/Chat;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChatId ()J
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDialogWithUser ()Lru/securitytrip/maxapi/model/user/UserWithPhoto;
+	public final fun getIcon ()Lru/securitytrip/maxapi/model/chat/Image;
+	public final fun getLastEventTime ()J
+	public final fun getLink ()Ljava/lang/String;
+	public final fun getMessagesCount ()Ljava/lang/Integer;
+	public final fun getOwnerId ()Ljava/lang/Long;
+	public final fun getParticipants ()Ljava/util/Map;
+	public final fun getParticipantsCount ()I
+	public final fun getPinnedMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun getStatus ()Lru/securitytrip/maxapi/model/chat/ChatStatus;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getType ()Lru/securitytrip/maxapi/model/chat/ChatType;
+	public fun hashCode ()I
+	public final fun isPublic ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ChatAdmin {
+	public fun <init> (JLjava/util/Set;)V
+	public fun <init> (JLjava/util/Set;Ljava/lang/String;)V
+	public synthetic fun <init> (JLjava/util/Set;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (JLjava/util/Set;Ljava/lang/String;)Lru/securitytrip/maxapi/model/chat/ChatAdmin;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/ChatAdmin;JLjava/util/Set;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ChatAdmin;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlias ()Ljava/lang/String;
+	public final fun getPermissions ()Ljava/util/Set;
+	public final fun getUserId ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ChatAdminPermission : java/lang/Enum, ru/securitytrip/maxapi/model/ApiEnum {
+	public static final field ADD_ADMINS Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field ADD_REMOVE_MEMBERS Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field CAN_CALL Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field CHANGE_CHAT_INFO Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field DELETE Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field EDIT Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field EDIT_LINK Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field PIN_MESSAGE Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field READ_ALL_MESSAGES Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field UNKNOWN Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field VIEW_STATS Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static final field WRITE Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+	public static fun values ()[Lru/securitytrip/maxapi/model/chat/ChatAdminPermission;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ChatAdminsList {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lru/securitytrip/maxapi/model/chat/ChatAdminsList;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/ChatAdminsList;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ChatAdminsList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdmins ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ChatMember : ru/securitytrip/maxapi/model/user/UserInfo {
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZJLjava/util/Set;Ljava/lang/String;)V
+	public synthetic fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZJLjava/util/Set;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component10 ()J
+	public final fun component11 ()Z
+	public final fun component12 ()Z
+	public final fun component13 ()J
+	public final fun component14 ()Ljava/util/Set;
+	public final fun component15 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZJLjava/util/Set;Ljava/lang/String;)Lru/securitytrip/maxapi/model/chat/ChatMember;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/ChatMember;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JZZJLjava/util/Set;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ChatMember;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlias ()Ljava/lang/String;
+	public final fun getAvatarUrl ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public fun getFirstName ()Ljava/lang/String;
+	public final fun getFullAvatarUrl ()Ljava/lang/String;
+	public final fun getJoinTime ()J
+	public final fun getLastAccessTime ()J
+	public fun getLastActivityTime ()Ljava/lang/Long;
+	public fun getLastName ()Ljava/lang/String;
+	public final fun getPermissions ()Ljava/util/Set;
+	public fun getUserId ()J
+	public fun getUsername ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isAdmin ()Z
+	public fun isBot ()Z
+	public final fun isOwner ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ChatMembersList {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Ljava/lang/Long;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/Long;
+	public final fun copy (Ljava/util/List;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/chat/ChatMembersList;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/ChatMembersList;Ljava/util/List;Ljava/lang/Long;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ChatMembersList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMarker ()Ljava/lang/Long;
+	public final fun getMembers ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ChatPatch {
+	public fun <init> ()V
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;)V
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;Ljava/lang/String;)V
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun copy (Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)Lru/securitytrip/maxapi/model/chat/ChatPatch;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/ChatPatch;Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ChatPatch;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getIcon ()Lru/securitytrip/maxapi/model/attachment/PhotoAttachmentRequestPayload;
+	public final fun getNotify ()Ljava/lang/Boolean;
+	public final fun getPin ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ChatStatus : java/lang/Enum, ru/securitytrip/maxapi/model/ApiEnum {
+	public static final field ACTIVE Lru/securitytrip/maxapi/model/chat/ChatStatus;
+	public static final field CLOSED Lru/securitytrip/maxapi/model/chat/ChatStatus;
+	public static final field LEFT Lru/securitytrip/maxapi/model/chat/ChatStatus;
+	public static final field REMOVED Lru/securitytrip/maxapi/model/chat/ChatStatus;
+	public static final field SUSPENDED Lru/securitytrip/maxapi/model/chat/ChatStatus;
+	public static final field UNKNOWN Lru/securitytrip/maxapi/model/chat/ChatStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/model/chat/ChatStatus;
+	public static fun values ()[Lru/securitytrip/maxapi/model/chat/ChatStatus;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ChatType : java/lang/Enum, ru/securitytrip/maxapi/model/ApiEnum {
+	public static final field CHANNEL Lru/securitytrip/maxapi/model/chat/ChatType;
+	public static final field CHAT Lru/securitytrip/maxapi/model/chat/ChatType;
+	public static final field DIALOG Lru/securitytrip/maxapi/model/chat/ChatType;
+	public static final field UNKNOWN Lru/securitytrip/maxapi/model/chat/ChatType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/model/chat/ChatType;
+	public static fun values ()[Lru/securitytrip/maxapi/model/chat/ChatType;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/FailedUserDetails {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lru/securitytrip/maxapi/model/chat/FailedUserDetails;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/FailedUserDetails;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/FailedUserDetails;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrorCode ()Ljava/lang/String;
+	public final fun getUserIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/GetPinnedMessageResult {
+	public fun <init> ()V
+	public fun <init> (Lru/securitytrip/maxapi/model/message/Message;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/message/Message;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun copy (Lru/securitytrip/maxapi/model/message/Message;)Lru/securitytrip/maxapi/model/chat/GetPinnedMessageResult;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/GetPinnedMessageResult;Lru/securitytrip/maxapi/model/message/Message;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/GetPinnedMessageResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/Image {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lru/securitytrip/maxapi/model/chat/Image;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/Image;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/Image;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/ModifyMembersResult {
+	public fun <init> (ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;)V
+	public synthetic fun <init> (ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;)Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFailedUserDetails ()Ljava/util/List;
+	public final fun getFailedUserIds ()Ljava/util/Set;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getSuccess ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/PinMessageBody {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Boolean;)Lru/securitytrip/maxapi/model/chat/PinMessageBody;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/PinMessageBody;Ljava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/PinMessageBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessageId ()Ljava/lang/String;
+	public final fun getNotify ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/SenderAction : java/lang/Enum, ru/securitytrip/maxapi/model/ApiEnum {
+	public static final field MARK_SEEN Lru/securitytrip/maxapi/model/chat/SenderAction;
+	public static final field SENDING_AUDIO Lru/securitytrip/maxapi/model/chat/SenderAction;
+	public static final field SENDING_FILE Lru/securitytrip/maxapi/model/chat/SenderAction;
+	public static final field SENDING_PHOTO Lru/securitytrip/maxapi/model/chat/SenderAction;
+	public static final field SENDING_VIDEO Lru/securitytrip/maxapi/model/chat/SenderAction;
+	public static final field TYPING_ON Lru/securitytrip/maxapi/model/chat/SenderAction;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/model/chat/SenderAction;
+	public static fun values ()[Lru/securitytrip/maxapi/model/chat/SenderAction;
+}
+
+public final class ru/securitytrip/maxapi/model/chat/UserIdsList {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lru/securitytrip/maxapi/model/chat/UserIdsList;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/UserIdsList;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/UserIdsList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getUserIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class ru/securitytrip/maxapi/model/keyboard/Button {
+	public abstract fun getText ()Ljava/lang/String;
+	public abstract fun getType ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/keyboard/CallbackButton : ru/securitytrip/maxapi/model/keyboard/Button {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/CallbackButton;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/keyboard/CallbackButton;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/CallbackButton;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Ljava/lang/String;
+	public fun getText ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/keyboard/ClipboardButton : ru/securitytrip/maxapi/model/keyboard/Button {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/ClipboardButton;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/keyboard/ClipboardButton;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/ClipboardButton;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Ljava/lang/String;
+	public fun getText ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/keyboard/Keyboard {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lru/securitytrip/maxapi/model/keyboard/Keyboard;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/keyboard/Keyboard;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/Keyboard;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButtons ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/keyboard/LinkButton : ru/securitytrip/maxapi/model/keyboard/Button {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/LinkButton;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/keyboard/LinkButton;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/LinkButton;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getText ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/keyboard/MessageButton : ru/securitytrip/maxapi/model/keyboard/Button {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/MessageButton;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/keyboard/MessageButton;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/MessageButton;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getText ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/keyboard/OpenAppButton : ru/securitytrip/maxapi/model/keyboard/Button {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/keyboard/OpenAppButton;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/keyboard/OpenAppButton;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/OpenAppButton;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContactId ()Ljava/lang/Long;
+	public final fun getPayload ()Ljava/lang/String;
+	public fun getText ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public final fun getWebApp ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/keyboard/RequestContactButton : ru/securitytrip/maxapi/model/keyboard/Button {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lru/securitytrip/maxapi/model/keyboard/RequestContactButton;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/keyboard/RequestContactButton;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/RequestContactButton;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getText ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/keyboard/RequestGeoLocationButton : ru/securitytrip/maxapi/model/keyboard/Button {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Boolean;)Lru/securitytrip/maxapi/model/keyboard/RequestGeoLocationButton;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/keyboard/RequestGeoLocationButton;Ljava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/RequestGeoLocationButton;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getQuick ()Ljava/lang/Boolean;
+	public fun getText ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/keyboard/UnknownButton : ru/securitytrip/maxapi/model/keyboard/Button {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProperties ()Ljava/util/Map;
+	public fun getText ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/EmphasizedMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lru/securitytrip/maxapi/model/markup/EmphasizedMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/EmphasizedMarkup;IIILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/EmphasizedMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/HeadingMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lru/securitytrip/maxapi/model/markup/HeadingMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/HeadingMarkup;IIILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/HeadingMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/HighlightedMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lru/securitytrip/maxapi/model/markup/HighlightedMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/HighlightedMarkup;IIILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/HighlightedMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/LinkMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (IILjava/lang/String;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (IILjava/lang/String;)Lru/securitytrip/maxapi/model/markup/LinkMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/LinkMarkup;IILjava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/LinkMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public abstract fun getFrom ()I
+	public abstract fun getLength ()I
+	public abstract fun getType ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/MonospacedMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lru/securitytrip/maxapi/model/markup/MonospacedMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/MonospacedMarkup;IIILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/MonospacedMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/QuoteMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lru/securitytrip/maxapi/model/markup/QuoteMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/QuoteMarkup;IIILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/QuoteMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/StrikethroughMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lru/securitytrip/maxapi/model/markup/StrikethroughMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/StrikethroughMarkup;IIILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/StrikethroughMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/StrongMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lru/securitytrip/maxapi/model/markup/StrongMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/StrongMarkup;IIILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/StrongMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/TextFormat : java/lang/Enum, ru/securitytrip/maxapi/model/ApiEnum {
+	public static final field HTML Lru/securitytrip/maxapi/model/markup/TextFormat;
+	public static final field MARKDOWN Lru/securitytrip/maxapi/model/markup/TextFormat;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/model/markup/TextFormat;
+	public static fun values ()[Lru/securitytrip/maxapi/model/markup/TextFormat;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/UnderlineMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lru/securitytrip/maxapi/model/markup/UnderlineMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/UnderlineMarkup;IIILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/UnderlineMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/UnknownMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;II)V
+	public synthetic fun <init> (Ljava/lang/String;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public final fun getProperties ()Ljava/util/Map;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/markup/UserMentionMarkup : ru/securitytrip/maxapi/model/markup/MarkupElement {
+	public fun <init> (IILjava/lang/String;Ljava/lang/Long;)V
+	public synthetic fun <init> (IILjava/lang/String;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun copy (IILjava/lang/String;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/markup/UserMentionMarkup;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/markup/UserMentionMarkup;IILjava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/markup/UserMentionMarkup;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFrom ()I
+	public fun getLength ()I
+	public fun getType ()Ljava/lang/String;
+	public final fun getUserId ()Ljava/lang/Long;
+	public final fun getUserLink ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/Callback {
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;)V
+	public synthetic fun <init> (JLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;)Lru/securitytrip/maxapi/model/message/Callback;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/Callback;JLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/Callback;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCallbackId ()Ljava/lang/String;
+	public final fun getPayload ()Ljava/lang/String;
+	public final fun getTimestamp ()J
+	public final fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/CallbackAnswer {
+	public fun <init> ()V
+	public fun <init> (Lru/securitytrip/maxapi/model/message/NewMessageBody;)V
+	public fun <init> (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/message/NewMessageBody;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/CallbackAnswer;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/CallbackAnswer;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/CallbackAnswer;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/NewMessageBody;
+	public final fun getNotification ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/CommentLinkedMessage {
+	public fun <init> (Lru/securitytrip/maxapi/model/message/MessageLinkType;Lru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/CommentMessageBody;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/message/MessageLinkType;Lru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/CommentMessageBody;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()Lru/securitytrip/maxapi/model/message/CommentMessageBody;
+	public final fun copy (Lru/securitytrip/maxapi/model/message/MessageLinkType;Lru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/CommentMessageBody;)Lru/securitytrip/maxapi/model/message/CommentLinkedMessage;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/CommentLinkedMessage;Lru/securitytrip/maxapi/model/message/MessageLinkType;Lru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/CommentMessageBody;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/CommentLinkedMessage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChatId ()Ljava/lang/Long;
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/CommentMessageBody;
+	public final fun getSender ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getType ()Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/CommentMessage {
+	public fun <init> (Lru/securitytrip/maxapi/model/user/User;Lru/securitytrip/maxapi/model/message/Recipient;JLru/securitytrip/maxapi/model/message/CommentLinkedMessage;Lru/securitytrip/maxapi/model/message/CommentMessageBody;Lru/securitytrip/maxapi/model/message/MessageStat;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/user/User;Lru/securitytrip/maxapi/model/message/Recipient;JLru/securitytrip/maxapi/model/message/CommentLinkedMessage;Lru/securitytrip/maxapi/model/message/CommentMessageBody;Lru/securitytrip/maxapi/model/message/MessageStat;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/message/Recipient;
+	public final fun component3 ()J
+	public final fun component4 ()Lru/securitytrip/maxapi/model/message/CommentLinkedMessage;
+	public final fun component5 ()Lru/securitytrip/maxapi/model/message/CommentMessageBody;
+	public final fun component6 ()Lru/securitytrip/maxapi/model/message/MessageStat;
+	public final fun copy (Lru/securitytrip/maxapi/model/user/User;Lru/securitytrip/maxapi/model/message/Recipient;JLru/securitytrip/maxapi/model/message/CommentLinkedMessage;Lru/securitytrip/maxapi/model/message/CommentMessageBody;Lru/securitytrip/maxapi/model/message/MessageStat;)Lru/securitytrip/maxapi/model/message/CommentMessage;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/CommentMessage;Lru/securitytrip/maxapi/model/user/User;Lru/securitytrip/maxapi/model/message/Recipient;JLru/securitytrip/maxapi/model/message/CommentLinkedMessage;Lru/securitytrip/maxapi/model/message/CommentMessageBody;Lru/securitytrip/maxapi/model/message/MessageStat;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/CommentMessage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Lru/securitytrip/maxapi/model/message/CommentMessageBody;
+	public final fun getLink ()Lru/securitytrip/maxapi/model/message/CommentLinkedMessage;
+	public final fun getRecipient ()Lru/securitytrip/maxapi/model/message/Recipient;
+	public final fun getSender ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getStat ()Lru/securitytrip/maxapi/model/message/MessageStat;
+	public final fun getTimestamp ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/CommentMessageBody {
+	public fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;JLjava/lang/String;Ljava/util/List;)Lru/securitytrip/maxapi/model/message/CommentMessageBody;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/CommentMessageBody;Ljava/lang/String;JLjava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/CommentMessageBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMarkup ()Ljava/util/List;
+	public final fun getMid ()Ljava/lang/String;
+	public final fun getSeq ()J
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/CommentMessageList {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lru/securitytrip/maxapi/model/message/CommentMessageList;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/CommentMessageList;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/CommentMessageList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessages ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/LinkedMessage {
+	public fun <init> (Lru/securitytrip/maxapi/model/message/MessageLinkType;Lru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/MessageBody;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/message/MessageLinkType;Lru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/MessageBody;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()Lru/securitytrip/maxapi/model/message/MessageBody;
+	public final fun copy (Lru/securitytrip/maxapi/model/message/MessageLinkType;Lru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/MessageBody;)Lru/securitytrip/maxapi/model/message/LinkedMessage;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/LinkedMessage;Lru/securitytrip/maxapi/model/message/MessageLinkType;Lru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/MessageBody;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/LinkedMessage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChatId ()Ljava/lang/Long;
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/MessageBody;
+	public final fun getSender ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getType ()Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/Message {
+	public fun <init> (Lru/securitytrip/maxapi/model/user/User;Lru/securitytrip/maxapi/model/message/Recipient;JLru/securitytrip/maxapi/model/message/LinkedMessage;Lru/securitytrip/maxapi/model/message/MessageBody;Lru/securitytrip/maxapi/model/message/MessageStat;Ljava/lang/String;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/model/user/User;Lru/securitytrip/maxapi/model/message/Recipient;JLru/securitytrip/maxapi/model/message/LinkedMessage;Lru/securitytrip/maxapi/model/message/MessageBody;Lru/securitytrip/maxapi/model/message/MessageStat;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/message/Recipient;
+	public final fun component3 ()J
+	public final fun component4 ()Lru/securitytrip/maxapi/model/message/LinkedMessage;
+	public final fun component5 ()Lru/securitytrip/maxapi/model/message/MessageBody;
+	public final fun component6 ()Lru/securitytrip/maxapi/model/message/MessageStat;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Lru/securitytrip/maxapi/model/user/User;Lru/securitytrip/maxapi/model/message/Recipient;JLru/securitytrip/maxapi/model/message/LinkedMessage;Lru/securitytrip/maxapi/model/message/MessageBody;Lru/securitytrip/maxapi/model/message/MessageStat;Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/Message;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/Message;Lru/securitytrip/maxapi/model/user/User;Lru/securitytrip/maxapi/model/message/Recipient;JLru/securitytrip/maxapi/model/message/LinkedMessage;Lru/securitytrip/maxapi/model/message/MessageBody;Lru/securitytrip/maxapi/model/message/MessageStat;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/Message;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Lru/securitytrip/maxapi/model/message/MessageBody;
+	public final fun getLink ()Lru/securitytrip/maxapi/model/message/LinkedMessage;
+	public final fun getRecipient ()Lru/securitytrip/maxapi/model/message/Recipient;
+	public final fun getSender ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getStat ()Lru/securitytrip/maxapi/model/message/MessageStat;
+	public final fun getTimestamp ()J
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/MessageBody {
+	public fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;JLjava/lang/String;Ljava/util/List;Ljava/util/List;)Lru/securitytrip/maxapi/model/message/MessageBody;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/MessageBody;Ljava/lang/String;JLjava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/MessageBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttachments ()Ljava/util/List;
+	public final fun getMarkup ()Ljava/util/List;
+	public final fun getMid ()Ljava/lang/String;
+	public final fun getSeq ()J
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/MessageLinkType : java/lang/Enum, ru/securitytrip/maxapi/model/ApiEnum {
+	public static final field FORWARD Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public static final field REPLY Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public static final field UNKNOWN Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public static fun values ()[Lru/securitytrip/maxapi/model/message/MessageLinkType;
+}
+
+public final class ru/securitytrip/maxapi/model/message/MessageList {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lru/securitytrip/maxapi/model/message/MessageList;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/MessageList;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/MessageList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessages ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/MessageStat {
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun copy (I)Lru/securitytrip/maxapi/model/message/MessageStat;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/MessageStat;IILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/MessageStat;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getViews ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/NewCommentBody {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewMessageLink;)V
+	public fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewMessageLink;Lru/securitytrip/maxapi/model/markup/TextFormat;)V
+	public synthetic fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewMessageLink;Lru/securitytrip/maxapi/model/markup/TextFormat;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/message/NewMessageLink;
+	public final fun component3 ()Lru/securitytrip/maxapi/model/markup/TextFormat;
+	public final fun copy (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewMessageLink;Lru/securitytrip/maxapi/model/markup/TextFormat;)Lru/securitytrip/maxapi/model/message/NewCommentBody;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewMessageLink;Lru/securitytrip/maxapi/model/markup/TextFormat;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/NewCommentBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFormat ()Lru/securitytrip/maxapi/model/markup/TextFormat;
+	public final fun getLink ()Lru/securitytrip/maxapi/model/message/NewMessageLink;
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/NewMessageBody {
+	public static final field Companion Lru/securitytrip/maxapi/model/message/NewMessageBody$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Lru/securitytrip/maxapi/model/message/NewMessageLink;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Lru/securitytrip/maxapi/model/message/NewMessageLink;Ljava/lang/Boolean;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Lru/securitytrip/maxapi/model/message/NewMessageLink;Ljava/lang/Boolean;Lru/securitytrip/maxapi/model/markup/TextFormat;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Lru/securitytrip/maxapi/model/message/NewMessageLink;Ljava/lang/Boolean;Lru/securitytrip/maxapi/model/markup/TextFormat;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun builder ()Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Lru/securitytrip/maxapi/model/message/NewMessageLink;
+	public final fun component4 ()Ljava/lang/Boolean;
+	public final fun component5 ()Lru/securitytrip/maxapi/model/markup/TextFormat;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Lru/securitytrip/maxapi/model/message/NewMessageLink;Ljava/lang/Boolean;Lru/securitytrip/maxapi/model/markup/TextFormat;)Lru/securitytrip/maxapi/model/message/NewMessageBody;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;Ljava/util/List;Lru/securitytrip/maxapi/model/message/NewMessageLink;Ljava/lang/Boolean;Lru/securitytrip/maxapi/model/markup/TextFormat;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/NewMessageBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttachments ()Ljava/util/List;
+	public final fun getFormat ()Lru/securitytrip/maxapi/model/markup/TextFormat;
+	public final fun getLink ()Lru/securitytrip/maxapi/model/message/NewMessageLink;
+	public final fun getNotify ()Ljava/lang/Boolean;
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun text (Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/NewMessageBody;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/NewMessageBody$Companion {
+	public final fun builder ()Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun text (Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/NewMessageBody;
+}
+
+public final class ru/securitytrip/maxapi/model/message/NewMessageLink {
+	public fun <init> (Lru/securitytrip/maxapi/model/message/MessageLinkType;Ljava/lang/String;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lru/securitytrip/maxapi/model/message/MessageLinkType;Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/NewMessageLink;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/NewMessageLink;Lru/securitytrip/maxapi/model/message/MessageLinkType;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/NewMessageLink;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMid ()Ljava/lang/String;
+	public final fun getType ()Lru/securitytrip/maxapi/model/message/MessageLinkType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/Recipient {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Long;Lru/securitytrip/maxapi/model/chat/ChatType;Ljava/lang/Long;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Long;Lru/securitytrip/maxapi/model/chat/ChatType;Ljava/lang/Long;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Long;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/chat/ChatType;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/Long;Lru/securitytrip/maxapi/model/chat/ChatType;Ljava/lang/Long;Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/Recipient;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/Recipient;Ljava/lang/Long;Lru/securitytrip/maxapi/model/chat/ChatType;Ljava/lang/Long;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/Recipient;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChatId ()Ljava/lang/Long;
+	public final fun getChatType ()Lru/securitytrip/maxapi/model/chat/ChatType;
+	public final fun getPostId ()Ljava/lang/String;
+	public final fun getUserId ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/SendCommentResult {
+	public fun <init> (Lru/securitytrip/maxapi/model/message/CommentMessage;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/message/CommentMessage;
+	public final fun copy (Lru/securitytrip/maxapi/model/message/CommentMessage;)Lru/securitytrip/maxapi/model/message/SendCommentResult;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/SendCommentResult;Lru/securitytrip/maxapi/model/message/CommentMessage;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/SendCommentResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/CommentMessage;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/message/SendMessageResult {
+	public fun <init> (Lru/securitytrip/maxapi/model/message/Message;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun copy (Lru/securitytrip/maxapi/model/message/Message;)Lru/securitytrip/maxapi/model/message/SendMessageResult;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/message/SendMessageResult;Lru/securitytrip/maxapi/model/message/Message;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/SendMessageResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/subscription/GetSubscriptionsResult {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lru/securitytrip/maxapi/model/subscription/GetSubscriptionsResult;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/subscription/GetSubscriptionsResult;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/subscription/GetSubscriptionsResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSubscriptions ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/subscription/Subscription {
+	public fun <init> (Ljava/lang/String;JLjava/util/Set;)V
+	public synthetic fun <init> (Ljava/lang/String;JLjava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;JLjava/util/Set;)Lru/securitytrip/maxapi/model/subscription/Subscription;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/subscription/Subscription;Ljava/lang/String;JLjava/util/Set;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/subscription/Subscription;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTime ()J
+	public final fun getUpdateTypes ()Ljava/util/Set;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/subscription/SubscriptionRequestBody {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;)Lru/securitytrip/maxapi/model/subscription/SubscriptionRequestBody;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/subscription/SubscriptionRequestBody;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/subscription/SubscriptionRequestBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSecret ()Ljava/lang/String;
+	public final fun getUpdateTypes ()Ljava/util/Set;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/BotAddedToChatUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Z)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Z
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Z)Lru/securitytrip/maxapi/model/update/BotAddedToChatUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/BotAddedToChatUpdate;JJLru/securitytrip/maxapi/model/user/User;ZILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotAddedToChatUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public final fun isChannel ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/BotAdminPermissionsChangedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJJJZZLjava/util/Set;)V
+	public synthetic fun <init> (JJJJZZLjava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Ljava/util/Set;
+	public final fun copy (JJJJZZLjava/util/Set;)Lru/securitytrip/maxapi/model/update/BotAdminPermissionsChangedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/BotAdminPermissionsChangedUpdate;JJJJZZLjava/util/Set;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotAdminPermissionsChangedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBotId ()J
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getPermissions ()Ljava/util/Set;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserId ()J
+	public fun hashCode ()I
+	public final fun isAdmin ()Z
+	public final fun isChannel ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/BotRemovedFromChatUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Z)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Z
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Z)Lru/securitytrip/maxapi/model/update/BotRemovedFromChatUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/BotRemovedFromChatUpdate;JJLru/securitytrip/maxapi/model/user/User;ZILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotRemovedFromChatUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public final fun isChannel ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/BotStartedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/BotStartedUpdate;JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getPayload ()Ljava/lang/String;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserLocale ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/BotStoppedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/BotStoppedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/BotStoppedUpdate;JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotStoppedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserLocale ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/ChatTitleChangedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/ChatTitleChangedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/ChatTitleChangedUpdate;JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/ChatTitleChangedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public fun getTimestamp ()J
+	public final fun getTitle ()Ljava/lang/String;
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/CommentCreatedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JLru/securitytrip/maxapi/model/message/Message;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun copy (JLru/securitytrip/maxapi/model/message/Message;)Lru/securitytrip/maxapi/model/update/CommentCreatedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/CommentCreatedUpdate;JLru/securitytrip/maxapi/model/message/Message;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/CommentCreatedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/CommentEditedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JLru/securitytrip/maxapi/model/message/Message;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun copy (JLru/securitytrip/maxapi/model/message/Message;)Lru/securitytrip/maxapi/model/update/CommentEditedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/CommentEditedUpdate;JLru/securitytrip/maxapi/model/message/Message;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/CommentEditedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/CommentRemovedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JLjava/lang/String;JJLjava/lang/String;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (JLjava/lang/String;JJLjava/lang/String;)Lru/securitytrip/maxapi/model/update/CommentRemovedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/CommentRemovedUpdate;JLjava/lang/String;JJLjava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/CommentRemovedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getMessageId ()Ljava/lang/String;
+	public final fun getPostId ()Ljava/lang/String;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserId ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/DialogClearedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/DialogClearedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/DialogClearedUpdate;JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/DialogClearedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserLocale ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/DialogMutedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;JLjava/lang/String;)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()J
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;JLjava/lang/String;)Lru/securitytrip/maxapi/model/update/DialogMutedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/DialogMutedUpdate;JJLru/securitytrip/maxapi/model/user/User;JLjava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/DialogMutedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getMutedUntil ()J
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserLocale ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/DialogRemovedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/DialogRemovedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/DialogRemovedUpdate;JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/DialogRemovedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserLocale ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/DialogUnmutedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/DialogUnmutedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/DialogUnmutedUpdate;JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/DialogUnmutedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserLocale ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/MessageCallbackUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JLru/securitytrip/maxapi/model/message/Callback;Lru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;)V
+	public synthetic fun <init> (JLru/securitytrip/maxapi/model/message/Callback;Lru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lru/securitytrip/maxapi/model/message/Callback;
+	public final fun component3 ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (JLru/securitytrip/maxapi/model/message/Callback;Lru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;JLru/securitytrip/maxapi/model/message/Callback;Lru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCallback ()Lru/securitytrip/maxapi/model/message/Callback;
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserLocale ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/MessageCreatedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JLru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;)V
+	public synthetic fun <init> (JLru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (JLru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;JLru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserLocale ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/MessageEditedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JLru/securitytrip/maxapi/model/message/Message;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lru/securitytrip/maxapi/model/message/Message;
+	public final fun copy (JLru/securitytrip/maxapi/model/message/Message;)Lru/securitytrip/maxapi/model/update/MessageEditedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/MessageEditedUpdate;JLru/securitytrip/maxapi/model/message/Message;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/MessageEditedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getMessage ()Lru/securitytrip/maxapi/model/message/Message;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/MessageRemovedUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JLjava/lang/String;JJ)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun copy (JLjava/lang/String;JJ)Lru/securitytrip/maxapi/model/update/MessageRemovedUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/MessageRemovedUpdate;JLjava/lang/String;JJILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/MessageRemovedUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getMessageId ()Ljava/lang/String;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun getUserId ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/UnknownUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;J)V
+	public synthetic fun <init> (Ljava/lang/String;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getProperties ()Ljava/util/Map;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class ru/securitytrip/maxapi/model/update/Update {
+	public abstract fun getChatId ()Ljava/lang/Long;
+	public abstract fun getTimestamp ()J
+	public abstract fun getUpdateType ()Ljava/lang/String;
+	public abstract fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+}
+
+public final class ru/securitytrip/maxapi/model/update/UpdateList {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Ljava/lang/Long;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/Long;
+	public final fun copy (Ljava/util/List;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/update/UpdateList;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/UpdateList;Ljava/util/List;Ljava/lang/Long;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/UpdateList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMarker ()Ljava/lang/Long;
+	public final fun getUpdates ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/UpdateType : java/lang/Enum, ru/securitytrip/maxapi/model/ApiEnum {
+	public static final field BOT_ADDED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field BOT_ADMIN_PERMISSIONS_CHANGED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field BOT_REMOVED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field BOT_STARTED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field BOT_STOPPED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field CHAT_TITLE_CHANGED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field COMMENT_CREATED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field COMMENT_EDITED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field COMMENT_REMOVED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field DIALOG_CLEARED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field DIALOG_MUTED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field DIALOG_REMOVED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field DIALOG_UNMUTED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field MESSAGE_CALLBACK Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field MESSAGE_CREATED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field MESSAGE_EDITED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field MESSAGE_REMOVED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field USER_ADDED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static final field USER_REMOVED Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/UpdateType;
+	public static fun values ()[Lru/securitytrip/maxapi/model/update/UpdateType;
+}
+
+public final class ru/securitytrip/maxapi/model/update/UserAddedToChatUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Z)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun component5 ()Z
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Z)Lru/securitytrip/maxapi/model/update/UserAddedToChatUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/UserAddedToChatUpdate;JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;ZILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/UserAddedToChatUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getChatId ()Ljava/lang/Long;
+	public final fun getInviterId ()Ljava/lang/Long;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public final fun isChannel ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/update/UserRemovedFromChatUpdate : ru/securitytrip/maxapi/model/update/Update {
+	public fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Z)V
+	public synthetic fun <init> (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()Lru/securitytrip/maxapi/model/user/User;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun component5 ()Z
+	public final fun copy (JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;Z)Lru/securitytrip/maxapi/model/update/UserRemovedFromChatUpdate;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/update/UserRemovedFromChatUpdate;JJLru/securitytrip/maxapi/model/user/User;Ljava/lang/Long;ZILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/UserRemovedFromChatUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdminId ()Ljava/lang/Long;
+	public fun getChatId ()Ljava/lang/Long;
+	public fun getTimestamp ()J
+	public fun getUpdateType ()Ljava/lang/String;
+	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
+	public fun hashCode ()I
+	public final fun isChannel ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/user/BotCommand {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/user/BotCommand;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/user/BotCommand;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/user/BotCommand;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/user/BotCommandsInfo {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lru/securitytrip/maxapi/model/user/BotCommandsInfo;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/user/BotCommandsInfo;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/user/BotCommandsInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCommands ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/user/BotCommandsPatch {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lru/securitytrip/maxapi/model/user/BotCommandsPatch;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/user/BotCommandsPatch;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/user/BotCommandsPatch;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCommands ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/user/BotInfo : ru/securitytrip/maxapi/model/user/UserInfo {
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component10 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lru/securitytrip/maxapi/model/user/BotInfo;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/user/BotInfo;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/user/BotInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAvatarUrl ()Ljava/lang/String;
+	public final fun getCommands ()Ljava/util/List;
+	public final fun getDescription ()Ljava/lang/String;
+	public fun getFirstName ()Ljava/lang/String;
+	public final fun getFullAvatarUrl ()Ljava/lang/String;
+	public fun getLastActivityTime ()Ljava/lang/Long;
+	public fun getLastName ()Ljava/lang/String;
+	public fun getUserId ()J
+	public fun getUsername ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun isBot ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/model/user/User : ru/securitytrip/maxapi/model/user/UserInfo {
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;)V
+	public synthetic fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;)Lru/securitytrip/maxapi/model/user/User;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/user/User;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/user/User;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getFirstName ()Ljava/lang/String;
+	public fun getLastActivityTime ()Ljava/lang/Long;
+	public fun getLastName ()Ljava/lang/String;
+	public fun getUserId ()J
+	public fun getUsername ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun isBot ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class ru/securitytrip/maxapi/model/user/UserInfo {
+	public abstract fun getFirstName ()Ljava/lang/String;
+	public abstract fun getLastActivityTime ()Ljava/lang/Long;
+	public abstract fun getLastName ()Ljava/lang/String;
+	public abstract fun getUserId ()J
+	public abstract fun getUsername ()Ljava/lang/String;
+	public abstract fun isBot ()Z
+}
+
+public final class ru/securitytrip/maxapi/model/user/UserWithPhoto : ru/securitytrip/maxapi/model/user/UserInfo {
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/user/UserWithPhoto;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/user/UserWithPhoto;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/user/UserWithPhoto;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAvatarUrl ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public fun getFirstName ()Ljava/lang/String;
+	public final fun getFullAvatarUrl ()Ljava/lang/String;
+	public fun getLastActivityTime ()Ljava/lang/Long;
+	public fun getLastName ()Ljava/lang/String;
+	public fun getUserId ()J
+	public fun getUsername ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun isBot ()Z
+	public fun toString ()Ljava/lang/String;
+}
+

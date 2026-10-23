@@ -16,6 +16,8 @@ fun main(): Unit = runBlocking {
     MaxBot(token).use { bot ->
         val me = bot.client.getMyInfo()
         println("Started as ${me.firstName} (@${me.username})")
+        // Known username: commands addressed to this bot (/start@name) need no extra request.
+        bot.username = me.username
         bot.client.editMyCommands(listOf(BotCommand("start", "Start"), BotCommand("help", "Help")))
 
         bot.onBotStarted {

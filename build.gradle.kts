@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.dokka)
     alias(libs.plugins.kover)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.binary.compatibility)
     `java-library`
 }
 
@@ -37,6 +38,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.jackson.yaml)
 }
 
 kotlin {
@@ -72,6 +74,8 @@ tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
 
 tasks.test {
     useJUnitPlatform()
+    // SpecConformanceTest reads the API specification: a new schema must re-run the tests.
+    inputs.file("spec/schema.yaml").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 // `./gradlew check` fails if a change leaves library code untested. Branches have some slack:
@@ -85,6 +89,12 @@ kover {
             }
         }
     }
+}
+
+// Public API dump in api/maxapi.api: `./gradlew apiCheck` (part of `check`) fails when the public API
+// changes without `./gradlew apiDump`, so every API change is visible in review.
+apiValidation {
+    ignoredProjects += "examples"
 }
 
 // Maven Central (Central Portal). Credentials and the signing key come from Gradle properties,

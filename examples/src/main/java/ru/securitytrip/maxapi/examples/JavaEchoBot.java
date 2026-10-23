@@ -20,6 +20,8 @@ public final class JavaEchoBot {
         try (MaxBot bot = new MaxBot(token)) {
             BotInfo me = bot.getClient().blocking().getMyInfo();
             System.out.println("Started as " + me.getFirstName() + " (@" + me.getUsername() + ")");
+            // Known username: commands addressed to this bot (/start@name) need no extra request.
+            bot.setUsername(me.getUsername());
 
             // Commands go before the catch-all onMessage: the first matching handler wins.
             bot.onCommand("start", ctx -> ctx.replyBlocking(
