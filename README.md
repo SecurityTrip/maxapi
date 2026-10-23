@@ -46,6 +46,7 @@ bot.startPolling()
 - [Threading and lifecycle](#threading-and-lifecycle)
 - [Project layout](#project-layout)
 - [Building and testing](#building-and-testing)
+- [Releasing](#releasing)
 - [License](#license)
 
 ## Features
@@ -73,37 +74,31 @@ bot.startPolling()
 - JDK 17 or newer.
 - Kotlin 2.x if you use the library from Kotlin.
 
-The library is not published to Maven Central yet. To use it from another project, install it to the
-local Maven repository:
-
-```bash
-./gradlew publishToMavenLocal
-```
-
-Then add it as a dependency:
+The library is published to Maven Central as `io.github.securitytrip:maxapi`
+(see [releases](https://github.com/SecurityTrip/maxapi/releases) for the latest version):
 
 ```kotlin
 // build.gradle.kts
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
 dependencies {
-    implementation("ru.securitytrip:maxapi:0.1.0-SNAPSHOT")
+    implementation("io.github.securitytrip:maxapi:<version>")
 }
 ```
 
 ```xml
 <!-- pom.xml -->
 <dependency>
-    <groupId>ru.securitytrip</groupId>
+    <groupId>io.github.securitytrip</groupId>
     <artifactId>maxapi</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version><!-- version --></version>
 </dependency>
 ```
 
-OkHttp, Jackson and kotlinx.coroutines come in as transitive dependencies.
+OkHttp, Jackson and kotlinx.coroutines come in as transitive dependencies. Packages in the code
+are `ru.securitytrip.maxapi.*`.
+
+To try unreleased changes, install the current sources to the local Maven repository with
+`./gradlew publishToMavenLocal` and depend on `io.github.securitytrip:maxapi:0.1.0-SNAPSHOT`
+with `mavenLocal()` among the repositories.
 
 ## Getting a token
 
@@ -818,6 +813,47 @@ MAX_BOT_TOKEN=your-token ./gradlew :examples:run
 ```bash
 MAX_BOT_TOKEN=your-token ./gradlew :examples:run -PmainClass=ru.securitytrip.maxapi.examples.JavaEchoBot
 ```
+
+## Releasing
+
+Releases are published to Maven Central by the [Release workflow](.github/workflows/release.yml)
+when a GitHub release is published. Every push and pull request is checked by the
+[CI workflow](.github/workflows/ci.yml).
+
+### One-time setup
+
+1. Sign in to [central.sonatype.com](https://central.sonatype.com/) with the `SecurityTrip` GitHub
+   account. The `io.github.securitytrip` namespace is verified automatically for it; check that it is
+   listed under **Namespaces**.
+2. Generate a user token in **Account → Generate User Token**. It consists of a username and a password.
+3. Create a GPG key for signing and publish its public part, so that Maven Central can verify
+   signatures:
+
+   ```bash
+   gpg --quick-gen-key "SecurityTrip <your-email>" ed25519 sign 3y
+   gpg --list-secret-keys --keyid-format=long          # note the key id
+   gpg --keyserver keyserver.ubuntu.com --send-keys <key-id>
+   gpg --armor --export-secret-keys <key-id>           # value for GPG_SIGNING_KEY
+   ```
+
+4. Add repository secrets in **Settings → Secrets and variables → Actions**:
+
+   | Secret                       | Value                                          |
+   |------------------------------|------------------------------------------------|
+   | `MAVEN_CENTRAL_USERNAME`     | username of the user token                     |
+   | `MAVEN_CENTRAL_PASSWORD`     | password of the user token                     |
+   | `GPG_SIGNING_KEY`            | the armored secret key, including BEGIN/END    |
+   | `GPG_SIGNING_KEY_PASSWORD`   | the key passphrase (empty if it has none)      |
+
+### Publishing a version
+
+Create a GitHub release with a tag like `v1.2.3` (or `v1.2.3-rc1`). The workflow takes the version
+from the tag, builds and tests it, signs the artifacts and publishes them; Maven Central releases
+them after validation. They usually appear in search within an hour.
+
+If publishing fails after the release was created, fix the cause and run the Release workflow by
+hand (**Actions → Release → Run workflow**) with the same version. A version that reached Maven Central
+cannot be replaced: publish a new one instead.
 
 ## License
 

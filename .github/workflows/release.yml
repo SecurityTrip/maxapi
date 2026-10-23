@@ -1,0 +1,74 @@
+name: Release
+
+# Publishes to Maven Central when a GitHub release is published. The version comes from the
+# release tag: v1.2.3 -> 1.2.3. Can also be run by hand to retry a failed release.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish, e.g. 1.2.3
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v6.4.0
+
+      - name: Determine version
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          INPUT: ${{ inputs.version }}
+        run: |
+          version="${INPUT:-${TAG#v}}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || [[ "$version" == *SNAPSHOT* ]]; then
+            echo "::error::'$version' is not a release version like 1.2.3 or 1.2.3-rc1 (tag: '$TAG')"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check secrets
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+        run: |
+          missing=""
+          [ -n "$MAVEN_CENTRAL_USERNAME" ] || missing="$missing MAVEN_CENTRAL_USERNAME"
+          [ -n "$MAVEN_CENTRAL_PASSWORD" ] || missing="$missing MAVEN_CENTRAL_PASSWORD"
+          [ -n "$GPG_SIGNING_KEY" ] || missing="$missing GPG_SIGNING_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing (see 'Releasing' in README.md)"
+            exit 1
+          fi
+
+      - name: Build and test
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ./gradlew build -PreleaseVersion="$VERSION"
+
+      - name: Publish to Maven Central
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+        run: ./gradlew publishAndReleaseToMavenCentral -PreleaseVersion="$VERSION" --no-configuration-cache

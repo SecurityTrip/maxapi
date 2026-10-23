@@ -1,13 +1,17 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.dokka)
     alias(libs.plugins.kover)
+    alias(libs.plugins.maven.publish)
     `java-library`
-    `maven-publish`
 }
 
-group = "ru.securitytrip"
-version = "0.1.0-SNAPSHOT"
+group = "io.github.securitytrip"
+// Release builds pass the version from the git tag: ./gradlew -PreleaseVersion=1.2.3 ...
+version = providers.gradleProperty("releaseVersion").getOrElse("0.1.0-SNAPSHOT")
 
 allprojects {
     repositories {
@@ -27,7 +31,8 @@ dependencies {
     api(libs.coroutines.core)
     implementation(libs.jackson.kotlin)
     implementation(libs.coroutines.jdk8)
-    implementation(kotlin("reflect"))
+    // An explicit version, otherwise the published pom gets a dependency without one.
+    implementation(kotlin("reflect", libs.versions.kotlin.get()))
 
     testImplementation(kotlin("test"))
     testImplementation(libs.okhttp.mockwebserver)
@@ -37,11 +42,6 @@ dependencies {
 kotlin {
     explicitApi()
     jvmToolchain(17)
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
 }
 
 dokka {
@@ -58,18 +58,15 @@ dokka {
     }
 }
 
-// The standard javadoc tool cannot read Kotlin sources, so the javadoc jar ships the Dokka HTML instead.
+// The standard javadoc tool cannot read Kotlin sources; the javadoc jar ships the Dokka HTML instead.
 tasks.javadoc {
     enabled = false
 }
 
-tasks.named<Jar>("javadocJar") {
-    from(tasks.dokkaGeneratePublicationHtml.flatMap { it.outputDirectory })
-}
-
-tasks.withType<Jar>().configureEach {
-    from(rootProject.file("LICENSE")) {
-        into("META-INF")
+// org.gradle.jvm.tasks.Jar is the common base: the javadoc jar of the publish plugin extends it directly.
+tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
+    metaInf {
+        from(rootProject.file("LICENSE"))
     }
 }
 
@@ -90,22 +87,45 @@ kover {
     }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            artifactId = "maxapi"
-            from(components["java"])
-            pom {
-                name.set("maxapi")
-                description.set("Kotlin/Java client and bot framework for Max Bot API")
-                licenses {
-                    license {
-                        name.set("Apache License 2.0")
-                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
-                        distribution.set("repo")
-                    }
-                }
+// Maven Central (Central Portal). Credentials and the signing key come from Gradle properties,
+// in CI from ORG_GRADLE_PROJECT_* environment variables; see "Releasing" in README.md.
+mavenPublishing {
+    configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml"), sourcesJar = true))
+    publishToMavenCentral()
+    // Local builds (publishToMavenLocal) work without a key; Maven Central rejects unsigned artifacts.
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+        signAllPublications()
+    }
+
+    coordinates("io.github.securitytrip", "maxapi", version.toString())
+
+    pom {
+        name.set("maxapi")
+        description.set("Kotlin/Java client and bot framework for Max Bot API")
+        inceptionYear.set("2026")
+        url.set("https://github.com/SecurityTrip/maxapi")
+        licenses {
+            license {
+                name.set("Apache License 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                distribution.set("repo")
             }
+        }
+        developers {
+            developer {
+                id.set("SecurityTrip")
+                name.set("SecurityTrip")
+                url.set("https://github.com/SecurityTrip")
+            }
+        }
+        scm {
+            url.set("https://github.com/SecurityTrip/maxapi")
+            connection.set("scm:git:https://github.com/SecurityTrip/maxapi.git")
+            developerConnection.set("scm:git:ssh://git@github.com/SecurityTrip/maxapi.git")
+        }
+        issueManagement {
+            system.set("GitHub")
+            url.set("https://github.com/SecurityTrip/maxapi/issues")
         }
     }
 }
