@@ -26,6 +26,14 @@ public abstract class ru/securitytrip/maxapi/bot/BaseRouter {
 	public final fun use (Lru/securitytrip/maxapi/bot/Middleware;)Lru/securitytrip/maxapi/bot/BaseRouter;
 }
 
+public abstract class ru/securitytrip/maxapi/bot/BlockingMarkerStore : ru/securitytrip/maxapi/bot/MarkerStore {
+	public fun <init> ()V
+	public final fun load (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	protected abstract fun loadMarker ()Ljava/lang/Long;
+	public final fun save (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	protected abstract fun saveMarker (J)V
+}
+
 public abstract class ru/securitytrip/maxapi/bot/BlockingStateStorage : ru/securitytrip/maxapi/bot/StateStorage {
 	public fun <init> ()V
 	public final fun get (Lru/securitytrip/maxapi/bot/StateKey;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -37,9 +45,13 @@ public abstract class ru/securitytrip/maxapi/bot/BlockingStateStorage : ru/secur
 public final class ru/securitytrip/maxapi/bot/BotConfig {
 	public static final field Companion Lru/securitytrip/maxapi/bot/BotConfig$Companion;
 	public fun <init> ()V
-	public fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;)V
-	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;)V
+	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun builder ()Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun getDeduplicator ()Lru/securitytrip/maxapi/bot/UpdateDeduplicator;
+	public final fun getEventListener ()Lru/securitytrip/maxapi/events/MaxEventListener;
+	public final fun getHandlerTimeout ()Ljava/time/Duration;
+	public final fun getMarkerStore ()Lru/securitytrip/maxapi/bot/MarkerStore;
 	public final fun getMaxErrorBackoff ()Ljava/time/Duration;
 	public final fun getMinPollInterval ()Ljava/time/Duration;
 	public final fun getParallelism ()I
@@ -52,6 +64,10 @@ public final class ru/securitytrip/maxapi/bot/BotConfig {
 public final class ru/securitytrip/maxapi/bot/BotConfig$Builder {
 	public fun <init> ()V
 	public final fun build ()Lru/securitytrip/maxapi/bot/BotConfig;
+	public final fun deduplicator (Lru/securitytrip/maxapi/bot/UpdateDeduplicator;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun eventListener (Lru/securitytrip/maxapi/events/MaxEventListener;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun handlerTimeout (Ljava/time/Duration;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun markerStore (Lru/securitytrip/maxapi/bot/MarkerStore;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
 	public final fun maxErrorBackoff (Ljava/time/Duration;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
 	public final fun minPollInterval (Ljava/time/Duration;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
 	public final fun parallelism (I)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
@@ -125,6 +141,12 @@ public abstract interface class ru/securitytrip/maxapi/bot/ErrorHandler {
 	public abstract fun handle (Ljava/lang/Throwable;Lru/securitytrip/maxapi/model/update/Update;)V
 }
 
+public final class ru/securitytrip/maxapi/bot/FileMarkerStore : ru/securitytrip/maxapi/bot/MarkerStore {
+	public fun <init> (Ljava/nio/file/Path;)V
+	public fun load (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun save (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public abstract class ru/securitytrip/maxapi/bot/Filter : java/util/function/Predicate, kotlin/jvm/functions/Function1 {
 	public fun <init> ()V
 	public fun test (Ljava/lang/Object;)Z
@@ -159,11 +181,35 @@ public abstract interface class ru/securitytrip/maxapi/bot/Handler {
 	public abstract fun handle (Ljava/lang/Object;)V
 }
 
+public final class ru/securitytrip/maxapi/bot/HandlerTimeoutException : ru/securitytrip/maxapi/client/MaxException {
+	public fun <init> (Lru/securitytrip/maxapi/model/update/Update;Ljava/time/Duration;)V
+	public final fun getTimeout ()Ljava/time/Duration;
+	public final fun getUpdate ()Lru/securitytrip/maxapi/model/update/Update;
+}
+
+public final class ru/securitytrip/maxapi/bot/InMemoryMarkerStore : ru/securitytrip/maxapi/bot/MarkerStore {
+	public fun <init> ()V
+	public fun load (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun save (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class ru/securitytrip/maxapi/bot/InMemoryStateStorage : ru/securitytrip/maxapi/bot/StateStorage {
 	public fun <init> ()V
 	public fun get (Lru/securitytrip/maxapi/bot/StateKey;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getSize ()I
 	public fun set (Lru/securitytrip/maxapi/bot/StateKey;Lru/securitytrip/maxapi/bot/DialogState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class ru/securitytrip/maxapi/bot/InMemoryUpdateDeduplicator : ru/securitytrip/maxapi/bot/UpdateDeduplicator {
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun isNew (Lru/securitytrip/maxapi/model/update/Update;)Z
+}
+
+public abstract interface class ru/securitytrip/maxapi/bot/MarkerStore {
+	public abstract fun load (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun save (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class ru/securitytrip/maxapi/bot/MaxBot : ru/securitytrip/maxapi/bot/BaseRouter, java/io/Closeable {
@@ -274,6 +320,16 @@ public class ru/securitytrip/maxapi/bot/UpdateContext {
 	public final fun updateStateDataBlocking (Ljava/util/Map;)V
 }
 
+public abstract interface class ru/securitytrip/maxapi/bot/UpdateDeduplicator {
+	public static final field Companion Lru/securitytrip/maxapi/bot/UpdateDeduplicator$Companion;
+	public abstract fun isNew (Lru/securitytrip/maxapi/model/update/Update;)Z
+	public static fun keyOf (Lru/securitytrip/maxapi/model/update/Update;)Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/bot/UpdateDeduplicator$Companion {
+	public final fun keyOf (Lru/securitytrip/maxapi/model/update/Update;)Ljava/lang/String;
+}
+
 public final class ru/securitytrip/maxapi/bot/WebhookHandler {
 	public static final field Companion Lru/securitytrip/maxapi/bot/WebhookHandler$Companion;
 	public static final field SECRET_HEADER Ljava/lang/String;
@@ -378,13 +434,15 @@ public final class ru/securitytrip/maxapi/client/MaxClientConfig {
 	public static final field Companion Lru/securitytrip/maxapi/client/MaxClientConfig$Companion;
 	public static final field DEFAULT_BASE_URL Ljava/lang/String;
 	public static final field DEFAULT_USER_AGENT Ljava/lang/String;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;Lru/securitytrip/maxapi/client/RateLimit;Lru/securitytrip/maxapi/events/MaxEventListener;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;Lru/securitytrip/maxapi/client/RateLimit;Lru/securitytrip/maxapi/events/MaxEventListener;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun builder (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun getAttachmentReadyDelay ()Ljava/time/Duration;
 	public final fun getAttachmentReadyRetries ()I
 	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getEventListener ()Lru/securitytrip/maxapi/events/MaxEventListener;
 	public final fun getHttpClient ()Lokhttp3/OkHttpClient;
+	public final fun getRateLimit ()Lru/securitytrip/maxapi/client/RateLimit;
 	public final fun getRetryPolicy ()Lru/securitytrip/maxapi/client/RetryPolicy;
 	public final fun getToken ()Ljava/lang/String;
 	public final fun getUserAgent ()Ljava/lang/String;
@@ -397,7 +455,9 @@ public final class ru/securitytrip/maxapi/client/MaxClientConfig$Builder {
 	public final fun attachmentReadyRetries (I)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun baseUrl (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun build ()Lru/securitytrip/maxapi/client/MaxClientConfig;
+	public final fun eventListener (Lru/securitytrip/maxapi/events/MaxEventListener;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun httpClient (Lokhttp3/OkHttpClient;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+	public final fun rateLimit (Lru/securitytrip/maxapi/client/RateLimit;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun retryPolicy (Lru/securitytrip/maxapi/client/RetryPolicy;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun userAgent (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 }
@@ -424,6 +484,19 @@ public final class ru/securitytrip/maxapi/client/MaxNetworkException : ru/securi
 
 public final class ru/securitytrip/maxapi/client/NotFoundException : ru/securitytrip/maxapi/client/MaxApiException {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class ru/securitytrip/maxapi/client/RateLimit {
+	public fun <init> (D)V
+	public fun <init> (DI)V
+	public fun <init> (DILjava/lang/Double;)V
+	public fun <init> (DILjava/lang/Double;I)V
+	public synthetic fun <init> (DILjava/lang/Double;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBurst ()I
+	public final fun getPerChatBurst ()I
+	public final fun getPerChatRequestsPerSecond ()Ljava/lang/Double;
+	public final fun getRequestsPerSecond ()D
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class ru/securitytrip/maxapi/client/RetryPolicy {
@@ -535,6 +608,56 @@ public final class ru/securitytrip/maxapi/dsl/RowBuilder {
 	public final fun requestContact (Ljava/lang/String;)V
 	public final fun requestGeoLocation (Ljava/lang/String;Z)V
 	public static synthetic fun requestGeoLocation$default (Lru/securitytrip/maxapi/dsl/RowBuilder;Ljava/lang/String;ZILjava/lang/Object;)V
+}
+
+public abstract interface class ru/securitytrip/maxapi/events/MaxEventListener {
+	public static final field Companion Lru/securitytrip/maxapi/events/MaxEventListener$Companion;
+	public static final field NONE Lru/securitytrip/maxapi/events/MaxEventListener;
+	public static fun composite (Ljava/util/List;)Lru/securitytrip/maxapi/events/MaxEventListener;
+	public fun onRequest (Lru/securitytrip/maxapi/events/RequestEvent;)V
+	public fun onUpdate (Lru/securitytrip/maxapi/events/UpdateEvent;)V
+}
+
+public final class ru/securitytrip/maxapi/events/MaxEventListener$Companion {
+	public final fun composite (Ljava/util/List;)Lru/securitytrip/maxapi/events/MaxEventListener;
+}
+
+public final class ru/securitytrip/maxapi/events/RequestEvent {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/time/Duration;ILjava/lang/Throwable;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun component4 ()Ljava/time/Duration;
+	public final fun component5 ()I
+	public final fun component6 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/time/Duration;ILjava/lang/Throwable;)Lru/securitytrip/maxapi/events/RequestEvent;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/events/RequestEvent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/time/Duration;ILjava/lang/Throwable;ILjava/lang/Object;)Lru/securitytrip/maxapi/events/RequestEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttempt ()I
+	public final fun getDuration ()Ljava/time/Duration;
+	public final fun getError ()Ljava/lang/Throwable;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/events/UpdateEvent {
+	public fun <init> (Lru/securitytrip/maxapi/model/update/Update;ZLjava/time/Duration;Ljava/lang/Throwable;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/model/update/Update;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/time/Duration;
+	public final fun component4 ()Ljava/lang/Throwable;
+	public final fun copy (Lru/securitytrip/maxapi/model/update/Update;ZLjava/time/Duration;Ljava/lang/Throwable;)Lru/securitytrip/maxapi/events/UpdateEvent;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/events/UpdateEvent;Lru/securitytrip/maxapi/model/update/Update;ZLjava/time/Duration;Ljava/lang/Throwable;ILjava/lang/Object;)Lru/securitytrip/maxapi/events/UpdateEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDuration ()Ljava/time/Duration;
+	public final fun getError ()Ljava/lang/Throwable;
+	public final fun getHandled ()Z
+	public final fun getUpdate ()Lru/securitytrip/maxapi/model/update/Update;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class ru/securitytrip/maxapi/java/MaxAsyncClient {

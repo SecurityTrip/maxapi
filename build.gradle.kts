@@ -22,6 +22,7 @@ dependencies {
     dokka(project(":maxapi-test"))
     dokka(project(":maxapi-spring-boot-starter"))
     dokka(project(":maxapi-ktor"))
+    dokka(project(":maxapi-micrometer"))
 }
 
 subprojects {

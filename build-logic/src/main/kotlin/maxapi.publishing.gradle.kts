@@ -7,7 +7,7 @@ plugins {
 
 group = "io.github.securitytrip"
 // Release builds pass the version from the git tag: ./gradlew -PreleaseVersion=1.2.3 ...
-version = providers.gradleProperty("releaseVersion").getOrElse("0.4.0-SNAPSHOT")
+version = providers.gradleProperty("releaseVersion").getOrElse("0.5.0-SNAPSHOT")
 
 mavenPublishing {
     publishToMavenCentral()

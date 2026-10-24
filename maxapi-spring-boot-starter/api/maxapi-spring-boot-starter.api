@@ -1,8 +1,8 @@
 public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration {
 	public fun <init> ()V
-	public final fun maxBot (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun maxBot (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/MaxBot;
 	public final fun maxBotLifecycle (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/spring/MaxBotLifecycle;
-	public final fun maxClient (Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/client/MaxClient;
+	public final fun maxClient (Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/client/MaxClient;
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration$WebhookConfiguration {
@@ -57,5 +57,10 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Webhook {
 
 public abstract interface class ru/securitytrip/maxapi/spring/MaxClientConfigCustomizer {
 	public abstract fun customize (Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;)V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxMetricsAutoConfiguration {
+	public fun <init> ()V
+	public final fun maxMetrics (Lio/micrometer/core/instrument/MeterRegistry;)Lru/securitytrip/maxapi/micrometer/MaxMetrics;
 }
 

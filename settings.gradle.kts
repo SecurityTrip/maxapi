@@ -20,6 +20,7 @@ include("maxapi-bom")
 include("maxapi-test")
 include("maxapi-spring-boot-starter")
 include("maxapi-ktor")
+include("maxapi-micrometer")
 
 include("examples")
 include("examples-spring")

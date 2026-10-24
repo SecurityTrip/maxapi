@@ -11,10 +11,15 @@ import ru.securitytrip.maxapi.bot.MaxBot;
 import ru.securitytrip.maxapi.bot.MessageContext;
 import ru.securitytrip.maxapi.bot.Router;
 import ru.securitytrip.maxapi.bot.StateKey;
+import ru.securitytrip.maxapi.bot.UpdateDeduplicator;
 import ru.securitytrip.maxapi.client.MaxJson;
+import ru.securitytrip.maxapi.events.MaxEventListener;
+import ru.securitytrip.maxapi.events.RequestEvent;
+import ru.securitytrip.maxapi.events.UpdateEvent;
 import ru.securitytrip.maxapi.model.chat.ChatType;
 import ru.securitytrip.maxapi.model.update.Update;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,6 +104,18 @@ class JavaFeaturesTest {
         assertEquals(List.of("saved {name=Ann}"), log);
         assertEquals(new DialogState("done", Map.of("name", "Ann")), map.get(new StateKey(3L, 7L)));
         assertEquals(new StateKey(3L, 7L), StateKey.of(message("x", "dialog")));
+    }
+
+    @Test
+    void eventListenerDefaultsIgnoreEvents() {
+        MaxEventListener listener = new MaxEventListener() {
+        };
+        listener.onRequest(new RequestEvent("GET", "/me", 200, Duration.ZERO, 0, null));
+        listener.onUpdate(new UpdateEvent(message("x", "dialog"), true, Duration.ZERO, null));
+        BotConfig config = BotConfig.builder().eventListener(listener).build();
+        assertEquals(listener, config.getEventListener());
+        assertEquals(listener, MaxEventListener.composite(List.of(listener)));
+        assertEquals("message_created:m", UpdateDeduplicator.keyOf(message("x", "dialog")));
     }
 
     @Test

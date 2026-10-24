@@ -1,6 +1,7 @@
 package ru.securitytrip.maxapi.client
 
 import okhttp3.OkHttpClient
+import ru.securitytrip.maxapi.events.MaxEventListener
 import java.time.Duration
 import kotlin.math.min
 import kotlin.math.pow
@@ -48,6 +49,10 @@ public class MaxClientConfig(
     public val attachmentReadyDelay: Duration = Duration.ofSeconds(1),
     /** Value of the `User-Agent` header. */
     public val userAgent: String = DEFAULT_USER_AGENT,
+    /** Client-side request rate limit; `null` (default) sends requests as fast as they come. */
+    public val rateLimit: RateLimit? = null,
+    /** Receives an event for every HTTP attempt, e.g. for metrics. */
+    public val eventListener: MaxEventListener = MaxEventListener.NONE,
 ) {
     init {
         require(token.isNotBlank()) { "token must not be blank" }
@@ -55,7 +60,7 @@ public class MaxClientConfig(
     }
 
     /** Never includes the token, so the config is safe to log. */
-    override fun toString(): String = "MaxClientConfig(baseUrl=$baseUrl, retryPolicy=$retryPolicy)"
+    override fun toString(): String = "MaxClientConfig(baseUrl=$baseUrl, retryPolicy=$retryPolicy, rateLimit=$rateLimit)"
 
     /** Builder for Java. Every setter has the same meaning as the matching constructor parameter. */
     public class Builder(private val token: String) {
@@ -65,6 +70,8 @@ public class MaxClientConfig(
         private var attachmentReadyRetries = 5
         private var attachmentReadyDelay = Duration.ofSeconds(1)
         private var userAgent = DEFAULT_USER_AGENT
+        private var rateLimit: RateLimit? = null
+        private var eventListener = MaxEventListener.NONE
 
         public fun baseUrl(value: String): Builder = apply { baseUrl = value }
         public fun httpClient(value: OkHttpClient): Builder = apply { httpClient = value }
@@ -72,6 +79,8 @@ public class MaxClientConfig(
         public fun attachmentReadyRetries(value: Int): Builder = apply { attachmentReadyRetries = value }
         public fun attachmentReadyDelay(value: Duration): Builder = apply { attachmentReadyDelay = value }
         public fun userAgent(value: String): Builder = apply { userAgent = value }
+        public fun rateLimit(value: RateLimit?): Builder = apply { rateLimit = value }
+        public fun eventListener(value: MaxEventListener): Builder = apply { eventListener = value }
 
         public fun build(): MaxClientConfig = MaxClientConfig(
             token = token,
@@ -81,6 +90,8 @@ public class MaxClientConfig(
             attachmentReadyRetries = attachmentReadyRetries,
             attachmentReadyDelay = attachmentReadyDelay,
             userAgent = userAgent,
+            rateLimit = rateLimit,
+            eventListener = eventListener,
         )
     }
 

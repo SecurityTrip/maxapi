@@ -1,5 +1,6 @@
 package ru.securitytrip.maxapi.bot
 
+import ru.securitytrip.maxapi.events.MaxEventListener
 import java.time.Duration
 
 /**
@@ -32,12 +33,25 @@ public class BotConfig(
     public val maxErrorBackoff: Duration = Duration.ofSeconds(30),
     /** Where dialog states ([UpdateContext.state]) are kept; by default in memory. */
     public val stateStorage: StateStorage = InMemoryStateStorage(),
+    /**
+     * Longest time a handler (with its middleware) may run. A handler that takes longer is cancelled
+     * (Java handlers are interrupted) and [HandlerTimeoutException] goes to `onError`, so a stuck
+     * handler does not block its chat forever. `null` (default) means no limit.
+     */
+    public val handlerTimeout: Duration? = null,
+    /** Drops repeated deliveries of the same update, e.g. [InMemoryUpdateDeduplicator]; `null` handles every delivery. */
+    public val deduplicator: UpdateDeduplicator? = null,
+    /** Keeps the long polling marker across restarts; `null` (default) does not keep it. */
+    public val markerStore: MarkerStore? = null,
+    /** Receives an event for every dispatched update, e.g. for metrics. */
+    public val eventListener: MaxEventListener = MaxEventListener.NONE,
 ) {
     init {
         require(parallelism >= 1) { "parallelism must be >= 1" }
         require(queueCapacity >= 1) { "queueCapacity must be >= 1" }
         require(pollTimeoutSeconds in 0..90) { "pollTimeoutSeconds must be in 0..90" }
         require(pollLimit in 1..1000) { "pollLimit must be in 1..1000" }
+        require(handlerTimeout == null || handlerTimeout > Duration.ZERO) { "handlerTimeout must be positive" }
     }
 
     /** Builder for Java. Every setter has the same meaning as the matching constructor parameter. */
@@ -49,6 +63,10 @@ public class BotConfig(
         private var minPollInterval = Duration.ofMillis(300)
         private var maxErrorBackoff = Duration.ofSeconds(30)
         private var stateStorage: StateStorage? = null
+        private var handlerTimeout: Duration? = null
+        private var deduplicator: UpdateDeduplicator? = null
+        private var markerStore: MarkerStore? = null
+        private var eventListener = MaxEventListener.NONE
 
         public fun parallelism(value: Int): Builder = apply { parallelism = value }
         public fun queueCapacity(value: Int): Builder = apply { queueCapacity = value }
@@ -57,10 +75,15 @@ public class BotConfig(
         public fun minPollInterval(value: Duration): Builder = apply { minPollInterval = value }
         public fun maxErrorBackoff(value: Duration): Builder = apply { maxErrorBackoff = value }
         public fun stateStorage(value: StateStorage): Builder = apply { stateStorage = value }
+        public fun handlerTimeout(value: Duration?): Builder = apply { handlerTimeout = value }
+        public fun deduplicator(value: UpdateDeduplicator?): Builder = apply { deduplicator = value }
+        public fun markerStore(value: MarkerStore?): Builder = apply { markerStore = value }
+        public fun eventListener(value: MaxEventListener): Builder = apply { eventListener = value }
 
         public fun build(): BotConfig = BotConfig(
             parallelism, queueCapacity, pollTimeoutSeconds, pollLimit, minPollInterval, maxErrorBackoff,
             stateStorage ?: InMemoryStateStorage(),
+            handlerTimeout, deduplicator, markerStore, eventListener,
         )
     }
 

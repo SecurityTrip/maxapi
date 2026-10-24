@@ -1,6 +1,13 @@
 package ru.securitytrip.maxapi.bot
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withTimeoutOrNull
+import ru.securitytrip.maxapi.events.MaxEventListener
+import ru.securitytrip.maxapi.events.UpdateEvent
+import ru.securitytrip.maxapi.events.safely
+import java.time.Duration
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -134,17 +141,42 @@ public class MaxBot private constructor(
      * Use it to feed updates from a custom source or in tests.
      */
     public suspend fun processUpdate(update: Update) {
+        val started = System.nanoTime()
+        if (config.deduplicator?.isNew(update) == false) {
+            updateEvent(update, false, started, null)
+            return
+        }
+        var handled = false
         try {
             if (username == null && isAddressedCommand(update)) username = client.getMyInfo().username
             val key = StateKey.of(update)
             val dispatch = Dispatch(this, update, key, key?.let { config.stateStorage.get(it) })
-            match(dispatch)?.run?.invoke()
+            val matched = match(dispatch)
+            if (matched != null) {
+                handled = true
+                run(matched, update)
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
             // Errors such as TODO() or AssertionError must not take down the polling workers either.
+            updateEvent(update, handled, started, e)
             reportError(e, update)
+            return
         }
+        updateEvent(update, handled, started, null)
+    }
+
+    private suspend fun run(matched: Matched, update: Update) {
+        val timeout = config.handlerTimeout ?: return matched.run()
+        withTimeoutOrNull(timeout.toMillis()) { matched.run() } ?: throw HandlerTimeoutException(update, timeout)
+    }
+
+    private fun updateEvent(update: Update, handled: Boolean, started: Long, error: Throwable?) {
+        val listener = config.eventListener
+        if (listener === MaxEventListener.NONE) return
+        val duration = Duration.ofNanos(System.nanoTime() - started)
+        listener.safely { onUpdate(UpdateEvent(update, handled, duration, error)) }
     }
 
     private fun isAddressedCommand(update: Update): Boolean =
@@ -170,13 +202,34 @@ public class MaxBot private constructor(
      * @throws MaxException if a webhook subscription is active (remove it with `client.unsubscribe(url)`).
      */
     public suspend fun startPolling(): Unit = coroutineScope {
-        val queues = List(config.parallelism) { Channel<Update>(config.queueCapacity) }
+        val queues = List(config.parallelism) { Channel<Delivery>(config.queueCapacity) }
         for (queue in queues) {
             launch(CoroutineName("max-bot-worker")) {
-                for (update in queue) processUpdate(update)
+                for (delivery in queue) {
+                    processUpdate(delivery.update)
+                    delivery.done?.complete(Unit)
+                }
             }
         }
-        val polling = launch(CoroutineName("max-bot-poller")) { pollLoop(queues) }
+        val store = config.markerStore
+        val pages = Channel<Page>(Channel.UNLIMITED)
+        if (store != null) {
+            // Saves the marker of a page once all its updates, and those of earlier pages, are handled.
+            launch(CoroutineName("max-bot-marker")) {
+                for (page in pages) {
+                    page.done.awaitAll()
+                    try {
+                        store.save(page.marker)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        reportError(e, null)
+                    }
+                }
+            }
+        }
+        val initialMarker = store?.load()
+        val polling = launch(CoroutineName("max-bot-poller")) { pollLoop(queues, pages.takeIf { store != null }, initialMarker) }
         poller = polling
         if (stopRequested) polling.cancel()
         try {
@@ -187,8 +240,15 @@ public class MaxBot private constructor(
             // Workers finish the updates already received (the server considers them delivered),
             // then this scope completes.
             queues.forEach { it.close() }
+            pages.close()
         }
     }
+
+    /** An update on its way to a worker; [done] completes when it is handled, if the marker is kept. */
+    private class Delivery(val update: Update, val done: CompletableDeferred<Unit>?)
+
+    /** A received page: [marker] may be saved once all of [done] complete. */
+    private class Page(val marker: Long, val done: List<CompletableDeferred<Unit>>)
 
     /**
      * Starts long polling in the background and returns its job.
@@ -303,9 +363,9 @@ public class MaxBot private constructor(
         }
     }
 
-    private suspend fun pollLoop(queues: List<SendChannel<Update>>) {
+    private suspend fun pollLoop(queues: List<SendChannel<Delivery>>, pages: SendChannel<Page>?, initialMarker: Long?) {
         val types = subscribedUpdateTypes()
-        var marker: Long? = null
+        var marker: Long? = initialMarker
         var backoff = 0L
         while (true) {
             currentCoroutineContext().ensureActive()
@@ -313,8 +373,15 @@ public class MaxBot private constructor(
             try {
                 val page = client.getUpdates(config.pollLimit, config.pollTimeoutSeconds, marker, types)
                 backoff = 0
-                for (update in page.updates) queues[shardOf(update, queues.size)].send(update)
-                page.marker?.let { marker = it }
+                val done = ArrayList<CompletableDeferred<Unit>>(page.updates.size)
+                for (update in page.updates) {
+                    val delivery = Delivery(update, pages?.let { CompletableDeferred<Unit>().also(done::add) })
+                    queues[shardOf(update, queues.size)].send(delivery)
+                }
+                page.marker?.let {
+                    marker = it
+                    pages?.send(Page(it, done))
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: UnauthorizedException) {

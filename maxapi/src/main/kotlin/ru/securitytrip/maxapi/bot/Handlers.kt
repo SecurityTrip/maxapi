@@ -1,6 +1,17 @@
 package ru.securitytrip.maxapi.bot
 
+import ru.securitytrip.maxapi.client.MaxException
 import ru.securitytrip.maxapi.model.update.Update
+import java.time.Duration
+
+/**
+ * A handler ran longer than [BotConfig.handlerTimeout] and was cancelled. Passed to `onError`.
+ *
+ * @property update the update whose handler timed out.
+ * @property timeout the limit.
+ */
+public class HandlerTimeoutException(public val update: Update, public val timeout: Duration) :
+    MaxException("Handler of ${update.updateType} did not finish in $timeout")
 
 /**
  * Update handler for Java, registered with the `MaxBot.on*` methods.

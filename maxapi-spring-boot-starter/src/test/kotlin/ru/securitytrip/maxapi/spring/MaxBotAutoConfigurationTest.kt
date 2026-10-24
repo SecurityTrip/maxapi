@@ -4,6 +4,8 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import org.springframework.boot.autoconfigure.AutoConfigurations
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import org.springframework.boot.test.context.FilteredClassLoader
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner
 import org.springframework.context.annotation.Bean
@@ -20,6 +22,8 @@ import ru.securitytrip.maxapi.bot.MaxBot
 import ru.securitytrip.maxapi.bot.Router
 import ru.securitytrip.maxapi.bot.WebhookHandler
 import ru.securitytrip.maxapi.client.MaxClient
+import ru.securitytrip.maxapi.client.MaxJson
+import ru.securitytrip.maxapi.micrometer.MaxMetrics
 import ru.securitytrip.maxapi.client.RetryPolicy
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -37,7 +41,7 @@ class MaxBotAutoConfigurationTest {
     private val log = CopyOnWriteArrayList<String>()
 
     private val runner = ApplicationContextRunner()
-        .withConfiguration(AutoConfigurations.of(MaxBotAutoConfiguration::class.java))
+        .withConfiguration(AutoConfigurations.of(MaxBotAutoConfiguration::class.java, MaxMetricsAutoConfiguration::class.java))
 
     private val webRunner = WebApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(MaxBotAutoConfiguration::class.java))
@@ -55,6 +59,8 @@ class MaxBotAutoConfigurationTest {
 
     private fun json(body: String) =
         MockResponse.Builder().addHeader("Content-Type", "application/json").body(body).build()
+
+    private val SUCCESS_JSON = """{"success":true}"""
 
     private fun take(): RecordedRequest = requireNotNull(server.takeRequest(5, TimeUnit.SECONDS)) { "No request" }
 
@@ -96,8 +102,8 @@ class MaxBotAutoConfigurationTest {
                 val bot = context.getBean(MaxBot::class.java)
                 assertEquals(listOf("first", "second"), log)
                 assertEquals("hi", bot.commands().single().name)
-                bot.processUpdateBlocking(ru.securitytrip.maxapi.client.MaxJson.parseUpdate(update))
-                bot.processUpdateBlocking(ru.securitytrip.maxapi.client.MaxJson.parseUpdate(update.replace("/hi", "text")))
+                bot.processUpdateBlocking(MaxJson.parseUpdate(update))
+                bot.processUpdateBlocking(MaxJson.parseUpdate(update.replace("/hi", "text")))
                 assertEquals(listOf("first", "second", "hi", "router"), log)
                 assertSame(context.getBean(MaxClient::class.java), bot.client)
                 assertTrue(context.getBean(MaxBotLifecycle::class.java).isRunning)
@@ -182,6 +188,32 @@ class MaxBotAutoConfigurationTest {
         runner.withPropertyValues(*props("max.bot.mode=none"))
             .withBean(MaxClient::class.java, { client })
             .run { context -> assertSame(client, context.getBean(MaxBot::class.java).client) }
+    }
+
+    @Test
+    fun `metrics are recorded with a meter registry`() {
+        server.enqueue(json(SUCCESS_JSON))
+        runner.withPropertyValues(*props("max.bot.mode=none"))
+            .withBean(SimpleMeterRegistry::class.java, { SimpleMeterRegistry() })
+            .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { bot -> bot.onMessage { client.deleteMessage("m") } } })
+            .run { context ->
+                assertNotNull(context.getBean(MaxMetrics::class.java))
+                context.getBean(MaxBot::class.java).processUpdateBlocking(MaxJson.parseUpdate(update))
+                val registry = context.getBean(SimpleMeterRegistry::class.java)
+                assertEquals(1, registry.get(MaxMetrics.UPDATES).tag("handled", "true").timer().count())
+                assertEquals(1, registry.get(MaxMetrics.REQUESTS).tag("path", "/messages").timer().count())
+            }
+    }
+
+    @Test
+    fun `no metrics without a registry or the metrics module`() {
+        runner.withPropertyValues(*props("max.bot.mode=none")).run { context ->
+            assertTrue(context.getBeansOfType(MaxMetrics::class.java).isEmpty())
+        }
+        runner.withPropertyValues(*props("max.bot.mode=none"))
+            .withBean(SimpleMeterRegistry::class.java, { SimpleMeterRegistry() })
+            .withClassLoader(FilteredClassLoader(MaxMetrics::class.java))
+            .run { context -> assertFalse(context.containsBean("maxMetrics")) }
     }
 
     @Test
