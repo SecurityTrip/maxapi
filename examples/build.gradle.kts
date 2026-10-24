@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":"))
+    implementation(project(":maxapi"))
 }
 
 kotlin {

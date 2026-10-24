@@ -1,0 +1,106 @@
+public final class ru/securitytrip/maxapi/test/ApiCall {
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getJson ()Lcom/fasterxml/jackson/databind/JsonNode;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getQuery ()Ljava/util/Map;
+	public final fun parseBody (Ljava/lang/Class;)Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/test/BotTester : java/io/Closeable {
+	public static final field BOT_USERNAME Ljava/lang/String;
+	public static final field BOT_USER_ID J
+	public static final field Companion Lru/securitytrip/maxapi/test/BotTester$Companion;
+	public fun <init> ()V
+	public fun <init> (Lru/securitytrip/maxapi/bot/BotConfig;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/bot/BotConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clearCalls ()V
+	public fun close ()V
+	public final fun getBot ()Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun getCallbackAnswers ()Ljava/util/List;
+	public final fun getCalls ()Ljava/util/List;
+	public final fun getClient ()Lru/securitytrip/maxapi/client/MaxClient;
+	public final fun getSentMessages ()Ljava/util/List;
+	public final fun pressButton (Ljava/lang/String;JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun pressButton$default (Lru/securitytrip/maxapi/test/BotTester;Ljava/lang/String;JJLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun pressButtonBlocking (Ljava/lang/String;)V
+	public final fun pressButtonBlocking (Ljava/lang/String;J)V
+	public final fun pressButtonBlocking (Ljava/lang/String;JJ)V
+	public static synthetic fun pressButtonBlocking$default (Lru/securitytrip/maxapi/test/BotTester;Ljava/lang/String;JJILjava/lang/Object;)V
+	public final fun send (Lru/securitytrip/maxapi/model/update/Update;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendBlocking (Lru/securitytrip/maxapi/model/update/Update;)V
+	public final fun sendMessage (Ljava/lang/String;JJLru/securitytrip/maxapi/model/chat/ChatType;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun sendMessage$default (Lru/securitytrip/maxapi/test/BotTester;Ljava/lang/String;JJLru/securitytrip/maxapi/model/chat/ChatType;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun sendMessageBlocking (Ljava/lang/String;)V
+	public final fun sendMessageBlocking (Ljava/lang/String;J)V
+	public final fun sendMessageBlocking (Ljava/lang/String;JJ)V
+	public final fun sendMessageBlocking (Ljava/lang/String;JJLru/securitytrip/maxapi/model/chat/ChatType;)V
+	public static synthetic fun sendMessageBlocking$default (Lru/securitytrip/maxapi/test/BotTester;Ljava/lang/String;JJLru/securitytrip/maxapi/model/chat/ChatType;ILjava/lang/Object;)V
+	public final fun startBot (Ljava/lang/String;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun startBot$default (Lru/securitytrip/maxapi/test/BotTester;Ljava/lang/String;JLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun startBotBlocking ()V
+	public final fun startBotBlocking (Ljava/lang/String;)V
+	public final fun startBotBlocking (Ljava/lang/String;J)V
+	public static synthetic fun startBotBlocking$default (Lru/securitytrip/maxapi/test/BotTester;Ljava/lang/String;JILjava/lang/Object;)V
+	public final fun stub (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun stub (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+	public static synthetic fun stub$default (Lru/securitytrip/maxapi/test/BotTester;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)V
+}
+
+public final class ru/securitytrip/maxapi/test/BotTester$Companion {
+}
+
+public final class ru/securitytrip/maxapi/test/CallbackAnswerCall {
+	public fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lru/securitytrip/maxapi/model/message/CallbackAnswer;
+	public final fun copy (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;)Lru/securitytrip/maxapi/test/CallbackAnswerCall;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/test/CallbackAnswerCall;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/CallbackAnswer;ILjava/lang/Object;)Lru/securitytrip/maxapi/test/CallbackAnswerCall;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnswer ()Lru/securitytrip/maxapi/model/message/CallbackAnswer;
+	public final fun getCallbackId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/test/SentMessage {
+	public fun <init> (Ljava/lang/Long;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/NewMessageBody;)V
+	public final fun component1 ()Ljava/lang/Long;
+	public final fun component2 ()Ljava/lang/Long;
+	public final fun component3 ()Lru/securitytrip/maxapi/model/message/NewMessageBody;
+	public final fun copy (Ljava/lang/Long;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/test/SentMessage;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/test/SentMessage;Ljava/lang/Long;Ljava/lang/Long;Lru/securitytrip/maxapi/model/message/NewMessageBody;ILjava/lang/Object;)Lru/securitytrip/maxapi/test/SentMessage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Lru/securitytrip/maxapi/model/message/NewMessageBody;
+	public final fun getChatId ()Ljava/lang/Long;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getUserId ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/test/TestUpdates {
+	public static final field CHAT_ID J
+	public static final field INSTANCE Lru/securitytrip/maxapi/test/TestUpdates;
+	public static final field USER_ID J
+	public static final fun botStarted ()Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
+	public static final fun botStarted (Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
+	public static final fun botStarted (Ljava/lang/String;J)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
+	public static final fun botStarted (Ljava/lang/String;JJ)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
+	public static synthetic fun botStarted$default (Ljava/lang/String;JJILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
+	public static final fun callback (Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
+	public static final fun callback (Ljava/lang/String;J)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
+	public static final fun callback (Ljava/lang/String;JJ)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
+	public static final fun callback (Ljava/lang/String;JJLjava/lang/String;)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
+	public static synthetic fun callback$default (Ljava/lang/String;JJLjava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
+	public static final fun message (Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
+	public static final fun message (Ljava/lang/String;J)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
+	public static final fun message (Ljava/lang/String;JJ)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
+	public static final fun message (Ljava/lang/String;JJLru/securitytrip/maxapi/model/chat/ChatType;)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
+	public static final fun message (Ljava/lang/String;JJLru/securitytrip/maxapi/model/chat/ChatType;Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
+	public static synthetic fun message$default (Ljava/lang/String;JJLru/securitytrip/maxapi/model/chat/ChatType;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
+	public static final fun user (J)Lru/securitytrip/maxapi/model/user/User;
+	public static synthetic fun user$default (JILjava/lang/Object;)Lru/securitytrip/maxapi/model/user/User;
+}
+

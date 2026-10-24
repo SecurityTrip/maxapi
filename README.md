@@ -44,6 +44,9 @@ bot.startPolling()
   - [Formatting](#formatting)
   - [Uploading files](#uploading-files)
   - [Pagination](#pagination)
+- [Spring Boot](#spring-boot)
+- [Ktor](#ktor)
+- [Testing bots](#testing-bots)
 - [Models](#models)
 - [Errors and retries](#errors-and-retries)
 - [Configuration](#configuration)
@@ -74,37 +77,63 @@ bot.startPolling()
 - Webhook handler with constant-time secret verification that plugs into Spring, Ktor, Javalin or servlets.
 - Few dependencies: OkHttp, Jackson, kotlinx.coroutines. Logging goes to `System.Logger`, so it
   reaches SLF4J, Log4j or JUL through their usual bridges.
+- Spring Boot starter (polling or webhook from `application.yaml`), Ktor webhook routing, and a
+  test kit that runs handlers without a network.
 
 ## Requirements and installation
 
 - JDK 17 or newer.
 - Kotlin 2.x if you use the library from Kotlin.
 
-The library is published to Maven Central as `io.github.securitytrip:maxapi`
+The library is published to Maven Central under the group `io.github.securitytrip`
 (see [releases](https://github.com/SecurityTrip/maxapi/releases) for the latest version):
+
+| Artifact                     | Contents                                                       |
+|------------------------------|----------------------------------------------------------------|
+| `maxapi`                     | API client and bot framework                                   |
+| `maxapi-spring-boot-starter` | Spring Boot auto-configuration, see [Spring Boot](#spring-boot) |
+| `maxapi-ktor`                | Ktor webhook routing, see [Ktor](#ktor)                        |
+| `maxapi-test`                | test kit, see [Testing bots](#testing-bots)                    |
+| `maxapi-bom`                 | versions of all of the above                                   |
 
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.github.securitytrip:maxapi:<version>")
+    implementation(platform("io.github.securitytrip:maxapi-bom:<version>"))
+    implementation("io.github.securitytrip:maxapi")
+    testImplementation("io.github.securitytrip:maxapi-test")
 }
 ```
 
 ```xml
 <!-- pom.xml -->
-<dependency>
-    <groupId>io.github.securitytrip</groupId>
-    <artifactId>maxapi</artifactId>
-    <version><!-- version --></version>
-</dependency>
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>io.github.securitytrip</groupId>
+            <artifactId>maxapi-bom</artifactId>
+            <version><!-- version --></version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>io.github.securitytrip</groupId>
+        <artifactId>maxapi</artifactId>
+    </dependency>
+</dependencies>
 ```
 
 OkHttp, Jackson and kotlinx.coroutines come in as transitive dependencies. Packages in the code
 are `ru.securitytrip.maxapi.*`.
 
 To try unreleased changes, install the current sources to the local Maven repository with
-`./gradlew publishToMavenLocal` and depend on `io.github.securitytrip:maxapi:0.1.0-SNAPSHOT`
-with `mavenLocal()` among the repositories.
+`./gradlew publishToMavenLocal` and depend on the `-SNAPSHOT` version from
+[maxapi-publishing](build-logic/src/main/kotlin/maxapi.publishing.gradle.kts) with `mavenLocal()`
+among the repositories.
 
 ## Getting a token
 
@@ -751,6 +780,121 @@ do {
 
 `getMessages` and `getComments` page by time instead: pass `before` / `after` (Unix milliseconds).
 
+## Spring Boot
+
+`maxapi-spring-boot-starter` creates a `MaxClient` and a `MaxBot` from `max.bot.*` properties and
+starts and stops the bot with the application. It is built and tested with Spring Boot 4.1 (Java 17+).
+
+```kotlin
+dependencies {
+    implementation("io.github.securitytrip:maxapi-spring-boot-starter:<version>")
+    implementation("org.springframework.boot:spring-boot-starter-web") // for webhook mode only
+}
+```
+
+```yaml
+max:
+  bot:
+    token: ${MAX_BOT_TOKEN}
+    mode: polling            # polling (default), webhook or none
+    sync-commands: true      # show commands with descriptions in the bot menu on startup
+    webhook:
+      path: /max/webhook     # the endpoint in your Spring MVC server
+      url: https://bot.example.com/max/webhook   # subscribe on startup (optional)
+      secret: ${MAX_WEBHOOK_SECRET}
+      async: false           # true: respond before the handler finishes
+```
+
+Handlers come from beans: every `MaxBotConfigurer` is called with the bot, and every `Router` bean
+is included, both in `@Order` order.
+
+```kotlin
+@Configuration
+class BotHandlers {
+    @Bean
+    fun start() = MaxBotConfigurer { bot -> bot.onCommand("start", "Start") { reply("Hi!") } }
+
+    @Bean
+    fun orders(service: OrderService) = Router()
+        .onCommand("orders", "My orders") { reply(service.ordersOf(user!!.userId)) }
+}
+```
+
+```java
+@Bean
+MaxBotConfigurer handlers() {
+    return bot -> bot.onCommand("start", "Start", ctx -> ctx.replyBlocking("Hi!"));
+}
+```
+
+| Mode      | What happens                                                                              |
+|-----------|-------------------------------------------------------------------------------------------|
+| `polling` | long polling starts with the context; on shutdown the bot stops polling and finishes the updates already received |
+| `webhook` | `POST max.bot.webhook.path` accepts deliveries (servlet web applications); with `webhook.url` set the bot subscribes on startup |
+| `none`    | nothing starts; deliver updates yourself                                                  |
+
+The webhook endpoint answers 200 for accepted updates, 401 for a wrong secret, 400 for a body that
+is not an update and 503 when the bot is closed. Define your own `MaxClient`, `MaxBot` or
+`BotConfig` bean to replace the default one, and `MaxClientConfigCustomizer` beans to adjust the
+client settings (retry policy, `OkHttpClient`).
+
+A complete application is in [examples-spring](examples-spring).
+
+## Ktor
+
+`maxapi-ktor` adds `maxWebhook` to Ktor routing:
+
+```kotlin
+val bot = MaxBot(token)
+bot.onCommand("start") { reply("Hello from Ktor!") }
+bot.setWebhook("https://bot.example.com/max/webhook", secret)
+
+embeddedServer(Netty, port = 8080) {
+    routing { maxWebhook("/max/webhook", bot, secret) }
+}.start(wait = true)
+```
+
+Responses are the same as in the Spring starter. `async = true` responds before the handler
+finishes. See [examples-ktor](examples-ktor).
+
+## Testing bots
+
+`maxapi-test` runs a bot without a network: `BotTester` feeds it updates and records the API calls
+its handlers make.
+
+```kotlin
+@Test
+fun `start shows the menu`(): Unit = runBlocking {
+    BotTester().use { tester ->
+        registerHandlers(tester.bot)                 // your code that sets up the bot
+
+        tester.sendMessage("/start")
+        assertEquals("Pick an option:", tester.sentMessages.single().text)
+
+        tester.pressButton("like")
+        assertEquals("Thanks!", tester.callbackAnswers.single().answer.notification)
+    }
+}
+```
+
+```java
+try (BotTester tester = new BotTester()) {
+    registerHandlers(tester.getBot());
+    tester.sendMessageBlocking("/start");
+    assertEquals("Pick an option:", tester.getSentMessages().get(0).getText());
+}
+```
+
+- `sendMessage`, `pressButton`, `startBot` and `send(update)` run the handler and return when it
+  completes; an exception in the handler is rethrown, so the test fails.
+- `sentMessages`, `callbackAnswers` and `calls` (every request, with method, path, query and body)
+  show what the bot did.
+- Calls are answered with defaults: `sendMessage` returns the message, `getMyInfo` returns a bot
+  named `test_bot`, other methods return `{"success":true}`. Use
+  `stub("GET", "/chats/42", json)` for calls whose result the handler reads, or with a status like
+  404 to test error handling.
+- `TestUpdates` builds other updates: `TestUpdates.message("hi", chatType = ChatType.CHAT)`.
+
 ## Models
 
 Models are split into packages by area under `ru.securitytrip.maxapi.model`:
@@ -906,18 +1050,24 @@ Logging uses `System.Logger` with the names `ru.securitytrip.maxapi.client` (ret
 ## Project layout
 
 ```
-src/main/kotlin/ru/securitytrip/maxapi/
-  model/    API models written from the specification, one subpackage per area:
-            user, chat, message, attachment, keyboard, markup, update, subscription
-  client/   MaxClient, configuration, exceptions, JSON, uploads, HTTP transport
-  java/     MaxBlockingClient and MaxAsyncClient facades
-  dsl/      message and keyboard builders, Buttons
-  bot/      MaxBot, handler contexts, long polling, WebhookHandler
-src/test/   tests (Kotlin and Java) against a mock HTTP server
-examples/   echo bot in Kotlin and Java
-api/        public API dump checked by the binary compatibility validator
-spec/       Max Bot API specification the library is checked against
-docs/       module and package descriptions for the API reference
+maxapi/                        the library
+  src/main/kotlin/ru/securitytrip/maxapi/
+    model/    API models written from the specification, one subpackage per area:
+              user, chat, message, attachment, keyboard, markup, update, subscription
+    client/   MaxClient, configuration, exceptions, JSON, uploads, HTTP transport
+    java/     MaxBlockingClient and MaxAsyncClient facades
+    dsl/      message and keyboard builders, Buttons
+    bot/      MaxBot, routers, filters, contexts, dialog state, long polling, WebhookHandler
+  src/test/   tests (Kotlin and Java) against a mock HTTP server
+  api/        public API dump checked by the binary compatibility validator
+  spec/       Max Bot API specification the library is checked against
+  docs/       module and package descriptions for the API reference
+maxapi-spring-boot-starter/    Spring Boot auto-configuration
+maxapi-ktor/                   Ktor webhook routing
+maxapi-test/                   BotTester and TestUpdates
+maxapi-bom/                    bill of materials
+build-logic/                   convention plugins: Kotlin settings, coverage, Dokka, publishing
+examples/, examples-spring/, examples-ktor/
 ```
 
 The `client` and `model` packages do not depend on `bot`, so the client can be used on its own.
@@ -928,27 +1078,29 @@ The `client` and `model` packages do not depend on `bot`, so the client can be u
 ./gradlew build
 ```
 
-This compiles the library and the examples and runs the tests. The tests use OkHttp's
-`MockWebServer` and need no token or network access. Every API method is checked through all three
-facades (Kotlin, blocking, async), as is every update, attachment, button and markup type.
+This compiles all modules and the examples and runs the tests. The tests use OkHttp's
+`MockWebServer`, Spring's context runners and Ktor's test host, and need no token or network
+access. Every API method is checked through all three facades (Kotlin, blocking, async), as is every
+update, attachment, button and markup type.
 
-Library code has 100% line coverage, and `./gradlew check` (part of `build`) fails if a change lowers
-it, or if branch coverage drops below 95% (Kotlin generates a few null-check branches that cannot be
-reached). Coverage report (Kover), written to `build/reports/kover/html/index.html`:
+Every library module has 100% line coverage, and `./gradlew check` (part of `build`) fails if a
+change lowers it, or if branch coverage drops below 95% (Kotlin generates a few null-check branches
+that cannot be reached). Coverage reports (Kover) are written to
+`<module>/build/reports/kover/html/index.html`:
 
 ```bash
 ./gradlew koverHtmlReport
 ```
 
-The public API is recorded in [api/maxapi.api](api/maxapi.api), and `./gradlew check` fails when
-it changes. After an intended change, update the dump and commit it together with the code, so the
-change is visible in review:
+The public API of each module is recorded in `<module>/api/<module>.api`, and `./gradlew check`
+fails when it changes. After an intended change, update the dumps and commit them together with the
+code, so the change is visible in review:
 
 ```bash
 ./gradlew apiDump
 ```
 
-The library is checked against the API specification in [spec/schema.yaml](spec/schema.yaml):
+The library is checked against the API specification in [maxapi/spec/schema.yaml](maxapi/spec/schema.yaml):
 `SpecConformanceTest` compares its operations, update, attachment, button and markup types and enums
 with the client and the models. To support a new version of Max Bot API, replace that file and run the
 tests: the failures list what has to be added.
@@ -958,14 +1110,14 @@ When writing tests as `fun name() = runBlocking { ... }`, declare the return typ
 (e.g. `assertIs<T>(...)`) gets a non-`Unit` return type, and JUnit silently skips it.
 
 API reference is generated with [Dokka](https://github.com/Kotlin/dokka) from the KDoc comments and
-the package descriptions in [docs/module.md](docs/module.md):
+the package descriptions in [maxapi/docs/module.md](maxapi/docs/module.md):
 
 ```bash
-./gradlew dokkaGenerate
+./gradlew :dokkaGenerate
 ```
 
-The result is in `build/dokka/html/index.html`. The same HTML is packaged into the `-javadoc.jar`
-artifact, and every stable release publishes it to
+The reference of all modules is in `build/dokka/html/index.html`. Each module's `-javadoc.jar`
+contains its own part, and every stable release publishes the whole reference to
 [securitytrip.github.io/maxapi](https://securitytrip.github.io/maxapi/).
 
 Run the examples against a real bot:
@@ -1019,8 +1171,9 @@ when a GitHub release is published. Every push and pull request is checked by th
    The workflow refuses to publish a version without its section.
 2. Create a GitHub release with the tag `v1.2.3` (or `v1.2.3-rc1`, marked as a pre-release).
 
-The workflow takes the version from the tag, builds and tests it, signs the artifacts and publishes
-them; Maven Central releases them after validation, and they usually appear in search within an hour.
+The workflow takes the version from the tag, builds and tests it, signs the artifacts of all modules
+(the BOM included) and publishes
+them in one deployment; Maven Central releases them after validation, and they usually appear in search within an hour.
 It then replaces the release notes with the changelog section and, for stable releases, publishes the
 API reference to GitHub Pages.
 

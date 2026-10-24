@@ -11,6 +11,25 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-24
+
+### Added
+
+- `maxapi-spring-boot-starter`: `max.bot.*` properties, auto-configured `MaxClient` and `MaxBot`,
+  handlers from `MaxBotConfigurer` and `Router` beans, long polling with graceful shutdown or a
+  webhook endpoint with optional subscription on startup, `sync-commands`.
+- `maxapi-ktor`: `Route.maxWebhook(path, bot, secret)`.
+- `maxapi-test`: `BotTester` runs handlers without a network and records API calls;
+  `TestUpdates` builds updates for tests.
+- `maxapi-bom` with the versions of all modules.
+- Spring Boot and Ktor examples.
+
+### Changed
+
+- The build has several modules: the library is in `maxapi/` and is still published as
+  `io.github.securitytrip:maxapi`. Shared build settings are convention plugins in `build-logic/`.
+- The API reference on GitHub Pages covers all modules.
+
 ## [0.3.0] - 2026-10-24
 
 ### Added
@@ -65,7 +84,8 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/SecurityTrip/maxapi/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/SecurityTrip/maxapi/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/SecurityTrip/maxapi/compare/v0.1.0-rc1...v0.2.0
 [0.1.0-rc1]: https://github.com/SecurityTrip/maxapi/releases/tag/v0.1.0-rc1
