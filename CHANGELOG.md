@@ -2,14 +2,25 @@
 
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
-[Semantic Versioning](https://semver.org/). Until 1.0, minor versions may contain breaking changes;
-they are listed under **Changed** or **Removed**.
+[Semantic Versioning](https://semver.org/). Since 1.0, minor and patch versions keep the public API
+compatible; before 1.0, minor versions could contain breaking changes, listed under **Changed**
+(see [MIGRATION.md](MIGRATION.md)).
 
 The release workflow publishes the section of a version as its GitHub release notes, so every
 release needs a `## [x.y.z]` section here before it is tagged. Pre-releases such as `x.y.z-rc1` use
 their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-10-24
+
+The public API is stable from this version on.
+
+### Added
+
+- [MIGRATION.md](MIGRATION.md) with the changes since 0.x, and a compatibility policy in README.
+- CONTRIBUTING.md.
+- Module descriptions in the API reference for the starter, Ktor, test kit and Micrometer modules.
 
 ## [0.5.0] - 2026-10-24
 
@@ -103,7 +114,8 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/SecurityTrip/maxapi/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/SecurityTrip/maxapi/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/SecurityTrip/maxapi/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/SecurityTrip/maxapi/compare/v0.2.0...v0.3.0

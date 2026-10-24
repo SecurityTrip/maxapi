@@ -21,6 +21,7 @@ bot.startPolling()
 
 - [Features](#features)
 - [Requirements and installation](#requirements-and-installation)
+- [Compatibility](#compatibility)
 - [Getting a token](#getting-a-token)
 - [Quick start](#quick-start)
 - [Bot framework](#bot-framework)
@@ -55,6 +56,7 @@ bot.startPolling()
 - [Project layout](#project-layout)
 - [Building and testing](#building-and-testing)
 - [Releasing](#releasing)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Features
@@ -136,6 +138,25 @@ To try unreleased changes, install the current sources to the local Maven reposi
 `./gradlew publishToMavenLocal` and depend on the `-SNAPSHOT` version from
 [maxapi-publishing](build-logic/src/main/kotlin/maxapi.publishing.gradle.kts) with `mavenLocal()`
 among the repositories.
+
+## Compatibility
+
+Since 1.0 the public API follows [semantic versioning](https://semver.org/): minor and patch
+versions keep source and binary compatibility, and API is deprecated (with `ReplaceWith`) before it
+is removed in the next major version. Every module's public API is recorded in `<module>/api/` and
+checked on every build. Coming from 0.x? See [MIGRATION.md](MIGRATION.md).
+
+| Component         | Supported                                              |
+|-------------------|--------------------------------------------------------|
+| Java              | 17 or newer                                            |
+| Kotlin            | 2.x (the library is built with 2.4)                    |
+| Max Bot API       | specification 0.0.33; newer server features arrive as `Unknown*` objects |
+| Spring Boot       | 4.x (built and tested with 4.1)                        |
+| Ktor              | 3.x (built and tested with 3.6)                        |
+| Micrometer        | 1.x (built and tested with 1.17)                       |
+
+Not part of the compatible API: anything `internal`, the content of exception messages and log
+lines, and the exact defaults of `BotTester` responses.
 
 ## Getting a token
 
@@ -1242,6 +1263,10 @@ API reference to GitHub Pages.
 If publishing fails after the release was created, fix the cause and run the Release workflow by
 hand (**Actions → Release → Run workflow**) with the same version. A version that reached Maven Central
 cannot be replaced: publish a new one instead.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
