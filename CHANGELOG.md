@@ -11,6 +11,30 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-24
+
+### Added
+
+- Middleware: `use { ctx, next -> }` in Kotlin and the `Middleware` interface in Java, around the
+  handlers of a bot or a router.
+- `Router` for feature modules, added with `include(router)`; routers can be nested and have their
+  own middleware.
+- `Filters` (text, regular expressions, chat type, attachments, payload prefix, users, chats,
+  dialog state) and `Filter` with `and`, `or` and `!`.
+- Dialog state: `state`, `stateData`, `setState`, `updateStateData` and `clearState` on every context,
+  `StateStorage` with `InMemoryStateStorage` and `BlockingStateStorage`, `BotConfig.stateStorage`.
+- `CallbackData` for typed button payloads, `onCallback(callbackData)` and `CallbackContext.data`.
+- `onCommand(name, description)`, `commands()` and `MaxBot.syncCommands()` for the bot menu.
+- `UpdateContext.locale`.
+- Questionnaire example with all of the above.
+
+### Changed
+
+- The registration methods (`on*`, `subscribedUpdateTypes`) moved to the new base class
+  `BaseRouter` of `MaxBot` and `Router`. Source code compiles unchanged; code compiled against 0.2
+  must be recompiled.
+- Java filter overloads accept `Predicate<? super Context>`.
+
 ## [0.2.0] - 2026-10-24
 
 ### Added
@@ -41,6 +65,7 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/SecurityTrip/maxapi/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/SecurityTrip/maxapi/compare/v0.1.0-rc1...v0.2.0
 [0.1.0-rc1]: https://github.com/SecurityTrip/maxapi/releases/tag/v0.1.0-rc1

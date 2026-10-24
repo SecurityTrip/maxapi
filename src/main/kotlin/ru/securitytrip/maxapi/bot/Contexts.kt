@@ -13,6 +13,11 @@ import ru.securitytrip.maxapi.model.message.MessageLinkType
 import ru.securitytrip.maxapi.model.message.NewMessageBody
 import ru.securitytrip.maxapi.model.message.NewMessageLink
 import ru.securitytrip.maxapi.model.update.BotStartedUpdate
+import ru.securitytrip.maxapi.model.update.BotStoppedUpdate
+import ru.securitytrip.maxapi.model.update.DialogClearedUpdate
+import ru.securitytrip.maxapi.model.update.DialogMutedUpdate
+import ru.securitytrip.maxapi.model.update.DialogRemovedUpdate
+import ru.securitytrip.maxapi.model.update.DialogUnmutedUpdate
 import ru.securitytrip.maxapi.model.update.MessageCallbackUpdate
 import ru.securitytrip.maxapi.model.update.MessageCreatedUpdate
 import ru.securitytrip.maxapi.model.update.Update
@@ -33,13 +38,27 @@ import ru.securitytrip.maxapi.model.user.User
  * Specialized contexts add helpers for their update type: [MessageContext], [CallbackContext],
  * [BotStartedContext].
  *
+ * ## Dialog state
+ *
+ * [state] and [stateData] hold the state of the dialog (this user in this chat), kept in
+ * [BotConfig.stateStorage]. Use them for conversations of several steps, together with
+ * [Filters.state]:
+ *
+ * ```kotlin
+ * bot.onCommand("register") { setState("name"); reply("Your name?") }
+ * bot.onMessage(Filters.state("name")) { setState("age", mapOf("name" to text.orEmpty())); reply("Your age?") }
+ * bot.onMessage(Filters.state("age")) { reply("Hi, ${stateData["name"]}!"); clearState() }
+ * ```
+ *
  * @property update the update being handled.
- * @property bot the bot that dispatched the update.
  */
 public open class UpdateContext<U : Update> internal constructor(
     public val update: U,
-    public val bot: MaxBot,
+    internal val dispatch: Dispatch,
 ) {
+    /** The bot that dispatched the update. */
+    public val bot: MaxBot get() = dispatch.bot
+
     /** Client of the bot, for any API call. */
     public val client: MaxClient get() = bot.client
 
@@ -51,6 +70,58 @@ public open class UpdateContext<U : Update> internal constructor(
 
     /** User who caused the update, if known. */
     public open val user: User? get() = update.user
+
+    /** Locale of the user's client, like `ru`, if the update carries it. Translations are up to you. */
+    public val locale: String? get() = localeOf(update)
+
+    // ---------------------------------------------------------------- state
+
+    /** Name of the dialog state, `null` if there is none. */
+    public val state: String? get() = dispatch.dialog?.name
+
+    /** Values stored with the dialog state; empty if there are none. */
+    public val stateData: Map<String, String> get() = dispatch.dialog?.data.orEmpty()
+
+    /**
+     * Sets the dialog state to [name] and its values to [data] (by default the current values are kept).
+     * @throws IllegalStateException if the update has neither a chat nor a user.
+     */
+    public suspend fun setState(name: String?, data: Map<String, String> = stateData) {
+        save(DialogState(name, data))
+    }
+
+    /** Adds [data] to the values of the dialog state, replacing values with the same keys. */
+    public suspend fun updateStateData(data: Map<String, String>) {
+        save(DialogState(state, stateData + data))
+    }
+
+    /** Removes the dialog state and its values. */
+    public suspend fun clearState() {
+        save(null)
+    }
+
+    private suspend fun save(value: DialogState?) {
+        val key = checkNotNull(dispatch.stateKey) {
+            "Cannot keep state for ${update.updateType}: neither chat nor user is known"
+        }
+        val stored = value?.takeUnless { it.name == null && it.data.isEmpty() }
+        bot.config.stateStorage.set(key, stored)
+        dispatch.dialog = stored
+    }
+
+    /** Blocking version of [setState] for Java handlers. */
+    public fun setStateBlocking(name: String?): Unit = runBlocking { setState(name) }
+
+    /** Blocking version of [setState] for Java handlers. */
+    public fun setStateBlocking(name: String?, data: Map<String, String>): Unit = runBlocking { setState(name, data) }
+
+    /** Blocking version of [updateStateData] for Java handlers. */
+    public fun updateStateDataBlocking(data: Map<String, String>): Unit = runBlocking { updateStateData(data) }
+
+    /** Blocking version of [clearState] for Java handlers. */
+    public fun clearStateBlocking(): Unit = runBlocking { clearState() }
+
+    // -------------------------------------------------------------- replies
 
     /** Sends a text message to [chatId], or to [user] if the chat is unknown. */
     public suspend fun reply(text: String): Message = reply(NewMessageBody(text = text))
@@ -106,8 +177,8 @@ public open class UpdateContext<U : Update> internal constructor(
  */
 public class MessageContext internal constructor(
     update: MessageCreatedUpdate,
-    bot: MaxBot,
-) : UpdateContext<MessageCreatedUpdate>(update, bot) {
+    dispatch: Dispatch,
+) : UpdateContext<MessageCreatedUpdate>(update, dispatch) {
     /** The new message. */
     public val message: Message get() = update.message
 
@@ -176,8 +247,8 @@ public class MessageContext internal constructor(
  */
 public class CallbackContext internal constructor(
     update: MessageCallbackUpdate,
-    bot: MaxBot,
-) : UpdateContext<MessageCallbackUpdate>(update, bot) {
+    dispatch: Dispatch,
+) : UpdateContext<MessageCallbackUpdate>(update, dispatch) {
     /** The button press. */
     public val callback: Callback get() = update.callback
 
@@ -189,6 +260,13 @@ public class CallbackContext internal constructor(
 
     /** User who pressed the button. */
     override val user: User get() = callback.user
+
+    /**
+     * The fields of [payload] packed by [callbackData].
+     * @throws IllegalArgumentException if the payload was not packed by [callbackData].
+     */
+    public fun data(callbackData: CallbackData): Map<String, String> =
+        requireNotNull(callbackData.unpack(payload)) { "Payload $payload does not match $callbackData" }
 
     /** Answers the press with a one-time notification to the user. */
     public suspend fun answer(notification: String): SimpleQueryResult =
@@ -224,8 +302,8 @@ public class CallbackContext internal constructor(
  */
 public class BotStartedContext internal constructor(
     update: BotStartedUpdate,
-    bot: MaxBot,
-) : UpdateContext<BotStartedUpdate>(update, bot) {
+    dispatch: Dispatch,
+) : UpdateContext<BotStartedUpdate>(update, dispatch) {
     /** The `start` parameter of `https://max.ru/<botName>?start=<payload>`, or `null` without a deep link. */
     public val payload: String? get() = update.payload
 
@@ -234,4 +312,16 @@ public class BotStartedContext internal constructor(
 
     /** The user who started the bot. */
     override val user: User get() = update.user
+}
+
+private fun localeOf(update: Update): String? = when (update) {
+    is MessageCreatedUpdate -> update.userLocale
+    is MessageCallbackUpdate -> update.userLocale
+    is BotStartedUpdate -> update.userLocale
+    is BotStoppedUpdate -> update.userLocale
+    is DialogClearedUpdate -> update.userLocale
+    is DialogRemovedUpdate -> update.userLocale
+    is DialogMutedUpdate -> update.userLocale
+    is DialogUnmutedUpdate -> update.userLocale
+    else -> null
 }

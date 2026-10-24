@@ -30,6 +30,8 @@ public class BotConfig(
     public val minPollInterval: Duration = Duration.ofMillis(300),
     /** Upper bound of the pause after failed `getUpdates` requests; the pause doubles from 1 second. */
     public val maxErrorBackoff: Duration = Duration.ofSeconds(30),
+    /** Where dialog states ([UpdateContext.state]) are kept; by default in memory. */
+    public val stateStorage: StateStorage = InMemoryStateStorage(),
 ) {
     init {
         require(parallelism >= 1) { "parallelism must be >= 1" }
@@ -46,6 +48,7 @@ public class BotConfig(
         private var pollLimit = 100
         private var minPollInterval = Duration.ofMillis(300)
         private var maxErrorBackoff = Duration.ofSeconds(30)
+        private var stateStorage: StateStorage? = null
 
         public fun parallelism(value: Int): Builder = apply { parallelism = value }
         public fun queueCapacity(value: Int): Builder = apply { queueCapacity = value }
@@ -53,9 +56,11 @@ public class BotConfig(
         public fun pollLimit(value: Int): Builder = apply { pollLimit = value }
         public fun minPollInterval(value: Duration): Builder = apply { minPollInterval = value }
         public fun maxErrorBackoff(value: Duration): Builder = apply { maxErrorBackoff = value }
+        public fun stateStorage(value: StateStorage): Builder = apply { stateStorage = value }
 
         public fun build(): BotConfig = BotConfig(
             parallelism, queueCapacity, pollTimeoutSeconds, pollLimit, minPollInterval, maxErrorBackoff,
+            stateStorage ?: InMemoryStateStorage(),
         )
     }
 
