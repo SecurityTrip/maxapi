@@ -16,6 +16,7 @@ import ru.securitytrip.maxapi.bot.MaxBot
 import ru.securitytrip.maxapi.bot.Router
 import ru.securitytrip.maxapi.client.MaxClient
 import ru.securitytrip.maxapi.client.MaxClientConfig
+import ru.securitytrip.maxapi.events.MaxEventListener
 
 /**
  * Configures a [MaxClient] and a [MaxBot] when `max.bot.token` is set, and starts receiving updates
@@ -24,6 +25,8 @@ import ru.securitytrip.maxapi.client.MaxClientConfig
  * Handlers come from beans: every [MaxBotConfigurer] is called with the bot, and every [Router] bean
  * is included, both in `@Order` order. Define your own `MaxClient`, `MaxBot` or [BotConfig] bean to
  * replace the default one; [MaxClientConfigCustomizer] beans adjust the client settings.
+ * [MaxEventListener] beans receive the events of the client and, unless you define a `BotConfig`
+ * bean, of the bot.
  */
 @AutoConfiguration
 @ConditionalOnClass(MaxBot::class)
@@ -32,8 +35,14 @@ import ru.securitytrip.maxapi.client.MaxClientConfig
 public class MaxBotAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
-    public fun maxClient(properties: MaxBotProperties, customizers: ObjectProvider<MaxClientConfigCustomizer>): MaxClient {
-        val builder = MaxClientConfig.builder(properties.token).baseUrl(properties.baseUrl)
+    public fun maxClient(
+        properties: MaxBotProperties,
+        customizers: ObjectProvider<MaxClientConfigCustomizer>,
+        listeners: ObjectProvider<MaxEventListener>,
+    ): MaxClient {
+        val builder = MaxClientConfig.builder(properties.token)
+            .baseUrl(properties.baseUrl)
+            .eventListener(MaxEventListener.composite(listeners.orderedStream().toList()))
         customizers.orderedStream().forEach { it.customize(builder) }
         return MaxClient(builder.build())
     }
@@ -45,8 +54,10 @@ public class MaxBotAutoConfiguration {
         config: ObjectProvider<BotConfig>,
         configurers: ObjectProvider<MaxBotConfigurer>,
         routers: ObjectProvider<Router>,
+        listeners: ObjectProvider<MaxEventListener>,
     ): MaxBot {
-        val bot = MaxBot(client, config.getIfAvailable { BotConfig() })
+        val default = { BotConfig(eventListener = MaxEventListener.composite(listeners.orderedStream().toList())) }
+        val bot = MaxBot(client, config.getIfAvailable(default))
         configurers.orderedStream().forEach { it.configure(bot) }
         routers.orderedStream().forEach { bot.include(it) }
         return bot

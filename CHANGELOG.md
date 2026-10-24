@@ -11,6 +11,25 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-24
+
+### Added
+
+- `RateLimit` (`MaxClientConfig.rateLimit`): client-side token bucket for all requests and per chat.
+- `MarkerStore` (`BotConfig.markerStore`) with `InMemoryMarkerStore`, `FileMarkerStore` and
+  `BlockingMarkerStore`: long polling continues after a restart; the marker is saved only after the
+  updates before it were handled.
+- `UpdateDeduplicator` (`BotConfig.deduplicator`) with `InMemoryUpdateDeduplicator` against repeated
+  webhook deliveries.
+- `BotConfig.handlerTimeout` and `HandlerTimeoutException`.
+- `MaxEventListener` with `RequestEvent` and `UpdateEvent` in `MaxClientConfig` and `BotConfig`.
+- `maxapi-micrometer` with `MaxMetrics`; the Spring Boot starter registers it when a `MeterRegistry`
+  exists and attaches `MaxEventListener` beans.
+
+### Changed
+
+- Java handlers run with `runInterruptible`, so they are interrupted when cancelled (timeout, `close()`).
+
 ## [0.4.0] - 2026-10-24
 
 ### Added
@@ -84,7 +103,8 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/SecurityTrip/maxapi/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/SecurityTrip/maxapi/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/SecurityTrip/maxapi/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/SecurityTrip/maxapi/compare/v0.1.0-rc1...v0.2.0

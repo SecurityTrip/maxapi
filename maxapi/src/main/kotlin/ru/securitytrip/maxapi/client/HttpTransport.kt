@@ -15,6 +15,9 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import ru.securitytrip.maxapi.events.MaxEventListener
+import ru.securitytrip.maxapi.events.RequestEvent
+import ru.securitytrip.maxapi.events.safely
 import ru.securitytrip.maxapi.model.ApiEnum
 import ru.securitytrip.maxapi.model.ErrorResponse
 import java.io.Closeable
@@ -40,6 +43,9 @@ internal class Query {
         }
     }
 
+    /** The value of parameter [name], if it was added. */
+    fun value(name: String): String? = params.firstOrNull { it.first == name }?.second
+
     fun applyTo(builder: HttpUrl.Builder) {
         for ((name, value) in params) builder.addQueryParameter(name, value)
     }
@@ -56,6 +62,7 @@ internal class HttpTransport(
     private val mapper: ObjectMapper,
 ) : Closeable {
     private val ownsClient = config.httpClient == null
+    private val limiter = config.rateLimit?.let { RateLimiter(it) }
     private val baseUrl = config.baseUrl.toHttpUrl()
 
     private val http: OkHttpClient = config.httpClient ?: OkHttpClient.Builder()
@@ -97,12 +104,16 @@ internal class HttpTransport(
         val client = if (longPolling) pollingHttp else http
         val policy = config.retryPolicy
         val operation = "$method /${path.joinToString("/")}"
+        val chatId = query?.value("chat_id")?.toLongOrNull() ?: path.getOrNull(1)?.takeIf { path[0] == "chats" }?.toLongOrNull()
 
         var attempt = 0
         while (true) {
+            limiter?.acquire(chatId)
+            val started = System.nanoTime()
             val raw = try {
                 send(client, request)
             } catch (e: IOException) {
+                event(method, path, null, started, attempt, e)
                 if (method in IDEMPOTENT_METHODS && attempt < policy.maxRetries) {
                     val wait = policy.backoffMillis(attempt++)
                     log.log(System.Logger.Level.DEBUG, "$operation failed: ${e.message}; retry in $wait ms")
@@ -111,6 +122,7 @@ internal class HttpTransport(
                 }
                 throw MaxNetworkException("$operation failed: ${e.message}", e)
             }
+            event(method, path, raw.code, started, attempt, null)
             if (raw.isSuccessful) return parse(raw.body, responseType, operation)
 
             val error = toApiException(raw)
@@ -126,6 +138,14 @@ internal class HttpTransport(
             }
             throw error
         }
+    }
+
+    private fun event(method: String, path: List<String>, status: Int?, started: Long, attempt: Int, error: Throwable?) {
+        val listener = config.eventListener
+        if (listener === MaxEventListener.NONE) return
+        val template = path.joinToString("/", prefix = "/") { segment -> if (segment.any(Char::isDigit)) "{id}" else segment }
+        val duration = Duration.ofNanos(System.nanoTime() - started)
+        listener.safely { onRequest(RequestEvent(method, template, status, duration, attempt, error)) }
     }
 
     /**

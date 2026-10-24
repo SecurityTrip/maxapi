@@ -50,6 +50,7 @@ bot.startPolling()
 - [Models](#models)
 - [Errors and retries](#errors-and-retries)
 - [Configuration](#configuration)
+- [Reliability and monitoring](#reliability-and-monitoring)
 - [Threading and lifecycle](#threading-and-lifecycle)
 - [Project layout](#project-layout)
 - [Building and testing](#building-and-testing)
@@ -94,6 +95,7 @@ The library is published to Maven Central under the group `io.github.securitytri
 | `maxapi-spring-boot-starter` | Spring Boot auto-configuration, see [Spring Boot](#spring-boot) |
 | `maxapi-ktor`                | Ktor webhook routing, see [Ktor](#ktor)                        |
 | `maxapi-test`                | test kit, see [Testing bots](#testing-bots)                    |
+| `maxapi-micrometer`          | Micrometer metrics, see [Reliability and monitoring](#reliability-and-monitoring) |
 | `maxapi-bom`                 | versions of all of the above                                   |
 
 ```kotlin
@@ -833,6 +835,9 @@ MaxBotConfigurer handlers() {
 | `webhook` | `POST max.bot.webhook.path` accepts deliveries (servlet web applications); with `webhook.url` set the bot subscribes on startup |
 | `none`    | nothing starts; deliver updates yourself                                                  |
 
+`MaxEventListener` beans (and `MaxMetrics`, when `maxapi-micrometer` and a `MeterRegistry` are
+present) receive the events of the client and the bot.
+
 The webhook endpoint answers 200 for accepted updates, 401 for a wrong secret, 400 for a body that
 is not an update and 503 when the bot is closed. Define your own `MaxClient`, `MaxBot` or
 `BotConfig` bean to replace the default one, and `MaxClientConfigCustomizer` beans to adjust the
@@ -1015,6 +1020,8 @@ MaxClient client = MaxClient.create(MaxClientConfig.builder(token)
 | `attachmentReadyRetries`  | `5`                             | re-sends while the server answers `attachment.not.ready`     |
 | `attachmentReadyDelay`    | 1 second                        | pause between those re-sends                                 |
 | `userAgent`               | `maxapi-jvm`                    | `User-Agent` header                                          |
+| `rateLimit`               | none                            | client-side request rate limit, see [Reliability](#reliability-and-monitoring) |
+| `eventListener`           | none                            | receives an event per HTTP attempt (metrics, tracing)        |
 
 The default HTTP client uses 15 s connect and 60 s read/write timeouts. `getUpdates` automatically
 gets a longer read timeout, so long polling works with your own client too. A client you pass in is
@@ -1030,9 +1037,63 @@ never closed by the library.
 | `pollLimit`           | `100`     | maximum updates per request, 1–1000                              |
 | `minPollInterval`     | 300 ms    | minimum interval between requests (the API requires ≥ 300 ms)    |
 | `maxErrorBackoff`     | 30 s      | maximum pause after polling errors                               |
+| `stateStorage`        | in memory | where [dialog states](#dialog-state) are kept                    |
+| `handlerTimeout`      | none      | longest time a handler may run                                   |
+| `deduplicator`        | none      | drops repeated deliveries of an update                           |
+| `markerStore`         | none      | keeps the polling marker across restarts                         |
+| `eventListener`       | none      | receives an event per dispatched update                          |
 
 Logging uses `System.Logger` with the names `ru.securitytrip.maxapi.client` (retries, at `DEBUG`) and
 `ru.securitytrip.maxapi.bot` (handler errors, at `ERROR`).
+
+## Reliability and monitoring
+
+All of the following is off by default.
+
+**Rate limit.** `RateLimit` makes the client wait instead of getting 429 responses: a token bucket
+for all requests and, optionally, one per chat.
+
+```kotlin
+MaxClientConfig(token, rateLimit = RateLimit(requestsPerSecond = 25.0, perChatRequestsPerSecond = 1.0))
+```
+
+**Polling marker.** With a `MarkerStore` the bot continues polling where it stopped after a restart.
+The marker is saved only after all updates received before it were handled, so nothing is lost on a
+crash, but an update may be handled twice (at-least-once delivery). `FileMarkerStore(path)` keeps it
+in a file; implement `MarkerStore` (or extend `BlockingMarkerStore` in Java) to keep it elsewhere.
+
+**Duplicates.** Max redelivers a webhook update until it gets 200, for up to 8 hours.
+`InMemoryUpdateDeduplicator` drops updates seen recently, by message id, callback id or, for other
+updates, type, time, chat and user (`UpdateDeduplicator.keyOf`). With several instances, implement
+`UpdateDeduplicator` on a shared store.
+
+**Handler timeout.** `handlerTimeout` cancels a handler that runs too long (Java handlers are
+interrupted) and passes `HandlerTimeoutException` to `onError`, so a stuck handler does not block its chat.
+
+```kotlin
+val bot = MaxBot(
+    client,
+    BotConfig(
+        markerStore = FileMarkerStore(Path.of("data/marker")),
+        deduplicator = InMemoryUpdateDeduplicator(),
+        handlerTimeout = Duration.ofSeconds(30),
+    ),
+)
+```
+
+**Metrics.** `MaxEventListener` receives an event for every HTTP attempt (`RequestEvent`: method,
+path template like `/chats/{id}`, status, duration, attempt) and every dispatched update
+(`UpdateEvent`: update, handled, duration, error). `maxapi-micrometer` turns them into the timers
+`max.client.requests` and `max.bot.updates`:
+
+```kotlin
+val metrics = MaxMetrics(meterRegistry)
+val client = MaxClient(MaxClientConfig(token, eventListener = metrics))
+val bot = MaxBot(client, BotConfig(eventListener = metrics))
+```
+
+With the Spring Boot starter, adding `maxapi-micrometer` is enough when the application has a
+`MeterRegistry` (e.g. from Actuator); other `MaxEventListener` beans are attached as well.
 
 ## Threading and lifecycle
 
@@ -1065,6 +1126,7 @@ maxapi/                        the library
 maxapi-spring-boot-starter/    Spring Boot auto-configuration
 maxapi-ktor/                   Ktor webhook routing
 maxapi-test/                   BotTester and TestUpdates
+maxapi-micrometer/             MaxMetrics
 maxapi-bom/                    bill of materials
 build-logic/                   convention plugins: Kotlin settings, coverage, Dokka, publishing
 examples/, examples-spring/, examples-ktor/

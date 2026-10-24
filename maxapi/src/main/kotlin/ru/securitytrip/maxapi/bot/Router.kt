@@ -2,6 +2,7 @@ package ru.securitytrip.maxapi.bot
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import ru.securitytrip.maxapi.model.update.BotStartedUpdate
 import ru.securitytrip.maxapi.model.update.MessageCallbackUpdate
@@ -309,9 +310,10 @@ public abstract class BaseRouter<R : BaseRouter<R>> internal constructor() {
         return self
     }
 
+    // runInterruptible: a Java handler cancelled by BotConfig.handlerTimeout or close() is interrupted.
     private fun <C> Handler<C>.toSuspend(): suspend C.() -> Unit = {
         val ctx = this
-        withContext(Dispatchers.IO) { handle(ctx) }
+        runInterruptible(Dispatchers.IO) { handle(ctx) }
     }
 }
 

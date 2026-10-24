@@ -133,6 +133,11 @@ with one class per [UpdateType][ru.securitytrip.maxapi.model.update.UpdateType]
 Webhook subscriptions: [Subscription][ru.securitytrip.maxapi.model.subscription.Subscription] and
 [SubscriptionRequestBody][ru.securitytrip.maxapi.model.subscription.SubscriptionRequestBody].
 
+# Package ru.securitytrip.maxapi.events
+
+[MaxEventListener][ru.securitytrip.maxapi.events.MaxEventListener] receives an event for every HTTP attempt of the
+client and every update dispatched by the bot, for metrics, tracing and logging.
+
 # Package ru.securitytrip.maxapi.dsl
 
 Builders for outgoing messages and inline keyboards: the Kotlin DSL

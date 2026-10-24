@@ -12,6 +12,7 @@ dependencies {
         api(project(":maxapi-test"))
         api(project(":maxapi-spring-boot-starter"))
         api(project(":maxapi-ktor"))
+        api(project(":maxapi-micrometer"))
     }
 }
 

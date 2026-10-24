@@ -9,6 +9,8 @@ dependencies {
     compileOnly(platform(libs.spring.boot.dependencies))
     compileOnly(libs.spring.webmvc)
     compileOnly(libs.jakarta.servlet)
+    // Metrics are recorded when the application adds maxapi-micrometer.
+    compileOnly(project(":maxapi-micrometer"))
 
     testImplementation(kotlin("test"))
     testImplementation(platform(libs.spring.boot.dependencies))
@@ -18,6 +20,7 @@ dependencies {
     testImplementation(libs.jakarta.servlet)
     testImplementation(libs.assertj)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(project(":maxapi-micrometer"))
 }
 
 mavenPublishing {
