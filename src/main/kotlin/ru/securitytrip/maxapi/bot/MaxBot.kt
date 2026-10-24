@@ -22,15 +22,10 @@ import ru.securitytrip.maxapi.client.MaxClient
 import ru.securitytrip.maxapi.client.MaxException
 import ru.securitytrip.maxapi.client.UnauthorizedException
 import ru.securitytrip.maxapi.model.SimpleQueryResult
-import ru.securitytrip.maxapi.model.update.BotStartedUpdate
-import ru.securitytrip.maxapi.model.update.MessageCallbackUpdate
+import ru.securitytrip.maxapi.model.user.BotCommandsInfo
 import ru.securitytrip.maxapi.model.update.MessageCreatedUpdate
 import ru.securitytrip.maxapi.model.update.Update
-import ru.securitytrip.maxapi.model.update.UpdateType
-import ru.securitytrip.maxapi.model.update.updateTypeOf
 import java.io.Closeable
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.function.Predicate
 import kotlin.math.min
 
 /**
@@ -55,11 +50,8 @@ import kotlin.math.min
  *
  * Handlers are checked in registration order and **only the first matching one runs**.
  * Register specific handlers (commands, exact payloads) before catch-all ones like `onMessage { }`.
- * Updates no handler matches are ignored.
- *
- * Every registration method has two overloads: a Kotlin `suspend` lambda with the context as
- * receiver, and a Java [Handler] that runs on `Dispatchers.IO`. Registration methods return the
- * bot, so calls can be chained.
+ * Updates no handler matches are ignored. See [BaseRouter] for the registration methods,
+ * middleware ([use]) and splitting a bot into [Router]s ([include]).
  *
  * ## Errors
  *
@@ -82,7 +74,7 @@ public class MaxBot private constructor(
     public val client: MaxClient,
     public val config: BotConfig,
     private val ownsClient: Boolean,
-) : Closeable {
+) : BaseRouter<MaxBot>(), Closeable {
     /** A bot that uses an existing `client`. [close] does not close the client. */
     @JvmOverloads
     public constructor(client: MaxClient, config: BotConfig = BotConfig()) : this(client, config, false)
@@ -90,17 +82,6 @@ public class MaxBot private constructor(
     /** A bot with its own client for `token`. [close] closes that client too. */
     @JvmOverloads
     public constructor(token: String, config: BotConfig = BotConfig()) : this(MaxClient(token), config, true)
-
-    /**
-     * A route returns a ready-to-run action for a matching update, or `null` otherwise.
-     * Contexts are created once per update and context type and shared through `contexts`.
-     */
-    private class Route(
-        val type: Class<out Update>,
-        val prepare: (update: Update, contexts: MutableMap<Class<*>, Any>) -> (suspend () -> Unit)?,
-    )
-
-    private val routes = CopyOnWriteArrayList<Route>()
 
     @Volatile
     private var errorHandler: suspend (Throwable, Update?) -> Unit = { error, update ->
@@ -130,110 +111,6 @@ public class MaxBot private constructor(
     @Volatile
     public var username: String? = null
 
-    // ------------------------------------------------------------ messages
-
-    /** Handles every new message that earlier handlers did not take. */
-    public fun onMessage(handler: suspend MessageContext.() -> Unit): MaxBot =
-        onMessage({ true }, handler)
-
-    /** Java version of [onMessage]. */
-    public fun onMessage(handler: Handler<MessageContext>): MaxBot = onMessage({ true }, handler.toSuspend())
-
-    /**
-     * Handles new messages matching [filter]:
-     *
-     * ```kotlin
-     * bot.onMessage({ it.text?.contains("price", ignoreCase = true) == true }) { reply("See our catalog") }
-     * ```
-     */
-    public fun onMessage(filter: (MessageContext) -> Boolean, handler: suspend MessageContext.() -> Unit): MaxBot =
-        route(MessageCreatedUpdate::class.java, MessageContext::class.java, { MessageContext(it, this) }, filter, handler)
-
-    /** Java version of [onMessage] with a filter. */
-    public fun onMessage(filter: Predicate<MessageContext>, handler: Handler<MessageContext>): MaxBot =
-        onMessage(filter::test, handler.toSuspend())
-
-    /**
-     * Handles the command `/name`. Matching ignores case, so `onCommand("start")` handles `/start` and
-     * `/Start`. A command with a suffix, like `/start@my_bot`, is handled only if the suffix is this
-     * bot's [username]. Arguments after the command are available as [MessageContext.commandArgs].
-     *
-     * @param name command name, with or without the leading `/`.
-     */
-    public fun onCommand(name: String, handler: suspend MessageContext.() -> Unit): MaxBot {
-        val command = name.removePrefix("/").lowercase()
-        require(command.isNotBlank()) { "Command name must not be blank" }
-        return onMessage({ it.command == command }, handler)
-    }
-
-    /** Java version of [onCommand]. */
-    public fun onCommand(name: String, handler: Handler<MessageContext>): MaxBot =
-        onCommand(name, handler.toSuspend())
-
-    // ----------------------------------------------------------- callbacks
-
-    /** Handles every callback button press that earlier handlers did not take. */
-    public fun onCallback(handler: suspend CallbackContext.() -> Unit): MaxBot = onCallback({ true }, handler)
-
-    /** Java version of [onCallback]. */
-    public fun onCallback(handler: Handler<CallbackContext>): MaxBot = onCallback({ true }, handler.toSuspend())
-
-    /** Handles presses of buttons whose payload equals [payload]. */
-    public fun onCallback(payload: String, handler: suspend CallbackContext.() -> Unit): MaxBot =
-        onCallback({ it.payload == payload }, handler)
-
-    /** Java version of [onCallback] with a payload. */
-    public fun onCallback(payload: String, handler: Handler<CallbackContext>): MaxBot =
-        onCallback(payload, handler.toSuspend())
-
-    /**
-     * Handles button presses matching [filter], e.g. a payload prefix:
-     *
-     * ```kotlin
-     * bot.onCallback({ it.payload?.startsWith("buy:") == true }) { ... }
-     * ```
-     */
-    public fun onCallback(filter: (CallbackContext) -> Boolean, handler: suspend CallbackContext.() -> Unit): MaxBot =
-        route(MessageCallbackUpdate::class.java, CallbackContext::class.java, { CallbackContext(it, this) }, filter, handler)
-
-    /** Java version of [onCallback] with a filter. */
-    public fun onCallback(filter: Predicate<CallbackContext>, handler: Handler<CallbackContext>): MaxBot =
-        onCallback(filter::test, handler.toSuspend())
-
-    // ------------------------------------------------------- other updates
-
-    /** Handles a user starting the bot, including via a deep link (see [BotStartedContext.payload]). */
-    public fun onBotStarted(handler: suspend BotStartedContext.() -> Unit): MaxBot =
-        route(BotStartedUpdate::class.java, BotStartedContext::class.java, { BotStartedContext(it, this) }, { true }, handler)
-
-    /** Java version of [onBotStarted]. */
-    public fun onBotStarted(handler: Handler<BotStartedContext>): MaxBot = onBotStarted(handler.toSuspend())
-
-    /**
-     * Handles every update of [type] or its subclasses. Pass `Update::class.java` to handle all updates.
-     *
-     * ```java
-     * bot.onUpdate(BotAddedToChatUpdate.class, ctx -> ctx.replyBlocking("Hi everyone!"));
-     * ```
-     */
-    public fun <U : Update> onUpdate(type: Class<U>, handler: suspend UpdateContext<U>.() -> Unit): MaxBot =
-        route(type, UpdateContext::class.java, { UpdateContext(it, this) }, { true }, handler)
-
-    /** Java version of [onUpdate]. */
-    public fun <U : Update> onUpdate(type: Class<U>, handler: Handler<UpdateContext<U>>): MaxBot =
-        onUpdate(type, handler.toSuspend())
-
-    /**
-     * Handles every update of type [U]:
-     *
-     * ```kotlin
-     * bot.on<BotAddedToChatUpdate> { reply("Hi everyone!") }
-     * bot.on<MessageEditedUpdate> { println("Edited: ${update.message.body?.text}") }
-     * ```
-     */
-    public inline fun <reified U : Update> on(noinline handler: suspend UpdateContext<U>.() -> Unit): MaxBot =
-        onUpdate(U::class.java, handler)
-
     /**
      * Sets the error handler, replacing the default one that logs to `System.Logger`
      * (logger name `ru.securitytrip.maxapi.bot`).
@@ -248,17 +125,6 @@ public class MaxBot private constructor(
     /** Java version of [onError]. */
     public fun onError(handler: ErrorHandler): MaxBot = onError { error, update -> handler.handle(error, update) }
 
-    /**
-     * Update types the registered handlers can process, or `null` if some handler accepts any
-     * update (e.g. `onUpdate(Update::class.java)`). Long polling and [setWebhook] use it to request
-     * only these types.
-     */
-    public fun subscribedUpdateTypes(): Set<UpdateType>? {
-        val types = LinkedHashSet<UpdateType>()
-        for (route in routes) types += updateTypeOf(route.type) ?: return null
-        return types
-    }
-
     // ------------------------------------------------------------ dispatch
 
     /**
@@ -270,13 +136,9 @@ public class MaxBot private constructor(
     public suspend fun processUpdate(update: Update) {
         try {
             if (username == null && isAddressedCommand(update)) username = client.getMyInfo().username
-            val contexts = HashMap<Class<*>, Any>(2)
-            for (route in routes) {
-                if (!route.type.isInstance(update)) continue
-                val action = route.prepare(update, contexts) ?: continue
-                action()
-                return
-            }
+            val key = StateKey.of(update)
+            val dispatch = Dispatch(this, update, key, key?.let { config.stateStorage.get(it) })
+            match(dispatch)?.run?.invoke()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -400,6 +262,15 @@ public class MaxBot private constructor(
         return client.subscribe(url, secret, types)
     }
 
+    /**
+     * Shows the [commands] registered with descriptions in the bot menu, replacing the commands
+     * shown before. Call it after registering handlers, e.g. at startup.
+     */
+    public suspend fun syncCommands(): BotCommandsInfo = client.editMyCommands(commands())
+
+    /** Blocking version of [syncCommands] for Java. */
+    public fun syncCommandsBlocking(): BotCommandsInfo = runBlocking { syncCommands() }
+
     /** Blocking version of [setWebhook] for Java. */
     @JvmOverloads
     public fun setWebhookBlocking(url: String, secret: String? = null): SimpleQueryResult =
@@ -421,25 +292,6 @@ public class MaxBot private constructor(
     }
 
     // ---------------------------------------------------------------------
-
-    private fun <U : Update, C : Any> route(
-        type: Class<U>,
-        contextType: Class<*>,
-        context: (U) -> C,
-        filter: (C) -> Boolean,
-        handler: suspend C.() -> Unit,
-    ): MaxBot = apply {
-        routes += Route(type) { update, contexts ->
-            @Suppress("UNCHECKED_CAST")
-            val ctx = contexts.getOrPut(contextType) { context(type.cast(update)) } as C
-            if (filter(ctx)) suspend { ctx.handler() } else null
-        }
-    }
-
-    private fun <C> Handler<C>.toSuspend(): suspend C.() -> Unit = {
-        val ctx = this
-        withContext(Dispatchers.IO) { handle(ctx) }
-    }
 
     private suspend fun reportError(error: Throwable, update: Update?) {
         try {

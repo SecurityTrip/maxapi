@@ -1,8 +1,44 @@
+public abstract class ru/securitytrip/maxapi/bot/BaseRouter {
+	public final fun commands ()Ljava/util/List;
+	public final fun include (Lru/securitytrip/maxapi/bot/Router;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onBotStarted (Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onBotStarted (Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCallback (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCallback (Ljava/lang/String;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCallback (Ljava/util/function/Predicate;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCallback (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCallback (Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCallback (Lru/securitytrip/maxapi/bot/CallbackData;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCallback (Lru/securitytrip/maxapi/bot/CallbackData;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCallback (Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCommand (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCommand (Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCommand (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onCommand (Ljava/lang/String;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onMessage (Ljava/util/function/Predicate;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onMessage (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onMessage (Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onMessage (Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onUpdate (Ljava/lang/Class;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun onUpdate (Ljava/lang/Class;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun subscribedUpdateTypes ()Ljava/util/Set;
+	public final fun use (Lkotlin/jvm/functions/Function3;)Lru/securitytrip/maxapi/bot/BaseRouter;
+	public final fun use (Lru/securitytrip/maxapi/bot/Middleware;)Lru/securitytrip/maxapi/bot/BaseRouter;
+}
+
+public abstract class ru/securitytrip/maxapi/bot/BlockingStateStorage : ru/securitytrip/maxapi/bot/StateStorage {
+	public fun <init> ()V
+	public final fun get (Lru/securitytrip/maxapi/bot/StateKey;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	protected abstract fun load (Lru/securitytrip/maxapi/bot/StateKey;)Lru/securitytrip/maxapi/bot/DialogState;
+	protected abstract fun save (Lru/securitytrip/maxapi/bot/StateKey;Lru/securitytrip/maxapi/bot/DialogState;)V
+	public final fun set (Lru/securitytrip/maxapi/bot/StateKey;Lru/securitytrip/maxapi/bot/DialogState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class ru/securitytrip/maxapi/bot/BotConfig {
 	public static final field Companion Lru/securitytrip/maxapi/bot/BotConfig$Companion;
 	public fun <init> ()V
-	public fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;)V
-	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;)V
+	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun builder ()Lru/securitytrip/maxapi/bot/BotConfig$Builder;
 	public final fun getMaxErrorBackoff ()Ljava/time/Duration;
 	public final fun getMinPollInterval ()Ljava/time/Duration;
@@ -10,6 +46,7 @@ public final class ru/securitytrip/maxapi/bot/BotConfig {
 	public final fun getPollLimit ()I
 	public final fun getPollTimeoutSeconds ()I
 	public final fun getQueueCapacity ()I
+	public final fun getStateStorage ()Lru/securitytrip/maxapi/bot/StateStorage;
 }
 
 public final class ru/securitytrip/maxapi/bot/BotConfig$Builder {
@@ -21,6 +58,7 @@ public final class ru/securitytrip/maxapi/bot/BotConfig$Builder {
 	public final fun pollLimit (I)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
 	public final fun pollTimeoutSeconds (I)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
 	public final fun queueCapacity (I)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun stateStorage (Lru/securitytrip/maxapi/bot/StateStorage;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
 }
 
 public final class ru/securitytrip/maxapi/bot/BotConfig$Companion {
@@ -38,6 +76,7 @@ public final class ru/securitytrip/maxapi/bot/CallbackContext : ru/securitytrip/
 	public final fun answer (Lru/securitytrip/maxapi/model/message/CallbackAnswer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun answerBlocking (Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
 	public final fun answerBlocking (Lru/securitytrip/maxapi/model/message/CallbackAnswer;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun data (Lru/securitytrip/maxapi/bot/CallbackData;)Ljava/util/Map;
 	public final fun editMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun editMessage$default (Lru/securitytrip/maxapi/bot/CallbackContext;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun editMessageBlocking (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
@@ -49,15 +88,85 @@ public final class ru/securitytrip/maxapi/bot/CallbackContext : ru/securitytrip/
 	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
 }
 
+public final class ru/securitytrip/maxapi/bot/CallbackData {
+	public static final field Companion Lru/securitytrip/maxapi/bot/CallbackData$Companion;
+	public static final field MAX_LENGTH I
+	public static final field SEPARATOR C
+	public fun <init> (Ljava/lang/String;[Ljava/lang/String;)V
+	public final fun filter ()Lru/securitytrip/maxapi/bot/Filter;
+	public final fun getFields ()Ljava/util/List;
+	public final fun getPrefix ()Ljava/lang/String;
+	public final fun matches (Ljava/lang/String;)Z
+	public final fun pack (Ljava/util/Map;)Ljava/lang/String;
+	public final fun pack ([Ljava/lang/Object;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public final fun unpack (Ljava/lang/String;)Ljava/util/Map;
+}
+
+public final class ru/securitytrip/maxapi/bot/CallbackData$Companion {
+}
+
+public final class ru/securitytrip/maxapi/bot/DialogState {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/util/Map;)Lru/securitytrip/maxapi/bot/DialogState;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/bot/DialogState;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lru/securitytrip/maxapi/bot/DialogState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/util/Map;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class ru/securitytrip/maxapi/bot/ErrorHandler {
 	public abstract fun handle (Ljava/lang/Throwable;Lru/securitytrip/maxapi/model/update/Update;)V
+}
+
+public abstract class ru/securitytrip/maxapi/bot/Filter : java/util/function/Predicate, kotlin/jvm/functions/Function1 {
+	public fun <init> ()V
+	public fun test (Ljava/lang/Object;)Z
+}
+
+public final class ru/securitytrip/maxapi/bot/Filters {
+	public static final field INSTANCE Lru/securitytrip/maxapi/bot/Filters;
+	public static final fun anyState ()Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun chatType ([Lru/securitytrip/maxapi/model/chat/ChatType;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun fromUsers ([J)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun hasAttachment (Ljava/lang/Class;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun hasText ()Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun inChats ([J)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun noState ()Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun of (Ljava/util/function/Predicate;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun payloadStartsWith (Ljava/lang/String;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun state ([Ljava/lang/String;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun text (Ljava/util/regex/Pattern;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun text (Lkotlin/text/Regex;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun textEquals ([Ljava/lang/String;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun textEqualsIgnoreCase ([Ljava/lang/String;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun textStartsWith (Ljava/lang/String;)Lru/securitytrip/maxapi/bot/Filter;
+}
+
+public final class ru/securitytrip/maxapi/bot/FiltersKt {
+	public static final fun and (Lru/securitytrip/maxapi/bot/Filter;Lru/securitytrip/maxapi/bot/Filter;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun not (Lru/securitytrip/maxapi/bot/Filter;)Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun or (Lru/securitytrip/maxapi/bot/Filter;Lru/securitytrip/maxapi/bot/Filter;)Lru/securitytrip/maxapi/bot/Filter;
 }
 
 public abstract interface class ru/securitytrip/maxapi/bot/Handler {
 	public abstract fun handle (Ljava/lang/Object;)V
 }
 
-public final class ru/securitytrip/maxapi/bot/MaxBot : java/io/Closeable {
+public final class ru/securitytrip/maxapi/bot/InMemoryStateStorage : ru/securitytrip/maxapi/bot/StateStorage {
+	public fun <init> ()V
+	public fun get (Lru/securitytrip/maxapi/bot/StateKey;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getSize ()I
+	public fun set (Lru/securitytrip/maxapi/bot/StateKey;Lru/securitytrip/maxapi/bot/DialogState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class ru/securitytrip/maxapi/bot/MaxBot : ru/securitytrip/maxapi/bot/BaseRouter, java/io/Closeable {
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/bot/BotConfig;)V
 	public synthetic fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/bot/BotConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -68,24 +177,8 @@ public final class ru/securitytrip/maxapi/bot/MaxBot : java/io/Closeable {
 	public final fun getClient ()Lru/securitytrip/maxapi/client/MaxClient;
 	public final fun getConfig ()Lru/securitytrip/maxapi/bot/BotConfig;
 	public final fun getUsername ()Ljava/lang/String;
-	public final fun onBotStarted (Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onBotStarted (Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onCallback (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onCallback (Ljava/lang/String;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onCallback (Ljava/util/function/Predicate;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onCallback (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onCallback (Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onCallback (Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onCommand (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onCommand (Ljava/lang/String;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
 	public final fun onError (Lkotlin/jvm/functions/Function3;)Lru/securitytrip/maxapi/bot/MaxBot;
 	public final fun onError (Lru/securitytrip/maxapi/bot/ErrorHandler;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onMessage (Ljava/util/function/Predicate;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onMessage (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onMessage (Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onMessage (Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onUpdate (Ljava/lang/Class;Lkotlin/jvm/functions/Function2;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun onUpdate (Ljava/lang/Class;Lru/securitytrip/maxapi/bot/Handler;)Lru/securitytrip/maxapi/bot/MaxBot;
 	public final fun processUpdate (Lru/securitytrip/maxapi/model/update/Update;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun processUpdateBlocking (Lru/securitytrip/maxapi/model/update/Update;)V
 	public final fun setUsername (Ljava/lang/String;)V
@@ -98,7 +191,8 @@ public final class ru/securitytrip/maxapi/bot/MaxBot : java/io/Closeable {
 	public final fun startBlocking ()V
 	public final fun startPolling (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun stop ()V
-	public final fun subscribedUpdateTypes ()Ljava/util/Set;
+	public final fun syncCommands (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun syncCommandsBlocking ()Lru/securitytrip/maxapi/model/user/BotCommandsInfo;
 	public final fun webhookHandler ()Lru/securitytrip/maxapi/bot/WebhookHandler;
 	public final fun webhookHandler (Ljava/lang/String;)Lru/securitytrip/maxapi/bot/WebhookHandler;
 	public static synthetic fun webhookHandler$default (Lru/securitytrip/maxapi/bot/MaxBot;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/bot/WebhookHandler;
@@ -115,11 +209,52 @@ public final class ru/securitytrip/maxapi/bot/MessageContext : ru/securitytrip/m
 	public final fun replyToMessageBlocking (Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/Message;
 }
 
+public abstract interface class ru/securitytrip/maxapi/bot/Middleware {
+	public abstract fun handle (Lru/securitytrip/maxapi/bot/UpdateContext;Lru/securitytrip/maxapi/bot/Next;)V
+}
+
+public abstract interface class ru/securitytrip/maxapi/bot/Next {
+	public abstract fun proceed ()V
+}
+
+public final class ru/securitytrip/maxapi/bot/Router : ru/securitytrip/maxapi/bot/BaseRouter {
+	public fun <init> ()V
+}
+
+public final class ru/securitytrip/maxapi/bot/StateKey {
+	public static final field Companion Lru/securitytrip/maxapi/bot/StateKey$Companion;
+	public fun <init> (Ljava/lang/Long;Ljava/lang/Long;)V
+	public final fun component1 ()Ljava/lang/Long;
+	public final fun component2 ()Ljava/lang/Long;
+	public final fun copy (Ljava/lang/Long;Ljava/lang/Long;)Lru/securitytrip/maxapi/bot/StateKey;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/bot/StateKey;Ljava/lang/Long;Ljava/lang/Long;ILjava/lang/Object;)Lru/securitytrip/maxapi/bot/StateKey;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChatId ()Ljava/lang/Long;
+	public final fun getUserId ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public static final fun of (Lru/securitytrip/maxapi/model/update/Update;)Lru/securitytrip/maxapi/bot/StateKey;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/bot/StateKey$Companion {
+	public final fun of (Lru/securitytrip/maxapi/model/update/Update;)Lru/securitytrip/maxapi/bot/StateKey;
+}
+
+public abstract interface class ru/securitytrip/maxapi/bot/StateStorage {
+	public abstract fun get (Lru/securitytrip/maxapi/bot/StateKey;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun set (Lru/securitytrip/maxapi/bot/StateKey;Lru/securitytrip/maxapi/bot/DialogState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public class ru/securitytrip/maxapi/bot/UpdateContext {
 	public final fun blocking ()Lru/securitytrip/maxapi/java/MaxBlockingClient;
+	public final fun clearState (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun clearStateBlocking ()V
 	public final fun getBot ()Lru/securitytrip/maxapi/bot/MaxBot;
 	public fun getChatId ()Ljava/lang/Long;
 	public final fun getClient ()Lru/securitytrip/maxapi/client/MaxClient;
+	public final fun getLocale ()Ljava/lang/String;
+	public final fun getState ()Ljava/lang/String;
+	public final fun getStateData ()Ljava/util/Map;
 	public final fun getUpdate ()Lru/securitytrip/maxapi/model/update/Update;
 	public fun getUser ()Lru/securitytrip/maxapi/model/user/User;
 	public final fun reply (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -129,8 +264,14 @@ public class ru/securitytrip/maxapi/bot/UpdateContext {
 	public final fun replyBlocking (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/message/Message;
 	public final fun sendAction (Lru/securitytrip/maxapi/model/chat/SenderAction;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun sendActionBlocking (Lru/securitytrip/maxapi/model/chat/SenderAction;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun setState (Ljava/lang/String;Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun setState$default (Lru/securitytrip/maxapi/bot/UpdateContext;Ljava/lang/String;Ljava/util/Map;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun setStateBlocking (Ljava/lang/String;)V
+	public final fun setStateBlocking (Ljava/lang/String;Ljava/util/Map;)V
 	public fun toString ()Ljava/lang/String;
 	public final fun typing (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun updateStateData (Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun updateStateDataBlocking (Ljava/util/Map;)V
 }
 
 public final class ru/securitytrip/maxapi/bot/WebhookHandler {

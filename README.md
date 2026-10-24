@@ -30,6 +30,10 @@ bot.startPolling()
   - [Buttons and callbacks](#buttons-and-callbacks)
   - [Deep links](#deep-links)
   - [Other updates](#other-updates)
+  - [Filters](#filters)
+  - [Middleware](#middleware)
+  - [Routers](#routers)
+  - [Dialog state](#dialog-state)
   - [Error handling](#error-handling)
   - [Long polling](#long-polling)
   - [Webhooks](#webhooks)
@@ -61,6 +65,8 @@ bot.startPolling()
 - First-class Java support: blocking and `CompletableFuture` facades, builders, `@JvmStatic`
   factories, Java overloads for optional parameters, unchecked exceptions only.
 - Kotlin DSL for messages and keyboards.
+- Bot building blocks: composable filters, middleware, routers for feature modules, dialog states
+  with pluggable storage, typed callback payloads, the command menu built from handlers.
 - File uploads in one call; the bot token is never sent to the upload host.
 - Automatic retries with exponential backoff on 429/503, and on 502/504 and network errors of
   idempotent requests, plus re-sending while an attachment is still being processed (`attachment.not.ready`).
@@ -167,14 +173,18 @@ Register handlers with the `on*` methods of `MaxBot`:
 | Method                         | Handles                                                    | Context              |
 |--------------------------------|------------------------------------------------------------|----------------------|
 | `onCommand("name")`            | messages starting with `/name`                             | `MessageContext`     |
+| `onCommand("name", "description")` | the same, and adds the command to the bot menu         | `MessageContext`     |
 | `onMessage { }`                | any new message                                            | `MessageContext`     |
 | `onMessage(filter) { }`        | new messages matching a predicate                          | `MessageContext`     |
 | `onCallback("payload") { }`    | presses of buttons with this exact payload                 | `CallbackContext`    |
 | `onCallback(filter) { }`       | button presses matching a predicate                        | `CallbackContext`    |
+| `onCallback(callbackData) { }` | presses of buttons with payloads of a `CallbackData` format | `CallbackContext`   |
 | `onCallback { }`               | any button press                                           | `CallbackContext`    |
 | `onBotStarted { }`             | a user pressing "Start" or opening a deep link             | `BotStartedContext`  |
 | `on<T> { }` / `onUpdate(T)`    | any update of type `T`; `Update` matches everything        | `UpdateContext<T>`   |
 | `onError { error, update -> }` | exceptions thrown by handlers and polling errors           | —                    |
+| `use { ctx, next -> }`         | middleware around the handlers                             | any                  |
+| `include(router)`              | adds the handlers of a `Router`                            | —                    |
 
 **Handlers are checked in registration order, and only the first matching one runs.** Register
 specific handlers before catch-all ones:
@@ -208,16 +218,19 @@ A handler receives a context with the update and shortcuts to answer it.
 | `update`                       | the update being handled                                              |
 | `bot`, `client`, `blocking()`  | the bot, its `MaxClient` and the blocking facade                      |
 | `chatId`, `user`               | chat and user of the update, when known                               |
+| `locale`                       | locale of the user's client (`ru`, `en`, ...), when the update has it |
+| `state`, `stateData`           | dialog state and its values, see [Dialog state](#dialog-state)        |
+| `setState`, `updateStateData`, `clearState` | change the dialog state                                  |
 | `reply(text)`, `reply(body)`, `reply { DSL }` | send a message to the chat (or to the user if there is no chat) |
 | `sendAction(action)`, `typing()` | show "typing…" or another activity                                  |
-| `replyBlocking`, `sendActionBlocking` | Java versions                                                  |
+| `replyBlocking`, `sendActionBlocking`, `setStateBlocking`, ... | Java versions                        |
 
 `MessageContext` adds `message`, `text`, `messageId`, `command`, `commandArgs`,
 `replyToMessage(...)` (reply with a quote) and `replyToMessageBlocking(...)`.
 
 `CallbackContext` adds `callback`, `payload`, `message` (the message with the keyboard),
-`answer(notification)`, `answer(CallbackAnswer)`, `editMessage(body, notification)` and their
-`*Blocking` versions.
+`data(callbackData)`, `answer(notification)`, `answer(CallbackAnswer)`,
+`editMessage(body, notification)` and their `*Blocking` versions.
 
 `BotStartedContext` adds `payload`, the deep link parameter.
 
@@ -237,10 +250,13 @@ bot.onCommand("weather") {
 }
 ```
 
-To show commands in the bot menu, set them once on startup:
+Commands registered with a description make up the bot menu. `syncCommands()` sends them
+(including those of included routers) with `editMyCommands`; call it once on startup:
 
 ```kotlin
-bot.client.editMyCommands(listOf(BotCommand("start", "Start"), BotCommand("weather", "Weather forecast")))
+bot.onCommand("start", "Start the bot") { ... }
+bot.onCommand("weather", "Weather forecast") { ... }
+bot.syncCommands() // bot.commands() returns the list
 ```
 
 ### Buttons and callbacks
@@ -273,10 +289,29 @@ bot.onCallback("orders") { editMessage(message { text("You have no orders yet") 
 bot.onCallback("settings") { answer("Settings are coming soon") }
 
 // Parameterized payloads
-bot.onCallback({ it.payload?.startsWith("order:") == true }) {
+bot.onCallback(Filters.payloadStartsWith("order:")) {
     val id = payload!!.removePrefix("order:")
     answer("Order $id")
 }
+```
+
+`CallbackData` describes such payloads once, packs and parses them, and checks the
+1024-character limit of the API:
+
+```kotlin
+val order = CallbackData("order", "id", "action")    // payloads like "order:42:buy"
+
+reply { text("Order 42"); keyboard { row { callback("Buy", order.pack(42, "buy")) } } }
+
+bot.onCallback(order) {
+    val fields = data(order)                         // {id=42, action=buy}
+    answer("Order ${fields["id"]}: ${fields["action"]}")
+}
+```
+
+```java
+CallbackData order = new CallbackData("order", "id", "action");
+bot.onCallback(order, ctx -> ctx.answerBlocking("Order " + ctx.data(order).get("id")));
 ```
 
 From Java, add rows with `keyboardRow(...)`:
@@ -319,6 +354,118 @@ bot.onUpdate(BotAddedToChatUpdate.class, ctx -> ctx.replyBlocking("Hi everyone!"
 
 In group chats the bot receives messages and member events only if it is an administrator with the
 `read_all_messages` permission.
+
+### Filters
+
+`Filters` has ready-made conditions for the `on*` methods that take a filter. In Kotlin combine
+them with `and`, `or` and `!`; in Java with the `Predicate` methods `and`, `or` and `negate`.
+
+| Filter                                           | Matches                                         |
+|--------------------------------------------------|-------------------------------------------------|
+| `hasText()`, `text(Regex)`, `text(Pattern)`      | messages with text, text containing a match     |
+| `textEquals(...)`, `textEqualsIgnoreCase(...)`, `textStartsWith(prefix)` | message text            |
+| `chatType(ChatType.DIALOG, ...)`                 | messages in dialogs, group chats or channels    |
+| `hasAttachment<PhotoAttachment>()`, `hasAttachment(Class)` | messages with an attachment of a type |
+| `payloadStartsWith(prefix)`                      | button presses                                  |
+| `fromUsers(ids)`, `inChats(ids)`                 | any update from these users or chats            |
+| `state(names)`, `noState()`, `anyState()`        | any update, by [dialog state](#dialog-state)    |
+| `Filters.of { ... }`                             | your own condition                              |
+
+```kotlin
+bot.onMessage(Filters.chatType(ChatType.DIALOG) and Filters.hasAttachment<PhotoAttachment>()) { reply("Nice photo!") }
+bot.onMessage(Filters.fromUsers(*admins) and Filters.textStartsWith("/admin")) { ... }
+```
+
+```java
+// In Java, start with the most specific filter: and() accepts filters of the same or a more general context.
+bot.onMessage(Filters.chatType(ChatType.DIALOG).and(Filters.fromUsers(42L)), ctx -> ...);
+```
+
+Filters of any update (`fromUsers`, `state`, ...) fit `onMessage`, `onCallback` and the others.
+A lambda works wherever a filter does: `bot.onMessage({ (it.text?.length ?: 0) > 100 }) { ... }`.
+
+### Middleware
+
+Middleware runs around handlers: logging, timing, access checks, error translation. It receives
+the context of the matched handler and `next`, which runs the handler; not calling `next` skips it.
+The first registered middleware is the outermost. Middleware runs only for updates some handler matched.
+
+```kotlin
+bot.use { ctx, next ->
+    val started = System.nanoTime()
+    try {
+        next()
+    } finally {
+        log.info("${ctx.update.updateType} took ${(System.nanoTime() - started) / 1_000_000} ms")
+    }
+}
+```
+
+```java
+bot.use((ctx, next) -> {
+    if (isBanned(ctx.getUser())) return; // the handler does not run
+    next.proceed();
+});
+```
+
+### Routers
+
+A `Router` is a group of handlers with its own middleware. Use routers to split a bot into
+feature modules and to apply middleware to some handlers only:
+
+```kotlin
+val admin = Router()
+    .use { ctx, next -> if (ctx.user?.userId in admins) next() else ctx.reply("Admins only") }
+    .onCommand("ban", "Ban a user") { ... }
+    .onCommand("stats", "Statistics") { ... }
+
+bot.onCommand("start") { ... }
+bot.include(admin)            // checked after /start and before the catch-all handler
+bot.onMessage { ... }
+```
+
+Handlers of an included router take part in the usual "first match wins" order at the place of
+`include`. Bot middleware wraps the router's handlers too; router middleware wraps only its own
+handlers and those of the routers it includes.
+
+### Dialog state
+
+For conversations of several steps (forms, wizards, checkout), every dialog, meaning a user in a
+chat, has an optional state: a name and string values. Handlers read it as `state` and
+`stateData` and change it with `setState`, `updateStateData` and `clearState`; `Filters.state`
+routes by it:
+
+```kotlin
+bot.onCommand("register") {
+    setState("name")
+    reply("What is your name?")
+}
+bot.onMessage(Filters.state("name") and Filters.hasText()) {
+    setState("age", mapOf("name" to text!!))
+    reply("How old are you?")
+}
+bot.onMessage(Filters.state("age")) {
+    reply("Hi, ${stateData["name"]}! Age: $text")
+    clearState()
+}
+```
+
+```java
+bot.onMessage(Filters.state("name"), ctx -> {
+    ctx.setStateBlocking("age", Map.of("name", ctx.getText()));
+    ctx.replyBlocking("How old are you?");
+});
+```
+
+States live in `BotConfig.stateStorage`. The default `InMemoryStateStorage` loses them on restart.
+To keep them in Redis or a database, implement `StateStorage` (Kotlin, `suspend` methods) or extend
+`BlockingStateStorage` (Java, runs on `Dispatchers.IO`):
+
+```kotlin
+val bot = MaxBot(token, BotConfig(stateStorage = RedisStateStorage(redis)))
+```
+
+The bot reads the state once per update before filters run, so filters see it without I/O.
 
 ### Error handling
 

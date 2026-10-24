@@ -29,3 +29,30 @@ public fun interface Handler<C> {
 public fun interface ErrorHandler {
     public fun handle(error: Throwable, update: Update?)
 }
+
+/**
+ * Middleware for Java, registered with `MaxBot.use` or `Router.use`. Runs on `Dispatchers.IO`.
+ *
+ * ```java
+ * bot.use((ctx, next) -> {
+ *     long started = System.nanoTime();
+ *     try {
+ *         next.proceed();
+ *     } finally {
+ *         log.info(ctx.getUpdate().getUpdateType() + ": " + (System.nanoTime() - started) / 1_000_000 + " ms");
+ *     }
+ * });
+ * ```
+ */
+public fun interface Middleware {
+    /** Runs around the handler: call [Next.proceed] to run it, or return without calling it to skip it. */
+    @Throws(Exception::class)
+    public fun handle(ctx: UpdateContext<*>, next: Next)
+}
+
+/** The rest of the chain passed to a [Middleware]: further middleware and the handler. */
+public fun interface Next {
+    /** Runs the rest of the chain and returns when it completes; exceptions of the handler propagate. */
+    @Throws(Exception::class)
+    public fun proceed()
+}
