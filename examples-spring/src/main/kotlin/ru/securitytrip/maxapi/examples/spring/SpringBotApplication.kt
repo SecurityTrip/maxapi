@@ -12,14 +12,14 @@ import ru.securitytrip.maxapi.spring.MaxBotConfigurer
  * `Router` bean, calls every `MaxBotConfigurer` bean and starts long polling with the application.
  */
 @SpringBootApplication
-class SpringBotApplication {
+open class SpringBotApplication {
     @Bean
-    fun greetings(): MaxBotConfigurer = MaxBotConfigurer { bot ->
+    open fun greetings(): MaxBotConfigurer = MaxBotConfigurer { bot ->
         bot.onBotStarted { reply("Hi! Send /time") }
     }
 
     @Bean
-    fun timeRouter(clock: TimeService): Router = Router()
+    open fun timeRouter(clock: TimeService): Router = Router()
         .onCommand("time", "Current server time") { reply("Server time: ${clock.now()}") }
         .onMessage { reply("Send /time") }
 }
