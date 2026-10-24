@@ -90,7 +90,8 @@ jobs:
       - name: Build and test
         env:
           VERSION: ${{ steps.version.outputs.version }}
-        run: ./gradlew build -PreleaseVersion="$VERSION"
+        # :dokkaGenerate builds the reference of all modules for GitHub Pages in build/dokka/html.
+        run: ./gradlew build :dokkaGenerate -PreleaseVersion="$VERSION"
 
       - name: Publish to Maven Central
         env:

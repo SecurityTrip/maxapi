@@ -1,0 +1,7 @@
+public final class ru/securitytrip/maxapi/ktor/MaxWebhookKt {
+	public static final fun maxWebhook (Lio/ktor/server/routing/Route;Ljava/lang/String;Lru/securitytrip/maxapi/bot/MaxBot;Ljava/lang/String;Z)Lio/ktor/server/routing/Route;
+	public static final fun maxWebhook (Lio/ktor/server/routing/Route;Ljava/lang/String;Lru/securitytrip/maxapi/bot/WebhookHandler;Z)Lio/ktor/server/routing/Route;
+	public static synthetic fun maxWebhook$default (Lio/ktor/server/routing/Route;Ljava/lang/String;Lru/securitytrip/maxapi/bot/MaxBot;Ljava/lang/String;ZILjava/lang/Object;)Lio/ktor/server/routing/Route;
+	public static synthetic fun maxWebhook$default (Lio/ktor/server/routing/Route;Ljava/lang/String;Lru/securitytrip/maxapi/bot/WebhookHandler;ZILjava/lang/Object;)Lio/ktor/server/routing/Route;
+}
+

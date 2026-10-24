@@ -1,6 +1,26 @@
+pluginManagement {
+    includeBuild("build-logic")
+}
+
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
-rootProject.name = "maxapi"
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+
+rootProject.name = "maxapi-parent"
+
+// Published modules; each is published as io.github.securitytrip:<module name>.
+include("maxapi")
+include("maxapi-bom")
+include("maxapi-test")
+include("maxapi-spring-boot-starter")
+include("maxapi-ktor")
 
 include("examples")
+include("examples-spring")
+include("examples-ktor")

@@ -1,0 +1,61 @@
+public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration {
+	public fun <init> ()V
+	public final fun maxBot (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun maxBotLifecycle (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/spring/MaxBotLifecycle;
+	public final fun maxClient (Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/client/MaxClient;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration$WebhookConfiguration {
+	public fun <init> ()V
+	public final fun maxBotWebhookEndpoint (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lorg/springframework/web/servlet/function/RouterFunction;
+}
+
+public abstract interface class ru/securitytrip/maxapi/spring/MaxBotConfigurer {
+	public abstract fun configure (Lru/securitytrip/maxapi/bot/MaxBot;)V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotLifecycle : org/springframework/context/SmartLifecycle {
+	public fun <init> (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)V
+	public fun isRunning ()Z
+	public fun start ()V
+	public fun stop ()V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
+	public fun <init> ()V
+	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getMode ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+	public final fun getSyncCommands ()Z
+	public final fun getToken ()Ljava/lang/String;
+	public final fun getWebhook ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Webhook;
+	public final fun setBaseUrl (Ljava/lang/String;)V
+	public final fun setMode (Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;)V
+	public final fun setSyncCommands (Z)V
+	public final fun setToken (Ljava/lang/String;)V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Mode : java/lang/Enum {
+	public static final field NONE Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+	public static final field POLLING Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+	public static final field WEBHOOK Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+	public static fun values ()[Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Webhook {
+	public fun <init> ()V
+	public final fun getAsync ()Z
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getSecret ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun setAsync (Z)V
+	public final fun setPath (Ljava/lang/String;)V
+	public final fun setSecret (Ljava/lang/String;)V
+	public final fun setUrl (Ljava/lang/String;)V
+}
+
+public abstract interface class ru/securitytrip/maxapi/spring/MaxClientConfigCustomizer {
+	public abstract fun customize (Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;)V
+}
+

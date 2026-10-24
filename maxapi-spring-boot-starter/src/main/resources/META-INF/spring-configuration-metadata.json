@@ -1,0 +1,16 @@
+{
+  "groups": [
+    {"name": "max.bot", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
+    {"name": "max.bot.webhook", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Webhook", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"}
+  ],
+  "properties": [
+    {"name": "max.bot.token", "type": "java.lang.String", "description": "Bot access token. The auto-configuration is active only when it is set."},
+    {"name": "max.bot.base-url", "type": "java.lang.String", "description": "Base URL of the API; override it only for tests or proxies.", "defaultValue": "https://platform-api2.max.ru"},
+    {"name": "max.bot.mode", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Mode", "description": "How the bot receives updates: polling, webhook or none.", "defaultValue": "polling"},
+    {"name": "max.bot.sync-commands", "type": "java.lang.Boolean", "description": "Whether to show the commands registered with descriptions in the bot menu on startup.", "defaultValue": false},
+    {"name": "max.bot.webhook.path", "type": "java.lang.String", "description": "Path of the webhook endpoint.", "defaultValue": "/max/webhook"},
+    {"name": "max.bot.webhook.url", "type": "java.lang.String", "description": "Public HTTPS URL of the endpoint; when set, the bot subscribes to it on startup."},
+    {"name": "max.bot.webhook.secret", "type": "java.lang.String", "description": "Secret Max sends in the X-Max-Bot-Api-Secret header; requests with another value get 401."},
+    {"name": "max.bot.webhook.async", "type": "java.lang.Boolean", "description": "Answer 200 right after parsing the update and run the handler in the background.", "defaultValue": false}
+  ]
+}

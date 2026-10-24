@@ -1,0 +1,6 @@
+max:
+  bot:
+    token: ${MAX_BOT_TOKEN}
+    # polling for local runs; in production use webhook with webhook.url and webhook.secret.
+    mode: polling
+    sync-commands: true
