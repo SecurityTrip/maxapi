@@ -1245,7 +1245,10 @@ when a GitHub release is published. Every push and pull request is checked by th
    | `GPG_SIGNING_KEY_PASSWORD`   | the key passphrase (omit if it has none)       |
 
 5. Enable GitHub Pages for the API reference: **Settings → Pages → Build and deployment → Source:
-   GitHub Actions**.
+   GitHub Actions**. The Release workflow deploys from the release tag, so allow tags too:
+   **Settings → Environments → github-pages → Deployment branches and tags → Add deployment
+   branch or tag rule**, type **Tag**, pattern `v*`. Without it the `docs` job fails with
+   "not allowed to deploy to github-pages due to environment protection rules".
 
 ### Publishing a version
 
