@@ -66,17 +66,24 @@ jobs:
           fi
 
       # Fails before anything is published if CHANGELOG.md has no section for the version.
+      # A pre-release (1.2.3-rc1) falls back to the section of its final version (1.2.3).
       - name: Extract release notes
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          awk -v v="$VERSION" '
-            /^## \[/ { if (found) exit; if (index($0, "## [" v "]") == 1) { found = 1; next } }
-            /^\[[^]]+\]: / { if (found) exit }
-            found { print }
-          ' CHANGELOG.md | sed -e '/./,$!d' > release-notes.md
+          section() {
+            awk -v v="$1" '
+              /^## \[/ { if (found) exit; if (index($0, "## [" v "]") == 1) { found = 1; next } }
+              /^\[[^]]+\]: / { if (found) exit }
+              found { print }
+            ' CHANGELOG.md | sed -e '/./,$!d'
+          }
+          section "$VERSION" > release-notes.md
           if ! grep -q '[^[:space:]]' release-notes.md; then
-            echo "::error::CHANGELOG.md has no '## [$VERSION]' section"
+            section "${VERSION%%-*}" > release-notes.md
+          fi
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::CHANGELOG.md has no '## [$VERSION]' or '## [${VERSION%%-*}]' section"
             exit 1
           fi
 

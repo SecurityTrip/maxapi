@@ -6,9 +6,12 @@ All notable changes to this project are documented here. The format follows
 they are listed under **Changed** or **Removed**.
 
 The release workflow publishes the section of a version as its GitHub release notes, so every
-release needs a `## [x.y.z]` section here before it is tagged.
+release needs a `## [x.y.z]` section here before it is tagged. Pre-releases such as `x.y.z-rc1` use
+their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
+
+## [0.2.0] - 2026-10-24
 
 ### Added
 
@@ -38,5 +41,6 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v0.1.0-rc1...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/SecurityTrip/maxapi/compare/v0.1.0-rc1...v0.2.0
 [0.1.0-rc1]: https://github.com/SecurityTrip/maxapi/releases/tag/v0.1.0-rc1
