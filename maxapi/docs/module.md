@@ -8,7 +8,8 @@ It has two layers that can be used separately:
   models. Kotlin gets `suspend` functions; Java gets the blocking
   [MaxBlockingClient][ru.securitytrip.maxapi.java.MaxBlockingClient] and the `CompletableFuture`-based
   [MaxAsyncClient][ru.securitytrip.maxapi.java.MaxAsyncClient];
-- the bot framework, [MaxBot][ru.securitytrip.maxapi.bot.MaxBot]: update handlers, long polling and a webhook handler.
+- the bot framework, [MaxBot][ru.securitytrip.maxapi.bot.MaxBot]: update handlers, filters, middleware, routers,
+  dialog states, long polling and a webhook handler.
 
 ```kotlin
 val bot = MaxBot(System.getenv("MAX_BOT_TOKEN"))
