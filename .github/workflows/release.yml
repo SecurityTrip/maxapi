@@ -61,7 +61,7 @@ jobs:
           [ -n "$MAVEN_CENTRAL_PASSWORD" ] || missing="$missing MAVEN_CENTRAL_PASSWORD"
           [ -n "$GPG_SIGNING_KEY" ] || missing="$missing GPG_SIGNING_KEY"
           if [ -n "$missing" ]; then
-            echo "::error::Missing repository secrets:$missing (see 'Releasing' in README.md)"
+            echo "::error::Missing repository secrets:$missing (see 'Releasing' in README.en.md)"
             exit 1
           fi
 

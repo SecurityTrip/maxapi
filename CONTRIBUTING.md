@@ -22,7 +22,8 @@ need Docker):
 Also:
 
 - add an entry under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md);
-- document public API with KDoc, and update [README.md](README.md) when behavior visible to users changes;
+- document public API with KDoc, and update [README.md](README.md) (Russian) and [README.en.md](README.en.md) (English) when behavior
+  visible to users changes;
 - keep Java usable: `fun interface` for callbacks, builders or `@JvmOverloads` for optional
   parameters, `*Blocking` variants of `suspend` functions;
 - declare tests written as `= runBlocking { ... }` with an explicit `: Unit` return type, otherwise
