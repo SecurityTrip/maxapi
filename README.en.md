@@ -1274,6 +1274,7 @@ maxapi-redis/                  Redis stores (tests on Redis)
 maxapi-bom/                    bill of materials
 build-logic/                   convention plugins: Kotlin settings, coverage, Dokka, publishing
 examples/, examples-spring/, examples-ktor/
+integration-tests/             a whole Spring Boot application: fake Max, PostgreSQL and Redis
 ```
 
 The `client` and `model` packages do not depend on `bot`, so the client can be used on its own.
@@ -1287,8 +1288,13 @@ The `client` and `model` packages do not depend on `bot`, so the client can be u
 This compiles all modules and the examples and runs the tests. The tests use OkHttp's
 `MockWebServer`, Spring's context runners and Ktor's test host, and the tests of the stores and the
 starter start PostgreSQL and Redis with Testcontainers, so they need Docker. No token or access to
-the API is needed. Every API method is checked through all three facades (Kotlin, blocking, async), as is every
-update, attachment, button and markup type.
+the API is needed. Every API method is checked through all three facades (Kotlin, blocking, async),
+as is every update, attachment, button and markup type.
+
+The `integration-tests` module runs a whole Spring Boot application against a fake Max server: long
+polling restarted in the middle of a dialog on PostgreSQL and on Redis (the dialog continues, polling
+resumes from the saved marker, a repeated delivery is dropped), and a webhook on a real Tomcat with
+the secret check and deduplication. Run them alone with `./gradlew :integration-tests:test`.
 
 Every library module has 100% line coverage, and `./gradlew check` (part of `build`) fails if a
 change lowers it, or if branch coverage drops below 95% (Kotlin generates a few null-check branches

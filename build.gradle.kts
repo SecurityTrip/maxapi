@@ -9,7 +9,7 @@ plugins {
 // Public API dumps in <module>/api/<module>.api: `./gradlew apiCheck` (part of `check`) fails when the
 // public API changes without `./gradlew apiDump`, so every API change is visible in review.
 apiValidation {
-    ignoredProjects += listOf("maxapi-bom", "examples", "examples-spring", "examples-ktor")
+    ignoredProjects += listOf("maxapi-bom", "examples", "examples-spring", "examples-ktor", "integration-tests")
 }
 
 // `./gradlew :dokkaGenerate` builds the reference of all modules in build/dokka/html.
