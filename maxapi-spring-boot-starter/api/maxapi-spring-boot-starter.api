@@ -1,6 +1,7 @@
 public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration {
 	public fun <init> ()V
 	public final fun maxBot (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/MaxBot;
+	public final fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
 	public final fun maxBotLifecycle (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/spring/MaxBotLifecycle;
 	public final fun maxClient (Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/client/MaxClient;
 }
@@ -24,16 +25,28 @@ public final class ru/securitytrip/maxapi/spring/MaxBotLifecycle : org/springfra
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public fun <init> ()V
 	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getJdbc ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Jdbc;
 	public final fun getMode ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+	public final fun getRedis ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Redis;
+	public final fun getStorage ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
 	public final fun getSyncCommands ()Z
 	public final fun getToken ()Ljava/lang/String;
 	public final fun getTrustRussianRootCa ()Z
 	public final fun getWebhook ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Webhook;
 	public final fun setBaseUrl (Ljava/lang/String;)V
 	public final fun setMode (Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;)V
+	public final fun setStorage (Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;)V
 	public final fun setSyncCommands (Z)V
 	public final fun setToken (Ljava/lang/String;)V
 	public final fun setTrustRussianRootCa (Z)V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Jdbc {
+	public fun <init> ()V
+	public final fun getCreateTables ()Z
+	public final fun getTablePrefix ()Ljava/lang/String;
+	public final fun setCreateTables (Z)V
+	public final fun setTablePrefix (Ljava/lang/String;)V
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Mode : java/lang/Enum {
@@ -43,6 +56,25 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Mode : java/la
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
 	public static fun values ()[Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Redis {
+	public fun <init> ()V
+	public final fun getKeyPrefix ()Ljava/lang/String;
+	public final fun getStateTtl ()Ljava/time/Duration;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun setKeyPrefix (Ljava/lang/String;)V
+	public final fun setStateTtl (Ljava/time/Duration;)V
+	public final fun setUrl (Ljava/lang/String;)V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Storage : java/lang/Enum {
+	public static final field JDBC Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
+	public static final field MEMORY Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
+	public static final field REDIS Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
+	public static fun values ()[Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Webhook {
@@ -64,5 +96,25 @@ public abstract interface class ru/securitytrip/maxapi/spring/MaxClientConfigCus
 public final class ru/securitytrip/maxapi/spring/MaxMetricsAutoConfiguration {
 	public fun <init> ()V
 	public final fun maxMetrics (Lio/micrometer/core/instrument/MeterRegistry;)Lru/securitytrip/maxapi/micrometer/MaxMetrics;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration {
+	public fun <init> ()V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration$Jdbc {
+	public fun <init> ()V
+	public final fun maxJdbcMarkerStore (Ljavax/sql/DataSource;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/jdbc/JdbcMarkerStore;
+	public final fun maxJdbcStateStorage (Ljavax/sql/DataSource;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/jdbc/JdbcStateStorage;
+	public final fun maxJdbcUpdateDeduplicator (Ljavax/sql/DataSource;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/jdbc/JdbcUpdateDeduplicator;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration$Redis {
+	public fun <init> ()V
+	public final fun maxRedisClient (Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lio/lettuce/core/RedisClient;
+	public final fun maxRedisConnection (Lio/lettuce/core/RedisClient;)Lio/lettuce/core/api/StatefulRedisConnection;
+	public final fun maxRedisMarkerStore (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisMarkerStore;
+	public final fun maxRedisStateStorage (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisStateStorage;
+	public final fun maxRedisUpdateDeduplicator (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisUpdateDeduplicator;
 }
 

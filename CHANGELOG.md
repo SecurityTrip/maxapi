@@ -12,6 +12,18 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+### Added
+
+- `maxapi-jdbc`: `JdbcStateStorage`, `JdbcMarkerStore` and `JdbcUpdateDeduplicator` keep dialog
+  states, the polling marker and the keys of handled updates in any SQL database through a
+  `DataSource`. Only standard SQL is used; `createTable()` creates a missing table.
+- `maxapi-redis`: `RedisStateStorage` (with an optional TTL), `RedisMarkerStore` and
+  `RedisUpdateDeduplicator` on Lettuce.
+- Spring Boot starter: `max.bot.storage=jdbc|redis` with `max.bot.jdbc.*` and `max.bot.redis.*`
+  creates those stores, and `StateStorage`, `MarkerStore` and `UpdateDeduplicator` beans are used by
+  the auto-configured bot. The bot settings are now a `BotConfig` bean (`maxBotConfig`).
+- Both modules are in `maxapi-bom`.
+
 ## [1.2.0] - 2026-10-26
 
 Fixes from running the examples against the real API.

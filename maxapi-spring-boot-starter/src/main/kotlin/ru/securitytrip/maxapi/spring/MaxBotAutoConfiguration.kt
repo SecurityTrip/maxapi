@@ -12,8 +12,12 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.servlet.function.RouterFunction
 import org.springframework.web.servlet.function.ServerResponse
 import ru.securitytrip.maxapi.bot.BotConfig
+import ru.securitytrip.maxapi.bot.InMemoryStateStorage
+import ru.securitytrip.maxapi.bot.MarkerStore
 import ru.securitytrip.maxapi.bot.MaxBot
 import ru.securitytrip.maxapi.bot.Router
+import ru.securitytrip.maxapi.bot.StateStorage
+import ru.securitytrip.maxapi.bot.UpdateDeduplicator
 import ru.securitytrip.maxapi.client.MaxClient
 import ru.securitytrip.maxapi.client.MaxClientConfig
 import ru.securitytrip.maxapi.events.MaxEventListener
@@ -26,7 +30,8 @@ import ru.securitytrip.maxapi.events.MaxEventListener
  * is included, both in `@Order` order. Define your own `MaxClient`, `MaxBot` or [BotConfig] bean to
  * replace the default one; [MaxClientConfigCustomizer] beans adjust the client settings.
  * [MaxEventListener] beans receive the events of the client and, unless you define a `BotConfig`
- * bean, of the bot.
+ * bean, of the bot. So do [StateStorage], [MarkerStore] and [UpdateDeduplicator] beans, e.g. those
+ * that `max.bot.storage` creates.
  */
 @AutoConfiguration
 @ConditionalOnClass(MaxBot::class)
@@ -48,6 +53,22 @@ public class MaxBotAutoConfiguration {
         return MaxClient(builder.build())
     }
 
+    /** Settings of the bot with the storages and event listeners defined as beans. */
+    @Bean
+    @ConditionalOnMissingBean
+    public fun maxBotConfig(
+        listeners: ObjectProvider<MaxEventListener>,
+        stateStorage: ObjectProvider<StateStorage>,
+        markerStore: ObjectProvider<MarkerStore>,
+        deduplicator: ObjectProvider<UpdateDeduplicator>,
+    ): BotConfig = BotConfig(
+        stateStorage = stateStorage.getIfAvailable(::InMemoryStateStorage),
+        markerStore = markerStore.ifAvailable,
+        deduplicator = deduplicator.ifAvailable,
+        eventListener = MaxEventListener.composite(listeners.orderedStream().toList()),
+    )
+
+    /** The bot; [listeners] is no longer used, they go to the [BotConfig] of [maxBotConfig]. */
     @Bean
     @ConditionalOnMissingBean
     public fun maxBot(
@@ -55,10 +76,9 @@ public class MaxBotAutoConfiguration {
         config: ObjectProvider<BotConfig>,
         configurers: ObjectProvider<MaxBotConfigurer>,
         routers: ObjectProvider<Router>,
-        listeners: ObjectProvider<MaxEventListener>,
+        @Suppress("UNUSED_PARAMETER") listeners: ObjectProvider<MaxEventListener>,
     ): MaxBot {
-        val default = { BotConfig(eventListener = MaxEventListener.composite(listeners.orderedStream().toList())) }
-        val bot = MaxBot(client, config.getIfAvailable(default))
+        val bot = MaxBot(client, config.getObject())
         configurers.orderedStream().forEach { it.configure(bot) }
         routers.orderedStream().forEach { bot.include(it) }
         return bot

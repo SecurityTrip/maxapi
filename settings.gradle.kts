@@ -21,6 +21,8 @@ include("maxapi-test")
 include("maxapi-spring-boot-starter")
 include("maxapi-ktor")
 include("maxapi-micrometer")
+include("maxapi-jdbc")
+include("maxapi-redis")
 
 include("examples")
 include("examples-spring")

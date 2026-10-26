@@ -9,7 +9,9 @@ Bug reports and pull requests are welcome at
 ./gradlew build
 ```
 
-It must pass. It runs the tests of all modules and checks that:
+It must pass. It runs the tests of all modules and checks that (the tests of `maxapi-jdbc`,
+`maxapi-redis` and the Spring Boot starter start PostgreSQL and Redis with Testcontainers, so they
+need Docker):
 
 - every library module keeps 100% line coverage and at least 95% branch coverage
   (`<module>/build/reports/kover/html/index.html` shows what is missing);
