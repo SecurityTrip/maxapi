@@ -27,3 +27,6 @@ include("maxapi-redis")
 include("examples")
 include("examples-spring")
 include("examples-ktor")
+
+// Tests of whole applications: the Spring Boot starter with real PostgreSQL and Redis. Not published.
+include("integration-tests")

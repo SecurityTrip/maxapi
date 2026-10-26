@@ -1294,6 +1294,7 @@ maxapi-redis/                  Redis-хранилища (тесты на Redis)
 maxapi-bom/                    BOM с версиями модулей
 build-logic/                   convention-плагины: настройки Kotlin, покрытие, Dokka, публикация
 examples/, examples-spring/, examples-ktor/
+integration-tests/             приложение Spring Boot целиком: фейковый Max, PostgreSQL и Redis
 ```
 
 Пакеты `client` и `model` не зависят от `bot`, поэтому клиент можно использовать отдельно.
@@ -1309,6 +1310,12 @@ OkHttp, context runner'ы Spring и тестовый хост Ktor, а тест�
 PostgreSQL и Redis через Testcontainers, поэтому для них нужен Docker. Токен и доступ к API не
 нужны. Каждый метод API проверяется через все три фасада (Kotlin, блокирующий, асинхронный), как и
 каждый тип события, вложения, кнопки и разметки.
+
+Модуль `integration-tests` запускает приложение Spring Boot целиком против фейкового сервера Max:
+long polling с перезапуском посреди диалога на PostgreSQL и на Redis (диалог продолжается, polling
+идёт с сохранённого marker, повторная доставка отбрасывается) и вебхук на настоящем Tomcat с
+проверкой секрета и дедупликацией. Отдельно их можно запустить командой
+`./gradlew :integration-tests:test`.
 
 У каждого модуля библиотеки 100% покрытия строк, и `./gradlew check` (входит в `build`) падает,
 если изменение его снижает или если покрытие ветвей опускается ниже 95% (Kotlin генерирует
