@@ -65,10 +65,11 @@ internal class HttpTransport(
     private val limiter = config.rateLimit?.let { RateLimiter(it) }
     private val baseUrl = config.baseUrl.toHttpUrl()
 
-    private val http: OkHttpClient = config.httpClient ?: OkHttpClient.Builder()
+    internal val http: OkHttpClient = config.httpClient ?: OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)
+        .apply { if (config.trustRussianRootCa) MaxTls.trustRussianRootCa(this) }
         .build()
 
     /** Client with a read timeout long enough for long polling (up to 90 seconds). */

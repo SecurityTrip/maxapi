@@ -12,6 +12,13 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+### Added
+
+- `MaxTls` and `MaxClientConfig.trustRussianRootCa` (`max.bot.trust-russian-root-ca` in the Spring Boot
+  starter): the library bundles the Russian Trusted Root CA, which the certificate of
+  `platform-api2.max.ru` is issued under, and its own HTTP client trusts it in addition to the JVM's
+  certificates. Connecting no longer needs a custom trust store.
+
 ## [1.0.0] - 2026-10-24
 
 The public API is stable from this version on.

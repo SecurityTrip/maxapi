@@ -27,11 +27,13 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public final fun getMode ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
 	public final fun getSyncCommands ()Z
 	public final fun getToken ()Ljava/lang/String;
+	public final fun getTrustRussianRootCa ()Z
 	public final fun getWebhook ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Webhook;
 	public final fun setBaseUrl (Ljava/lang/String;)V
 	public final fun setMode (Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;)V
 	public final fun setSyncCommands (Z)V
 	public final fun setToken (Ljava/lang/String;)V
+	public final fun setTrustRussianRootCa (Z)V
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Mode : java/lang/Enum {

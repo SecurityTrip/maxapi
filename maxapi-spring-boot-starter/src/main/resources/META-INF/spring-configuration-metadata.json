@@ -6,6 +6,7 @@
   "properties": [
     {"name": "max.bot.token", "type": "java.lang.String", "description": "Bot access token. The auto-configuration is active only when it is set."},
     {"name": "max.bot.base-url", "type": "java.lang.String", "description": "Base URL of the API; override it only for tests or proxies.", "defaultValue": "https://platform-api2.max.ru"},
+    {"name": "max.bot.trust-russian-root-ca", "type": "java.lang.Boolean", "description": "Whether the client trusts the Russian Trusted Root CA, which the API server's certificate is issued under and which JDKs do not include.", "defaultValue": true},
     {"name": "max.bot.mode", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Mode", "description": "How the bot receives updates: polling, webhook or none.", "defaultValue": "polling"},
     {"name": "max.bot.sync-commands", "type": "java.lang.Boolean", "description": "Whether to show the commands registered with descriptions in the bot menu on startup.", "defaultValue": false},
     {"name": "max.bot.webhook.path", "type": "java.lang.String", "description": "Path of the webhook endpoint.", "defaultValue": "/max/webhook"},
