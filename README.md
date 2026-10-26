@@ -52,6 +52,7 @@ bot.startPolling()
 - [Errors and retries](#errors-and-retries)
 - [Configuration](#configuration)
 - [Reliability and monitoring](#reliability-and-monitoring)
+- [Storage](#storage)
 - [Threading and lifecycle](#threading-and-lifecycle)
 - [Project layout](#project-layout)
 - [Building and testing](#building-and-testing)
@@ -98,6 +99,8 @@ The library is published to Maven Central under the group `io.github.securitytri
 | `maxapi-ktor`                | Ktor webhook routing, see [Ktor](#ktor)                        |
 | `maxapi-test`                | test kit, see [Testing bots](#testing-bots)                    |
 | `maxapi-micrometer`          | Micrometer metrics, see [Reliability and monitoring](#reliability-and-monitoring) |
+| `maxapi-jdbc`                | dialog states, marker and seen updates in an SQL database, see [Storage](#storage) |
+| `maxapi-redis`               | the same in Redis (Lettuce), see [Storage](#storage)            |
 | `maxapi-bom`                 | versions of all of the above                                   |
 
 ```kotlin
@@ -1121,8 +1124,8 @@ in a file; implement `MarkerStore` (or extend `BlockingMarkerStore` in Java) to 
 
 **Duplicates.** Max redelivers a webhook update until it gets 200, for up to 8 hours.
 `InMemoryUpdateDeduplicator` drops updates seen recently, by message id, callback id or, for other
-updates, type, time, chat and user (`UpdateDeduplicator.keyOf`). With several instances, implement
-`UpdateDeduplicator` on a shared store.
+updates, type, time, chat and user (`UpdateDeduplicator.keyOf`). With several instances, use the
+shared stores of [Storage](#storage).
 
 **Handler timeout.** `handlerTimeout` cancels a handler that runs too long (Java handlers are
 interrupted) and passes `HandlerTimeoutException` to `onError`, so a stuck handler does not block its chat.
@@ -1151,6 +1154,67 @@ val bot = MaxBot(client, BotConfig(eventListener = metrics))
 
 With the Spring Boot starter, adding `maxapi-micrometer` is enough when the application has a
 `MeterRegistry` (e.g. from Actuator); other `MaxEventListener` beans are attached as well.
+
+## Storage
+
+By default dialog states live in memory: they are lost on restart, and instances of a bot do not
+see each other's states. `maxapi-jdbc` and `maxapi-redis` keep the dialog states, the polling marker
+and the keys of handled updates in an SQL database or in Redis, so they survive restarts, are shared
+by all instances, and a repeated delivery of an update is dropped even if another instance got the
+first one.
+
+| What                       | JDBC (any database)        | Redis (Lettuce)            |
+|----------------------------|----------------------------|----------------------------|
+| dialog states              | `JdbcStateStorage`         | `RedisStateStorage`        |
+| polling marker             | `JdbcMarkerStore`          | `RedisMarkerStore`         |
+| duplicate updates (9 h)    | `JdbcUpdateDeduplicator`   | `RedisUpdateDeduplicator`  |
+
+```kotlin
+// JDBC: any DataSource; createTable() creates a missing table with standard SQL
+val bot = MaxBot(
+    token,
+    BotConfig(
+        stateStorage = JdbcStateStorage(dataSource).createTable(),
+        markerStore = JdbcMarkerStore(dataSource).createTable(),
+        deduplicator = JdbcUpdateDeduplicator(dataSource).createTable(),
+    ),
+)
+
+// Redis: one connection is enough for all three
+val redis = RedisClient.create("redis://localhost:6379").connect()
+val bot = MaxBot(
+    token,
+    BotConfig(
+        stateStorage = RedisStateStorage(redis, ttl = Duration.ofDays(7)),
+        markerStore = RedisMarkerStore(redis),
+        deduplicator = RedisUpdateDeduplicator(redis),
+    ),
+)
+```
+
+The JDBC stores use only standard SQL and are tested on H2 and PostgreSQL. Tables are named
+`max_dialog_state`, `max_bot_marker` and `max_seen_update` by default; their `CREATE TABLE`
+statements are in the KDoc of each class, for migrations. Redis keys start with `max:`. Pass other
+table names, key prefixes or `botId`s when several bots share one database.
+`JdbcStateStorage.deleteOlderThan(age)` and the `ttl` of `RedisStateStorage` remove abandoned dialogs.
+
+With the Spring Boot starter, add the module and choose it with `max.bot.storage`:
+
+```yaml
+max:
+  bot:
+    storage: jdbc              # memory (default), jdbc or redis
+    jdbc:
+      table-prefix: max_       # max_dialog_state, max_bot_marker, max_seen_update
+      create-tables: true      # false when migrations create the tables
+    redis:
+      url: redis://localhost:6379
+      key-prefix: "max:"
+      state-ttl: 7d            # by default states are kept until cleared
+```
+
+`jdbc` uses the application's `DataSource`. Your own `StateStorage`, `MarkerStore` or
+`UpdateDeduplicator` bean replaces the matching store, also without `max.bot.storage`.
 
 ## Threading and lifecycle
 
@@ -1184,6 +1248,8 @@ maxapi-spring-boot-starter/    Spring Boot auto-configuration
 maxapi-ktor/                   Ktor webhook routing
 maxapi-test/                   BotTester and TestUpdates
 maxapi-micrometer/             MaxMetrics
+maxapi-jdbc/                   JDBC stores (tests on H2 and PostgreSQL)
+maxapi-redis/                  Redis stores (tests on Redis)
 maxapi-bom/                    bill of materials
 build-logic/                   convention plugins: Kotlin settings, coverage, Dokka, publishing
 examples/, examples-spring/, examples-ktor/

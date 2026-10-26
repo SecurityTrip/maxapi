@@ -13,6 +13,8 @@ dependencies {
         api(project(":maxapi-spring-boot-starter"))
         api(project(":maxapi-ktor"))
         api(project(":maxapi-micrometer"))
+        api(project(":maxapi-jdbc"))
+        api(project(":maxapi-redis"))
     }
 }
 

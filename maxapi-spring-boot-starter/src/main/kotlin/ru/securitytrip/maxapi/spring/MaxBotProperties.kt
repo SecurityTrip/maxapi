@@ -2,6 +2,7 @@ package ru.securitytrip.maxapi.spring
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import ru.securitytrip.maxapi.client.MaxClientConfig
+import java.time.Duration
 
 /**
  * Settings of the auto-configured bot, under `max.bot`:
@@ -40,6 +41,50 @@ public class MaxBotProperties {
 
     /** Webhook settings, used when [mode] is [Mode.WEBHOOK]. */
     public val webhook: Webhook = Webhook()
+
+    /**
+     * Where dialog states, the polling marker and the keys of seen updates are kept. With
+     * [Storage.JDBC] and [Storage.REDIS] they survive restarts and are shared by all instances,
+     * and repeated deliveries of an update are dropped.
+     */
+    public var storage: Storage = Storage.MEMORY
+
+    /** Settings of [Storage.JDBC]. */
+    public val jdbc: Jdbc = Jdbc()
+
+    /** Settings of [Storage.REDIS]. */
+    public val redis: Redis = Redis()
+
+    /** Where the bot keeps its state. */
+    public enum class Storage {
+        /** In memory: lost on restart, not shared between instances, no deduplication. */
+        MEMORY,
+
+        /** In tables of the application's `DataSource`; needs `maxapi-jdbc`. */
+        JDBC,
+
+        /** In Redis at [Redis.url]; needs `maxapi-redis`. */
+        REDIS,
+    }
+
+    public class Jdbc {
+        /** Prefix of the table names: `<prefix>dialog_state`, `<prefix>bot_marker` and `<prefix>seen_update`. */
+        public var tablePrefix: String = "max_"
+
+        /** Whether to create missing tables on startup; turn it off when migrations create them. */
+        public var createTables: Boolean = true
+    }
+
+    public class Redis {
+        /** Redis URI, e.g. `redis://:password@host:6379/0`. */
+        public var url: String = "redis://localhost:6379"
+
+        /** Prefix of the keys: `<prefix>state:...`, `<prefix>marker` and `<prefix>seen:...`. */
+        public var keyPrefix: String = "max:"
+
+        /** How long a dialog state is kept after its last change; `null` (default) keeps it until it is cleared. */
+        public var stateTtl: Duration? = null
+    }
 
     /** How the bot receives updates. */
     public enum class Mode {

@@ -1,7 +1,9 @@
 {
   "groups": [
     {"name": "max.bot", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
-    {"name": "max.bot.webhook", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Webhook", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"}
+    {"name": "max.bot.webhook", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Webhook", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
+    {"name": "max.bot.jdbc", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Jdbc", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
+    {"name": "max.bot.redis", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Redis", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"}
   ],
   "properties": [
     {"name": "max.bot.token", "type": "java.lang.String", "description": "Bot access token. The auto-configuration is active only when it is set."},
@@ -12,6 +14,12 @@
     {"name": "max.bot.webhook.path", "type": "java.lang.String", "description": "Path of the webhook endpoint.", "defaultValue": "/max/webhook"},
     {"name": "max.bot.webhook.url", "type": "java.lang.String", "description": "Public HTTPS URL of the endpoint; when set, the bot subscribes to it on startup."},
     {"name": "max.bot.webhook.secret", "type": "java.lang.String", "description": "Secret Max sends in the X-Max-Bot-Api-Secret header; requests with another value get 401."},
-    {"name": "max.bot.webhook.async", "type": "java.lang.Boolean", "description": "Answer 200 right after parsing the update and run the handler in the background.", "defaultValue": false}
+    {"name": "max.bot.webhook.async", "type": "java.lang.Boolean", "description": "Answer 200 right after parsing the update and run the handler in the background.", "defaultValue": false},
+    {"name": "max.bot.storage", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Storage", "description": "Where dialog states, the polling marker and the keys of seen updates are kept: memory, jdbc (needs maxapi-jdbc) or redis (needs maxapi-redis).", "defaultValue": "memory"},
+    {"name": "max.bot.jdbc.table-prefix", "type": "java.lang.String", "description": "Prefix of the table names: <prefix>dialog_state, <prefix>bot_marker and <prefix>seen_update.", "defaultValue": "max_"},
+    {"name": "max.bot.jdbc.create-tables", "type": "java.lang.Boolean", "description": "Whether to create missing tables on startup; turn it off when migrations create them.", "defaultValue": true},
+    {"name": "max.bot.redis.url", "type": "java.lang.String", "description": "Redis URI, e.g. redis://:password@host:6379/0.", "defaultValue": "redis://localhost:6379"},
+    {"name": "max.bot.redis.key-prefix", "type": "java.lang.String", "description": "Prefix of the keys: <prefix>state:..., <prefix>marker and <prefix>seen:....", "defaultValue": "max:"},
+    {"name": "max.bot.redis.state-ttl", "type": "java.time.Duration", "description": "How long a dialog state is kept after its last change; by default until it is cleared."}
   ]
 }

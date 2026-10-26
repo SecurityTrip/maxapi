@@ -1,0 +1,45 @@
+public final class ru/securitytrip/maxapi/jdbc/JdbcMarkerStore : ru/securitytrip/maxapi/bot/BlockingMarkerStore {
+	public static final field Companion Lru/securitytrip/maxapi/jdbc/JdbcMarkerStore$Companion;
+	public static final field DEFAULT_TABLE Ljava/lang/String;
+	public fun <init> (Ljavax/sql/DataSource;)V
+	public fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;)V
+	public fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun createTable ()Lru/securitytrip/maxapi/jdbc/JdbcMarkerStore;
+	public final fun getBotId ()Ljava/lang/String;
+	public final fun getTable ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/jdbc/JdbcMarkerStore$Companion {
+}
+
+public final class ru/securitytrip/maxapi/jdbc/JdbcStateStorage : ru/securitytrip/maxapi/bot/BlockingStateStorage {
+	public static final field Companion Lru/securitytrip/maxapi/jdbc/JdbcStateStorage$Companion;
+	public static final field DEFAULT_TABLE Ljava/lang/String;
+	public fun <init> (Ljavax/sql/DataSource;)V
+	public fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun createTable ()Lru/securitytrip/maxapi/jdbc/JdbcStateStorage;
+	public final fun deleteOlderThan (Ljava/time/Duration;)I
+	public final fun getTable ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/jdbc/JdbcStateStorage$Companion {
+}
+
+public final class ru/securitytrip/maxapi/jdbc/JdbcUpdateDeduplicator : ru/securitytrip/maxapi/bot/UpdateDeduplicator {
+	public static final field Companion Lru/securitytrip/maxapi/jdbc/JdbcUpdateDeduplicator$Companion;
+	public static final field DEFAULT_TABLE Ljava/lang/String;
+	public fun <init> (Ljavax/sql/DataSource;)V
+	public fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;)V
+	public fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;Ljava/time/Duration;)V
+	public synthetic fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;Ljava/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun createTable ()Lru/securitytrip/maxapi/jdbc/JdbcUpdateDeduplicator;
+	public final fun getTable ()Ljava/lang/String;
+	public final fun getTtl ()Ljava/time/Duration;
+	public fun isNew (Lru/securitytrip/maxapi/model/update/Update;)Z
+}
+
+public final class ru/securitytrip/maxapi/jdbc/JdbcUpdateDeduplicator$Companion {
+}
+
