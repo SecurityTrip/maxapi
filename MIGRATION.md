@@ -1,7 +1,7 @@
 # Migrating to 1.0
 
 1.0 freezes the public API: from now on, minor and patch versions keep source and binary
-compatibility (see [Compatibility](README.md#compatibility)). This guide lists what changed since
+compatibility (see [Compatibility](README.en.md#compatibility)). This guide lists what changed since
 the 0.x releases and how to update code written for them. Changes are grouped by the version that
 introduced them; apply the sections for every version after the one you use.
 
@@ -70,7 +70,7 @@ should restore the flag with `Thread.currentThread().interrupt()`.
 
 New and off by default: `RateLimit`, `MarkerStore`, `UpdateDeduplicator`, `handlerTimeout`,
 `MaxEventListener` and the `maxapi-micrometer` module. See
-[Reliability and monitoring](README.md#reliability-and-monitoring).
+[Reliability and monitoring](README.en.md#reliability-and-monitoring).
 
 ## From 0.5 to 1.0
 

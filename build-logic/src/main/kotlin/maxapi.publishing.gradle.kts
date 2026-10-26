@@ -1,6 +1,6 @@
 // Maven Central publishing (Central Portal) for every published module, libraries and the BOM.
 // Credentials and the signing key come from Gradle properties, in CI from ORG_GRADLE_PROJECT_*
-// environment variables; see "Releasing" in README.md.
+// environment variables; see "Releasing" in README.en.md.
 plugins {
     id("com.vanniktech.maven.publish")
 }
