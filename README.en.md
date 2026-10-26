@@ -166,6 +166,8 @@ checked on every build. Coming from 0.x? See [MIGRATION.md](MIGRATION.md).
 | Spring Boot       | 4.x (built and tested with 4.1)                        |
 | Ktor              | 3.x (built and tested with 3.6)                        |
 | Micrometer        | 1.x (built and tested with 1.17)                       |
+| Lettuce (Redis)   | 7.x (built and tested with 7.5 and Redis 7.4)          |
+| JDBC              | any database with standard SQL (tested on H2 2.4 and PostgreSQL 17) |
 
 Not part of the compatible API: anything `internal`, the content of exception messages and log
 lines, and the exact defaults of `BotTester` responses.
