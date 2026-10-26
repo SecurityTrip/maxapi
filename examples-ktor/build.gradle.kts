@@ -6,6 +6,7 @@ plugins {
 dependencies {
     implementation(project(":maxapi-ktor"))
     implementation(libs.ktor.server.netty)
+    runtimeOnly(libs.slf4j.simple)
 }
 
 kotlin {

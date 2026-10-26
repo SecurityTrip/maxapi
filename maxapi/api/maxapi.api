@@ -220,6 +220,8 @@ public final class ru/securitytrip/maxapi/bot/MaxBot : ru/securitytrip/maxapi/bo
 	public fun <init> (Lru/securitytrip/maxapi/client/MaxClient;Lru/securitytrip/maxapi/bot/BotConfig;)V
 	public synthetic fun <init> (Lru/securitytrip/maxapi/client/MaxClient;Lru/securitytrip/maxapi/bot/BotConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close ()V
+	public final fun deleteWebhook (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun deleteWebhookBlocking ()Ljava/util/List;
 	public final fun getClient ()Lru/securitytrip/maxapi/client/MaxClient;
 	public final fun getConfig ()Lru/securitytrip/maxapi/bot/BotConfig;
 	public final fun getUsername ()Ljava/lang/String;

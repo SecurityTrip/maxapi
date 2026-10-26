@@ -12,6 +12,31 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+Fixes from running the examples against the real API.
+
+### Added
+
+- `MaxBot.deleteWebhook()` (and `deleteWebhookBlocking()`) removes every webhook subscription of
+  the bot.
+
+### Fixed
+
+- `MessageContext.text` is `null` for photos, stickers and other messages without text. Max sends an
+  empty string for them, so `text ?: "..."` replied with an empty message (rejected with
+  `400 proto.payload`) and `Filters.hasText()` let such messages through.
+- Long polling no longer receives nothing while the bot is subscribed to a webhook: Max answers
+  `getUpdates` with empty pages then, so `startPolling()` now checks the subscriptions first and
+  throws `MaxException`, as documented.
+- `sendMessage` rejects a message without text, attachments or a forwarded message with
+  `IllegalArgumentException` instead of sending it and getting `400 proto.payload: errors.required`.
+- The Ktor example unsubscribes from the webhook when it stops and logs through `slf4j-simple`.
+- The echo examples change the message on "Like" too, since the web client of Max does not show
+  callback notifications.
+
+### Changed
+
+- Documented that the web client of Max shows neither the command menu nor callback notifications.
+
 ## [1.1.0] - 2026-10-26
 
 ### Added

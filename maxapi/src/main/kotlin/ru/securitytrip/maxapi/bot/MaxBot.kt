@@ -199,9 +199,11 @@ public class MaxBot private constructor(
      * Long polling is limited in speed and retention time; the API recommends webhooks in production.
      *
      * @throws UnauthorizedException if the token is invalid.
-     * @throws MaxException if a webhook subscription is active (remove it with `client.unsubscribe(url)`).
+     * @throws MaxException if a webhook subscription is active: Max then answers long polling with
+     *   empty pages, so the bot would silently receive nothing. Remove it with [deleteWebhook].
      */
     public suspend fun startPolling(): Unit = coroutineScope {
+        checkNoWebhook()
         val queues = List(config.parallelism) { Channel<Delivery>(config.queueCapacity) }
         for (queue in queues) {
             launch(CoroutineName("max-bot-worker")) {
@@ -277,7 +279,7 @@ public class MaxBot private constructor(
      * from another thread, or until a fatal error happens.
      *
      * @throws UnauthorizedException if the token is invalid.
-     * @throws MaxException if a webhook subscription is active.
+     * @throws MaxException if a webhook subscription is active (see [deleteWebhook]).
      */
     public fun startBlocking() {
         val job = start()
@@ -324,7 +326,8 @@ public class MaxBot private constructor(
 
     /**
      * Shows the [commands] registered with descriptions in the bot menu, replacing the commands
-     * shown before. Call it after registering handlers, e.g. at startup.
+     * shown before. Call it after registering handlers, e.g. at startup. The mobile apps of Max
+     * show the menu; the web client does not.
      */
     public suspend fun syncCommands(): BotCommandsInfo = client.editMyCommands(commands())
 
@@ -335,6 +338,39 @@ public class MaxBot private constructor(
     @JvmOverloads
     public fun setWebhookBlocking(url: String, secret: String? = null): SimpleQueryResult =
         runBlocking { setWebhook(url, secret) }
+
+    /**
+     * Removes every webhook subscription of the bot, e.g. before switching to long polling or when
+     * a webhook server shuts down, and returns the URLs that were removed.
+     */
+    public suspend fun deleteWebhook(): List<String> =
+        client.getSubscriptions().map { it.url }.onEach { client.unsubscribe(it) }
+
+    /** Blocking version of [deleteWebhook] for Java. */
+    public fun deleteWebhookBlocking(): List<String> = runBlocking { deleteWebhook() }
+
+    /**
+     * Fails if the bot is subscribed to a webhook. The check is best effort: if the subscriptions
+     * cannot be read, polling starts anyway and its own error handling takes over.
+     */
+    private suspend fun checkNoWebhook() {
+        val urls = try {
+            client.getSubscriptions().map { it.url }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: UnauthorizedException) {
+            throw e
+        } catch (e: Exception) {
+            log.log(System.Logger.Level.DEBUG, "Cannot check webhook subscriptions: ${e.message}")
+            return
+        }
+        if (urls.isNotEmpty()) {
+            throw MaxException(
+                "Long polling receives nothing while the bot is subscribed to a webhook (${urls.joinToString()}); " +
+                    "remove the subscription with deleteWebhook() first",
+            )
+        }
+    }
 
     internal fun launchProcessing(update: Update): Job {
         check(scope.isActive) { "The bot is closed" }
@@ -389,7 +425,7 @@ public class MaxBot private constructor(
             } catch (e: MaxApiException) {
                 if (e.httpStatus == 405) {
                     throw MaxException(
-                        "Long polling is not available while a webhook subscription is active; call unsubscribe() first",
+                        "Long polling is not available while a webhook subscription is active; call deleteWebhook() first",
                         e,
                     )
                 }

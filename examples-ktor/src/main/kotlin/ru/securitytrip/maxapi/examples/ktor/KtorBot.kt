@@ -1,5 +1,6 @@
 package ru.securitytrip.maxapi.examples.ktor
 
+import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
@@ -10,6 +11,9 @@ import ru.securitytrip.maxapi.ktor.maxWebhook
 /**
  * Webhook bot on Ktor. Max delivers updates only to HTTPS on port 443, so run it behind a reverse
  * proxy that terminates TLS and forwards to port 8080.
+ *
+ * The subscription is removed when the server stops: while it exists, Max sends updates only to the
+ * webhook, and long polling (e.g. the other examples) receives nothing.
  */
 fun main() {
     val token = System.getenv("MAX_BOT_TOKEN") ?: error("Set the MAX_BOT_TOKEN environment variable")
@@ -23,5 +27,6 @@ fun main() {
 
     embeddedServer(Netty, port = 8080) {
         routing { maxWebhook("/max/webhook", bot, secret) }
+        monitor.subscribe(ApplicationStopping) { runBlocking { bot.client.unsubscribe(url) } }
     }.start(wait = true)
 }

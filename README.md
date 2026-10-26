@@ -278,7 +278,9 @@ A handler receives a context with the update and shortcuts to answer it.
 | `replyBlocking`, `sendActionBlocking`, `setStateBlocking`, ... | Java versions                        |
 
 `MessageContext` adds `message`, `text`, `messageId`, `command`, `commandArgs`,
-`replyToMessage(...)` (reply with a quote) and `replyToMessageBlocking(...)`.
+`replyToMessage(...)` (reply with a quote) and `replyToMessageBlocking(...)`. `text` is `null` for
+messages without text: Max sends an empty string for photos and stickers, which `text` turns into
+`null`, so `text ?: "..."` and `Filters.hasText()` work as expected.
 
 `CallbackContext` adds `callback`, `payload`, `message` (the message with the keyboard),
 `data(callbackData)`, `answer(notification)`, `answer(CallbackAnswer)`,
@@ -310,6 +312,9 @@ bot.onCommand("start", "Start the bot") { ... }
 bot.onCommand("weather", "Weather forecast") { ... }
 bot.syncCommands() // bot.commands() returns the list
 ```
+
+The mobile apps of Max show this menu; the web client does not show it, so there users type
+commands themselves.
 
 ### Buttons and callbacks
 
@@ -365,6 +370,10 @@ bot.onCallback(order) {
 CallbackData order = new CallbackData("order", "id", "action");
 bot.onCallback(order, ctx -> ctx.answerBlocking("Order " + ctx.data(order).get("id")));
 ```
+
+A notification (`answer(notification)`) is a short popup in the mobile apps of Max; the web client
+does not show it. When the user must see the result, also change the message with
+`editMessage(body, notification)` or send a new one.
 
 From Java, add rows with `keyboardRow(...)`:
 
@@ -557,7 +566,10 @@ How it works:
 - Network and server errors are reported to `onError` and retried with a pause that doubles from
   1 second up to `maxErrorBackoff`.
 - An invalid token (`UnauthorizedException`) and an active webhook subscription (`MaxException`)
-  stop polling: `startPolling()` and `startBlocking()` throw them.
+  stop polling: `startPolling()` and `startBlocking()` throw them. While the bot is subscribed to a
+  webhook, Max answers long polling with empty pages, so polling checks the subscriptions before it
+  starts instead of silently receiving nothing. `deleteWebhook()` removes them, e.g. after a webhook
+  server that did not unsubscribe on shutdown.
 
 ```kotlin
 val bot = MaxBot(token, BotConfig(parallelism = 16, pollTimeoutSeconds = 60))

@@ -37,6 +37,7 @@ import ru.securitytrip.maxapi.model.message.CallbackAnswer
 import ru.securitytrip.maxapi.model.message.CommentMessage
 import ru.securitytrip.maxapi.model.message.CommentMessageList
 import ru.securitytrip.maxapi.model.message.Message
+import ru.securitytrip.maxapi.model.message.MessageLinkType
 import ru.securitytrip.maxapi.model.message.MessageList
 import ru.securitytrip.maxapi.model.message.NewCommentBody
 import ru.securitytrip.maxapi.model.message.NewMessageBody
@@ -104,7 +105,8 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
     public suspend fun getMyInfo(): BotInfo = get(BotInfo::class.java, "me")
 
     /**
-     * Replaces the commands shown in the bot menu.
+     * Replaces the commands shown in the bot menu. The mobile apps of Max show the menu; the web
+     * client does not.
      *
      * @param commands up to 32 commands; an empty list removes all commands.
      * @return the commands after the change.
@@ -375,7 +377,8 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
      *
      * @param disableLinkPreview `true` disables previews for links in the text.
      * @return the created message, including its [ru.securitytrip.maxapi.model.message.MessageBody.mid].
-     * @throws IllegalArgumentException if neither or both of [userId] and [chatId] are set.
+     * @throws IllegalArgumentException if neither or both of [userId] and [chatId] are set, or if
+     *   [body] has no text, no attachments and does not forward a message (Max rejects such messages).
      * @throws ForbiddenException if the user stopped the bot, the bot cannot write to the chat,
      *   or forwarding from the source chat is prohibited.
      */
@@ -386,6 +389,9 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
         disableLinkPreview: Boolean? = null,
     ): Message {
         require((userId == null) != (chatId == null)) { "Exactly one of userId or chatId must be set" }
+        require(!body.text.isNullOrEmpty() || !body.attachments.isNullOrEmpty() || body.link?.type == MessageLinkType.FORWARD) {
+            "A message needs text, attachments or a forwarded message"
+        }
         val query = Query().add("user_id", userId).add("chat_id", chatId).add("disable_link_preview", disableLinkPreview)
         return retryWhileAttachmentNotReady {
             transport.execute("POST", listOf("messages"), SendMessageResult::class.java, query, body)
