@@ -440,7 +440,7 @@ class BotBehaviorTest {
         val requests = CopyOnWriteArrayList<RecordedRequest>()
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
-                requests += request
+                if (request.url.encodedPath == "/updates") requests += request
                 return page()
             }
         }

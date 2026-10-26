@@ -113,12 +113,14 @@ class MaxBotAutoConfigurationTest {
     @Test
     fun `polling starts with the context and stops with it`() {
         server.enqueue(json("""{"commands":[]}"""))
+        server.enqueue(json("""{"subscriptions":[]}"""))
         server.enqueue(json("""{"updates":[$update],"marker":1}"""))
         runner.withPropertyValues(*props("max.bot.sync-commands=true"))
             .withBean(BotConfig::class.java, { BotConfig(pollTimeoutSeconds = 0) })
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { bot -> bot.onCommand("hi", "Hi") { log += "handled" } } })
             .run { context ->
                 assertEquals("PATCH /me/commands", take().let { "${it.method} ${it.url.encodedPath}" })
+                assertEquals("/subscriptions", take().url.encodedPath)
                 assertEquals("/updates", take().url.encodedPath)
                 val deadline = System.currentTimeMillis() + 5_000
                 while (log.isEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(10)

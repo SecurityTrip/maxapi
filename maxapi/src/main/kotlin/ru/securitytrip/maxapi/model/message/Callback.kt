@@ -23,6 +23,6 @@ public data class Callback(
 public data class CallbackAnswer @JvmOverloads constructor(
     /** New content of the message that contains the button. */
     val message: NewMessageBody? = null,
-    /** One-time notification shown to the user who pressed the button. */
+    /** One-time notification shown to the user who pressed the button (not shown by the web client of Max). */
     val notification: String? = null,
 )

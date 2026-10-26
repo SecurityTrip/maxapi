@@ -13,6 +13,7 @@ import ru.securitytrip.maxapi.bot.WebhookHandler
 import ru.securitytrip.maxapi.client.MaxClient
 import ru.securitytrip.maxapi.client.MaxException
 import ru.securitytrip.maxapi.client.MaxJson
+import ru.securitytrip.maxapi.client.UnauthorizedException
 import ru.securitytrip.maxapi.model.update.BotAddedToChatUpdate
 import ru.securitytrip.maxapi.model.update.Update
 import ru.securitytrip.maxapi.model.update.UpdateType
@@ -185,10 +186,51 @@ class MaxBotTest {
 
     @Test
     fun `polling stops with a clear error when webhook is active`() {
+        server.enqueue(json("""{"subscriptions":[]}"""))
         server.enqueue(json("""{"code":"method.not.allowed","message":"Webhook subscription is active"}""", code = 405))
         bot.onMessage { }
         val error = assertFailsWith<MaxException> { bot.startBlocking() }
-        assertTrue(error.message!!.contains("unsubscribe"))
+        assertTrue(error.message!!.contains("deleteWebhook"))
+    }
+
+    @Test
+    fun `polling does not start while the bot is subscribed to a webhook`() {
+        server.enqueue(json("""{"subscriptions":[{"url":"https://bot.example/hook","time":1}]}"""))
+        bot.onMessage { }
+        val error = assertFailsWith<MaxException> { bot.startBlocking() }
+        assertTrue(error.message!!.contains("https://bot.example/hook"))
+        assertTrue(error.message!!.contains("deleteWebhook"))
+        assertEquals("/subscriptions", server.take().url.encodedPath)
+    }
+
+    @Test
+    fun `polling starts when the subscriptions cannot be read`() {
+        server.enqueue(json("""{"code":"internal","message":"boom"}""", code = 500))
+        server.enqueue(json("""{"code":"method.not.allowed","message":"Webhook subscription is active"}""", code = 405))
+        bot.onMessage { }
+        assertFailsWith<MaxException> { bot.startBlocking() }
+        assertEquals("/subscriptions", server.take().url.encodedPath)
+        assertEquals("/updates", server.take().url.encodedPath)
+    }
+
+    @Test
+    fun `an invalid token stops polling before it starts`() {
+        server.enqueue(json("""{"code":"verify.token","message":"Invalid access_token"}""", code = 401))
+        bot.onMessage { }
+        assertFailsWith<UnauthorizedException> { bot.startBlocking() }
+    }
+
+    @Test
+    fun `deleteWebhook removes every subscription`(): Unit = runBlocking {
+        server.enqueue(json("""{"subscriptions":[{"url":"https://a.example/hook"},{"url":"https://b.example/hook"}]}"""))
+        server.enqueue(json(SUCCESS))
+        server.enqueue(json(SUCCESS))
+        assertEquals(listOf("https://a.example/hook", "https://b.example/hook"), bot.deleteWebhook())
+        assertEquals("/subscriptions", server.take().url.encodedPath)
+        assertEquals("https://a.example/hook", server.take().url.queryParameter("url"))
+        assertEquals("https://b.example/hook", server.take().url.queryParameter("url"))
+        server.enqueue(json("""{"subscriptions":[]}"""))
+        assertEquals(emptyList(), bot.deleteWebhookBlocking())
     }
 
     @Test

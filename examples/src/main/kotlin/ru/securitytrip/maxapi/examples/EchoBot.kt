@@ -42,7 +42,8 @@ fun main(): Unit = runBlocking {
             reply(message { markdown("**Echo bot**: I repeat everything you write. Commands: `/start`, `/help`") })
         }
 
-        bot.onCallback("like") { answer("Thanks!") }
+        // The web client of Max does not show notifications, so the answer also changes the message.
+        bot.onCallback("like") { editMessage(message { text("Thanks for the like! 👍") }, notification = "Thanks!") }
 
         bot.onCallback("dislike") {
             editMessage(message { text("Sorry to hear that 😔") }, notification = "Noted")

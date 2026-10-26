@@ -182,8 +182,11 @@ public class MessageContext internal constructor(
     /** The new message. */
     public val message: Message get() = update.message
 
-    /** Message text, or `null` if the message has no text (e.g. only a photo). */
-    public val text: String? get() = message.body?.text
+    /**
+     * Message text, or `null` if the message has no text (e.g. only a photo or a sticker). Max sends
+     * an empty string for such messages; it is `null` here too, so `text ?: "..."` works as expected.
+     */
+    public val text: String? get() = message.body?.text?.takeIf { it.isNotEmpty() }
 
     /** Identifier of the message. */
     public val messageId: String? get() = message.body?.mid
@@ -268,7 +271,10 @@ public class CallbackContext internal constructor(
     public fun data(callbackData: CallbackData): Map<String, String> =
         requireNotNull(callbackData.unpack(payload)) { "Payload $payload does not match $callbackData" }
 
-    /** Answers the press with a one-time notification to the user. */
+    /**
+     * Answers the press with a one-time notification to the user. The mobile apps of Max show it;
+     * the web client does not, so use [editMessage] when the user must see the result.
+     */
     public suspend fun answer(notification: String): SimpleQueryResult =
         client.answerOnCallback(callback.callbackId, notification)
 

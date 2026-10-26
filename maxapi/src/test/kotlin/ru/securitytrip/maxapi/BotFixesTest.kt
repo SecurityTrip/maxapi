@@ -14,6 +14,12 @@ import ru.securitytrip.maxapi.bot.MaxBot
 import ru.securitytrip.maxapi.bot.MessageContext
 import ru.securitytrip.maxapi.client.MaxClient
 import ru.securitytrip.maxapi.client.MaxJson
+import ru.securitytrip.maxapi.bot.Filters
+import ru.securitytrip.maxapi.dsl.Buttons
+import ru.securitytrip.maxapi.model.attachment.InlineKeyboardAttachmentRequest
+import ru.securitytrip.maxapi.model.message.MessageLinkType
+import ru.securitytrip.maxapi.model.message.NewMessageBody
+import ru.securitytrip.maxapi.model.message.NewMessageLink
 import ru.securitytrip.maxapi.model.update.Update
 import ru.securitytrip.maxapi.model.update.UpdateType
 import java.time.Duration
@@ -189,5 +195,38 @@ class BotFixesTest {
         bot.onUpdate(Update::class.java) { kinds += this::class.simpleName!! }
         bot.processUpdate(MaxJson.parseUpdate(message("x")))
         assertEquals(listOf("UpdateContext"), kinds)
+    }
+
+    @Test
+    fun `an empty text, as Max sends for photos and stickers, counts as no text`(): Unit = runBlocking {
+        val seen = mutableListOf<String>()
+        bot.onMessage(Filters.hasText()) { seen += "text:$text" }
+        bot.onMessage { seen += "none:${text ?: "null"}" }
+        bot.processUpdate(MaxJson.parseUpdate(message("")))
+        bot.processUpdate(MaxJson.parseUpdate(message("hi")))
+        assertEquals(listOf("none:null", "text:hi"), seen)
+    }
+
+    @Test
+    fun `messages without text, attachments or a forward are rejected before sending`(): Unit = runBlocking {
+        for (body in listOf(NewMessageBody(), NewMessageBody(text = ""), NewMessageBody(text = "", attachments = emptyList()))) {
+            val error = assertFailsWith<IllegalArgumentException> { client.sendMessageToChat(1, body) }
+            assertTrue(error.message!!.contains("text, attachments or a forwarded message"))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            client.sendMessageToChat(1, NewMessageBody(link = NewMessageLink(MessageLinkType.REPLY, "mid.1")))
+        }
+        assertEquals(0, server.requestCount)
+
+        val sent = listOf(
+            NewMessageBody(text = "hi"),
+            NewMessageBody(attachments = listOf(InlineKeyboardAttachmentRequest(listOf(listOf(Buttons.callback("a", "b")))))),
+            NewMessageBody(link = NewMessageLink(MessageLinkType.FORWARD, "mid.1")),
+        )
+        for (body in sent) {
+            server.enqueue(json("""{"message":${messageJson()}}"""))
+            client.sendMessageToChat(1, body)
+        }
+        assertEquals(sent.size, server.requestCount)
     }
 }

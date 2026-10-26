@@ -303,6 +303,7 @@ class EdgeCasesTest {
 
             @Synchronized
             override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.url.encodedPath != "/updates") return json(SUCCESS)
                 markers += request.url.queryParameter("marker")
                 return when (++polls) {
                     1 -> json("""{"updates":[],"marker":5}""")

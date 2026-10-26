@@ -9,6 +9,7 @@ maven-publish = "0.37.0"
 binary-compatibility = "0.18.2"
 spring-boot = "4.1.1"
 ktor = "3.6.0"
+slf4j = "2.0.19"
 micrometer = "1.17.1"
 
 [libraries]
@@ -33,6 +34,7 @@ assertj = { module = "org.assertj:assertj-core" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 

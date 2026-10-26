@@ -31,7 +31,8 @@ public final class JavaEchoBot {
                             .keyboardRow(Buttons.link("API docs", "https://dev.max.ru/docs-api"))
                             .build()));
 
-            bot.onCallback("like", ctx -> ctx.answerBlocking("Thanks!"));
+            // The web client of Max does not show notifications, so the answer also changes the message.
+            bot.onCallback("like", ctx -> ctx.editMessageBlocking(NewMessageBody.text("Thanks for the like! 👍"), "Thanks!"));
 
             bot.onCallback("dislike", ctx -> ctx.editMessageBlocking(NewMessageBody.text("Sorry to hear that 😔"), "Noted"));
 
