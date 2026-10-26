@@ -12,6 +12,10 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-26
+
+Storage for production: dialog states, the polling marker and seen updates in SQL or Redis.
+
 ### Added
 
 - `maxapi-jdbc`: `JdbcStateStorage`, `JdbcMarkerStore` and `JdbcUpdateDeduplicator` keep dialog
@@ -162,7 +166,8 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/SecurityTrip/maxapi/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/SecurityTrip/maxapi/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/SecurityTrip/maxapi/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/SecurityTrip/maxapi/compare/v0.5.0...v1.0.0
