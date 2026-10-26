@@ -53,7 +53,27 @@ public class MaxClientConfig(
     public val rateLimit: RateLimit? = null,
     /** Receives an event for every HTTP attempt, e.g. for metrics. */
     public val eventListener: MaxEventListener = MaxEventListener.NONE,
+    /**
+     * Whether the `OkHttpClient` the library creates trusts the Russian Trusted Root CA, which the API
+     * server's certificate is issued under and which JDKs do not include (see [MaxTls]). It does not
+     * apply to a client passed in [httpClient]. Turn it off only if the JVM already trusts that CA.
+     */
+    public val trustRussianRootCa: Boolean = true,
 ) {
+    /** The constructor of 1.0, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        token: String,
+        baseUrl: String = DEFAULT_BASE_URL,
+        httpClient: OkHttpClient? = null,
+        retryPolicy: RetryPolicy = RetryPolicy.DEFAULT,
+        attachmentReadyRetries: Int = 5,
+        attachmentReadyDelay: Duration = Duration.ofSeconds(1),
+        userAgent: String = DEFAULT_USER_AGENT,
+        rateLimit: RateLimit? = null,
+        eventListener: MaxEventListener = MaxEventListener.NONE,
+    ) : this(token, baseUrl, httpClient, retryPolicy, attachmentReadyRetries, attachmentReadyDelay, userAgent, rateLimit, eventListener, true)
+
     init {
         require(token.isNotBlank()) { "token must not be blank" }
         require(attachmentReadyRetries >= 0) { "attachmentReadyRetries must be >= 0" }
@@ -72,6 +92,7 @@ public class MaxClientConfig(
         private var userAgent = DEFAULT_USER_AGENT
         private var rateLimit: RateLimit? = null
         private var eventListener = MaxEventListener.NONE
+        private var trustRussianRootCa = true
 
         public fun baseUrl(value: String): Builder = apply { baseUrl = value }
         public fun httpClient(value: OkHttpClient): Builder = apply { httpClient = value }
@@ -81,6 +102,7 @@ public class MaxClientConfig(
         public fun userAgent(value: String): Builder = apply { userAgent = value }
         public fun rateLimit(value: RateLimit?): Builder = apply { rateLimit = value }
         public fun eventListener(value: MaxEventListener): Builder = apply { eventListener = value }
+        public fun trustRussianRootCa(value: Boolean): Builder = apply { trustRussianRootCa = value }
 
         public fun build(): MaxClientConfig = MaxClientConfig(
             token = token,
@@ -92,6 +114,7 @@ public class MaxClientConfig(
             userAgent = userAgent,
             rateLimit = rateLimit,
             eventListener = eventListener,
+            trustRussianRootCa = trustRussianRootCa,
         )
     }
 

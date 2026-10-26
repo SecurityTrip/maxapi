@@ -223,5 +223,14 @@ class MaxBotAutoConfigurationTest {
         assertEquals("/max/webhook", properties.webhook.path)
         assertFalse(properties.webhook.async)
         assertFalse(properties.syncCommands)
+        assertTrue(properties.trustRussianRootCa)
+    }
+
+    @Test
+    fun `the client trusts the Russian root CA unless turned off`() {
+        runner.withPropertyValues(*props("max.bot.mode=none"))
+            .run { assertTrue(it.getBean(MaxClient::class.java).config.trustRussianRootCa) }
+        runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.trust-russian-root-ca=false"))
+            .run { assertFalse(it.getBean(MaxClient::class.java).config.trustRussianRootCa) }
     }
 }

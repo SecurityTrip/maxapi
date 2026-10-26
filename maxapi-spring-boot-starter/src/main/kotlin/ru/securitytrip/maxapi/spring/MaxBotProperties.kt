@@ -26,6 +26,12 @@ public class MaxBotProperties {
     /** Base URL of the API; override it only for tests or proxies. */
     public var baseUrl: String = MaxClientConfig.DEFAULT_BASE_URL
 
+    /**
+     * Whether the client trusts the Russian Trusted Root CA, which the API server's certificate is
+     * issued under and which JDKs do not include. Turn it off only if the JVM already trusts that CA.
+     */
+    public var trustRussianRootCa: Boolean = true
+
     /** How the bot receives updates. */
     public var mode: Mode = Mode.POLLING
 

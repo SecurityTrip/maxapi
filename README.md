@@ -821,6 +821,7 @@ max:
     token: ${MAX_BOT_TOKEN}
     mode: polling            # polling (default), webhook or none
     sync-commands: true      # show commands with descriptions in the bot menu on startup
+    trust-russian-root-ca: true  # default; see "TLS certificate" below
     webhook:
       path: /max/webhook     # the endpoint in your Spring MVC server
       url: https://bot.example.com/max/webhook   # subscribe on startup (optional)
@@ -1043,10 +1044,33 @@ MaxClient client = MaxClient.create(MaxClientConfig.builder(token)
 | `userAgent`               | `maxapi-jvm`                    | `User-Agent` header                                          |
 | `rateLimit`               | none                            | client-side request rate limit, see [Reliability](#reliability-and-monitoring) |
 | `eventListener`           | none                            | receives an event per HTTP attempt (metrics, tracing)        |
+| `trustRussianRootCa`      | `true`                          | the library's own HTTP client trusts the Russian Trusted Root CA, see [TLS certificate](#tls-certificate) |
 
 The default HTTP client uses 15 s connect and 60 s read/write timeouts. `getUpdates` automatically
 gets a longer read timeout, so long polling works with your own client too. A client you pass in is
 never closed by the library.
+
+### TLS certificate
+
+The certificate of `platform-api2.max.ru` is issued under the Russian Trusted Root CA of the Ministry
+of Digital Development. JDKs do not include that CA, so a plain `OkHttpClient` fails with
+`PKIX path building failed`. The library bundles the root certificate, and the HTTP client it creates
+trusts it in addition to the certificates the JVM trusts. Only that client is affected: the trust of
+the rest of the JVM stays as it is, and there is no need for `-Djavax.net.ssl.trustStore` or for
+importing the certificate into `cacerts`.
+
+A client you pass in `httpClient` is used as is. Add the certificate to it with `MaxTls`:
+
+```kotlin
+val http = MaxTls.trustRussianRootCa(OkHttpClient.Builder())
+    .proxy(proxy)
+    .build()
+val client = MaxClient(MaxClientConfig(token, httpClient = http))
+```
+
+`MaxTls.sslContext` and `MaxTls.trustManager` do the same for other HTTP clients, and
+`MaxTls.russianTrustedRootCa` is the certificate itself. If the JVM already trusts the CA, turn the
+bundled one off with `trustRussianRootCa = false` (`max.bot.trust-russian-root-ca=false` in Spring Boot).
 
 `BotConfig`:
 

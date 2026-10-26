@@ -85,7 +85,7 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
     public constructor(token: String) : this(MaxClientConfig(token))
 
     private val json = MaxJson.mapper
-    private val transport = HttpTransport(config, json)
+    internal val transport = HttpTransport(config, json)
 
     internal val asyncScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

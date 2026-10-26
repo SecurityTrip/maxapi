@@ -434,8 +434,10 @@ public final class ru/securitytrip/maxapi/client/MaxClientConfig {
 	public static final field Companion Lru/securitytrip/maxapi/client/MaxClientConfig$Companion;
 	public static final field DEFAULT_BASE_URL Ljava/lang/String;
 	public static final field DEFAULT_USER_AGENT Ljava/lang/String;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;Lru/securitytrip/maxapi/client/RateLimit;Lru/securitytrip/maxapi/events/MaxEventListener;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;Lru/securitytrip/maxapi/client/RateLimit;Lru/securitytrip/maxapi/events/MaxEventListener;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;Lru/securitytrip/maxapi/client/RateLimit;Lru/securitytrip/maxapi/events/MaxEventListener;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;Lru/securitytrip/maxapi/client/RateLimit;Lru/securitytrip/maxapi/events/MaxEventListener;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/OkHttpClient;Lru/securitytrip/maxapi/client/RetryPolicy;ILjava/time/Duration;Ljava/lang/String;Lru/securitytrip/maxapi/client/RateLimit;Lru/securitytrip/maxapi/events/MaxEventListener;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun builder (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun getAttachmentReadyDelay ()Ljava/time/Duration;
 	public final fun getAttachmentReadyRetries ()I
@@ -445,6 +447,7 @@ public final class ru/securitytrip/maxapi/client/MaxClientConfig {
 	public final fun getRateLimit ()Lru/securitytrip/maxapi/client/RateLimit;
 	public final fun getRetryPolicy ()Lru/securitytrip/maxapi/client/RetryPolicy;
 	public final fun getToken ()Ljava/lang/String;
+	public final fun getTrustRussianRootCa ()Z
 	public final fun getUserAgent ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 }
@@ -459,6 +462,7 @@ public final class ru/securitytrip/maxapi/client/MaxClientConfig$Builder {
 	public final fun httpClient (Lokhttp3/OkHttpClient;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun rateLimit (Lru/securitytrip/maxapi/client/RateLimit;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun retryPolicy (Lru/securitytrip/maxapi/client/RetryPolicy;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+	public final fun trustRussianRootCa (Z)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun userAgent (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 }
 
@@ -480,6 +484,14 @@ public final class ru/securitytrip/maxapi/client/MaxJson {
 
 public final class ru/securitytrip/maxapi/client/MaxNetworkException : ru/securitytrip/maxapi/client/MaxException {
 	public fun <init> (Ljava/lang/String;Ljava/io/IOException;)V
+}
+
+public final class ru/securitytrip/maxapi/client/MaxTls {
+	public static final field INSTANCE Lru/securitytrip/maxapi/client/MaxTls;
+	public static final field russianTrustedRootCa Ljava/security/cert/X509Certificate;
+	public static final field sslContext Ljavax/net/ssl/SSLContext;
+	public static final field trustManager Ljavax/net/ssl/X509TrustManager;
+	public static final fun trustRussianRootCa (Lokhttp3/OkHttpClient$Builder;)Lokhttp3/OkHttpClient$Builder;
 }
 
 public final class ru/securitytrip/maxapi/client/NotFoundException : ru/securitytrip/maxapi/client/MaxApiException {
