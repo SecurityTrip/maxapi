@@ -12,6 +12,8 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-26
+
 Fixes from running the examples against the real API.
 
 ### Added
@@ -148,7 +150,8 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/SecurityTrip/maxapi/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/SecurityTrip/maxapi/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/SecurityTrip/maxapi/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/SecurityTrip/maxapi/compare/v0.4.0...v0.5.0
