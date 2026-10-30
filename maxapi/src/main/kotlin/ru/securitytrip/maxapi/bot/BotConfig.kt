@@ -39,7 +39,10 @@ public class BotConfig(
      * handler does not block its chat forever. `null` (default) means no limit.
      */
     public val handlerTimeout: Duration? = null,
-    /** Drops repeated deliveries of the same update, e.g. [InMemoryUpdateDeduplicator]; `null` handles every delivery. */
+    /**
+     * Drops repeated deliveries of the same update, e.g. [InMemoryUpdateDeduplicator]; `null` handles
+     * every delivery. If it also implements [SuspendUpdateDeduplicator], the bot calls the non-blocking method.
+     */
     public val deduplicator: UpdateDeduplicator? = null,
     /** Keeps the long polling marker across restarts; `null` (default) does not keep it. */
     public val markerStore: MarkerStore? = null,
@@ -47,7 +50,32 @@ public class BotConfig(
     public val eventListener: MaxEventListener = MaxEventListener.NONE,
     /** Where the bot remembers the chats it is in, read with [MaxBot.chats]; `null` (default) does not remember them. */
     public val chatStore: ChatStore? = null,
+    /**
+     * Non-blocking alternative to [deduplicator] for stores with an asynchronous client; set one of the
+     * two. `null` (default) leaves deduplication to [deduplicator].
+     */
+    public val suspendDeduplicator: SuspendUpdateDeduplicator? = null,
 ) {
+    /** The constructor before 1.7, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        parallelism: Int = 4,
+        queueCapacity: Int = 64,
+        pollTimeoutSeconds: Int = 30,
+        pollLimit: Int = 100,
+        minPollInterval: Duration = Duration.ofMillis(300),
+        maxErrorBackoff: Duration = Duration.ofSeconds(30),
+        stateStorage: StateStorage = InMemoryStateStorage(),
+        handlerTimeout: Duration? = null,
+        deduplicator: UpdateDeduplicator? = null,
+        markerStore: MarkerStore? = null,
+        eventListener: MaxEventListener = MaxEventListener.NONE,
+        chatStore: ChatStore? = null,
+    ) : this(
+        parallelism, queueCapacity, pollTimeoutSeconds, pollLimit, minPollInterval, maxErrorBackoff,
+        stateStorage, handlerTimeout, deduplicator, markerStore, eventListener, chatStore, null,
+    )
+
     /** The constructor before 1.6, kept for binary compatibility. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     public constructor(
@@ -64,7 +92,7 @@ public class BotConfig(
         eventListener: MaxEventListener = MaxEventListener.NONE,
     ) : this(
         parallelism, queueCapacity, pollTimeoutSeconds, pollLimit, minPollInterval, maxErrorBackoff,
-        stateStorage, handlerTimeout, deduplicator, markerStore, eventListener, null,
+        stateStorage, handlerTimeout, deduplicator, markerStore, eventListener, null, null,
     )
 
     init {
@@ -73,6 +101,7 @@ public class BotConfig(
         require(pollTimeoutSeconds in 0..90) { "pollTimeoutSeconds must be in 0..90" }
         require(pollLimit in 1..1000) { "pollLimit must be in 1..1000" }
         require(handlerTimeout == null || handlerTimeout > Duration.ZERO) { "handlerTimeout must be positive" }
+        require(deduplicator == null || suspendDeduplicator == null) { "Set deduplicator or suspendDeduplicator, not both" }
     }
 
     /** Builder for Java. Every setter has the same meaning as the matching constructor parameter. */
@@ -89,6 +118,7 @@ public class BotConfig(
         private var markerStore: MarkerStore? = null
         private var eventListener = MaxEventListener.NONE
         private var chatStore: ChatStore? = null
+        private var suspendDeduplicator: SuspendUpdateDeduplicator? = null
 
         public fun parallelism(value: Int): Builder = apply { parallelism = value }
         public fun queueCapacity(value: Int): Builder = apply { queueCapacity = value }
@@ -102,11 +132,12 @@ public class BotConfig(
         public fun markerStore(value: MarkerStore?): Builder = apply { markerStore = value }
         public fun eventListener(value: MaxEventListener): Builder = apply { eventListener = value }
         public fun chatStore(value: ChatStore?): Builder = apply { chatStore = value }
+        public fun suspendDeduplicator(value: SuspendUpdateDeduplicator?): Builder = apply { suspendDeduplicator = value }
 
         public fun build(): BotConfig = BotConfig(
             parallelism, queueCapacity, pollTimeoutSeconds, pollLimit, minPollInterval, maxErrorBackoff,
             stateStorage ?: InMemoryStateStorage(),
-            handlerTimeout, deduplicator, markerStore, eventListener, chatStore,
+            handlerTimeout, deduplicator, markerStore, eventListener, chatStore, suspendDeduplicator,
         )
     }
 

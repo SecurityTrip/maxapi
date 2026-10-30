@@ -1,5 +1,8 @@
 package ru.securitytrip.maxapi.jdbc
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import ru.securitytrip.maxapi.bot.SuspendUpdateDeduplicator
 import ru.securitytrip.maxapi.bot.UpdateDeduplicator
 import ru.securitytrip.maxapi.model.update.Update
 import java.sql.SQLException
@@ -11,7 +14,8 @@ import javax.sql.DataSource
  * for [ttl], so a repeated delivery is dropped even when another instance of the bot received the
  * first one. Max retries webhook deliveries for up to 8 hours, hence the default of 9 hours.
  *
- * Every [isNew] inserts a row, and at most once a minute rows older than [ttl] are deleted. Create the
+ * Every [isNew] inserts a row, and at most once a minute rows older than [ttl] are deleted. The bot calls
+ * [markSeen], which does the same on `Dispatchers.IO`, so JDBC does not block its workers. Create the
  * table with [createTable], or yourself:
  *
  * ```sql
@@ -26,7 +30,7 @@ public class JdbcUpdateDeduplicator @JvmOverloads constructor(
     table: String = DEFAULT_TABLE,
     /** How long a key is remembered. */
     public val ttl: Duration = Duration.ofHours(9),
-) : UpdateDeduplicator {
+) : UpdateDeduplicator, SuspendUpdateDeduplicator {
     /** Name of the table. */
     public val table: String = Sql.table(table)
 
@@ -58,6 +62,8 @@ public class JdbcUpdateDeduplicator @JvmOverloads constructor(
             }
         }
     }
+
+    override suspend fun markSeen(update: Update): Boolean = withContext(Dispatchers.IO) { isNew(update) }
 
     /** Creates the table unless it exists and returns this deduplicator. */
     public fun createTable(): JdbcUpdateDeduplicator = apply {

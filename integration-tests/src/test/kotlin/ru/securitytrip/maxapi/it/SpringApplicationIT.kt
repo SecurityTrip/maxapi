@@ -1,5 +1,8 @@
 package ru.securitytrip.maxapi.it
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.boot.WebApplicationType
+import org.springframework.context.ConfigurableApplicationContext
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.postgresql.PostgreSQLContainer
 import ru.securitytrip.maxapi.it.FakeMax.Companion.message
@@ -30,6 +33,7 @@ class SpringApplicationIT {
 
     private fun properties(vararg extra: String) = arrayOf(
         "max.bot.token=test-token",
+        "management.endpoint.health.show-details=always",
         "max.bot.base-url=${max.url}",
         "spring.datasource.url=${postgres.jdbcUrl}",
         "spring.datasource.username=${postgres.username}",
@@ -91,7 +95,7 @@ class SpringApplicationIT {
         val webhook = properties(
             "max.bot.mode=webhook", "max.bot.webhook.url=$url", "max.bot.webhook.secret=$secret", "server.port=0", *redis(),
         )
-        SurveyApp.start(*webhook, web = true).use { context ->
+        SurveyApp.start(*webhook, web = WebApplicationType.SERVLET).use { context ->
             val subscription = max.subscriptions.single()
             assertTrue(url in subscription && secret in subscription, subscription)
 
@@ -115,6 +119,66 @@ class SpringApplicationIT {
             assertEquals("Nice to meet you, Ann! Rate us from 1 to 5", max.sentTexts.last())
         }
     }
+
+    @Test
+    fun `webhook deliveries on a reactive server are handled once`() {
+        val url = "https://bot.example/max/webhook"
+        val secret = "s3cret-value"
+        val webhook = properties(
+            "max.bot.mode=webhook", "max.bot.webhook.url=$url", "max.bot.webhook.secret=$secret", "server.port=0", *redis(),
+        )
+        SurveyApp.start(*webhook, web = WebApplicationType.REACTIVE).use { context ->
+            val endpoint = URI("http://localhost:${port(context)}/max/webhook")
+            fun post(body: String, key: String): Int = http.send(
+                HttpRequest.newBuilder(endpoint)
+                    .header("X-Max-Bot-Api-Secret", key)
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build(),
+                HttpResponse.BodyHandlers.discarding(),
+            ).statusCode()
+
+            assertEquals(200, post(message("r1", "/survey"), secret))
+            assertEquals(listOf("What is your name?"), max.sentTexts, "answered before the response")
+            assertEquals(200, post(message("r1", "/survey"), secret), "a retried delivery is accepted")
+            assertEquals(1, max.sentTexts.size, "but not handled again: Redis is asked without blocking")
+            assertEquals(401, post(message("r2", "Ann"), "wrong-secret"))
+            assertEquals(400, post("not an update", secret))
+            assertEquals(200, post(message("r2", "Ann"), secret))
+            assertEquals("Nice to meet you, Ann! Rate us from 1 to 5", max.sentTexts.last())
+
+            val health = health(context)
+            assertEquals("UP", health.path("status").asText(), health.toString())
+            assertEquals(true, health.path("components").path("bot").path("details").path("webhook").path("subscribed").asBoolean())
+            assertEquals("PONG", health.path("components").path("storage").path("details").path("ping").asText())
+        }
+    }
+
+    @Test
+    fun `actuator shows the health of a polling bot and its database`() {
+        SurveyApp.start(*properties("max.bot.mode=polling", "server.port=0", *jdbc()), web = WebApplicationType.SERVLET).use { context ->
+            await("polling starts") { max.pollMarkers.isNotEmpty() }
+            val health = health(context)
+            assertEquals("UP", health.path("status").asText(), health.toString())
+            val bot = health.path("components").path("bot").path("details")
+            assertEquals("running", bot.path("polling").asText())
+            assertEquals("survey_bot", bot.path("username").asText())
+            assertEquals("PostgreSQL", health.path("components").path("storage").path("details").path("database").asText())
+
+            // Health checks within max.bot.health.cache-ttl reuse the answer of the API.
+            repeat(3) { health(context) }
+            assertEquals(1, max.requests.count { it == "GET /me" })
+        }
+    }
+
+    private fun port(context: ConfigurableApplicationContext) = context.environment.getProperty("local.server.port")
+
+    /** `GET /actuator/health/max`, with details. */
+    private fun health(context: ConfigurableApplicationContext) = ObjectMapper().readTree(
+        http.send(
+            HttpRequest.newBuilder(URI("http://localhost:${port(context)}/actuator/health/max")).build(),
+            HttpResponse.BodyHandlers.ofString(),
+        ).body(),
+    )
 
     private fun awaitSent(text: String) = await("the bot sends \"$text\"") { text in max.sentTexts }
 

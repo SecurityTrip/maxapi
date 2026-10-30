@@ -15,6 +15,7 @@ dependencies {
         api(project(":maxapi-micrometer"))
         api(project(":maxapi-jdbc"))
         api(project(":maxapi-redis"))
+        api(project(":maxapi-opentelemetry"))
     }
 }
 

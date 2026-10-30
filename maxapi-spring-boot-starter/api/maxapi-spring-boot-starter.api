@@ -2,10 +2,16 @@ public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration {
 	public fun <init> ()V
 	public final fun maxBot (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/MaxBot;
 	public final synthetic fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
-	public final fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
+	public final synthetic fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
+	public final fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
 	public final fun maxBotLifecycle (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/spring/MaxBotLifecycle;
 	public final fun maxBroadcaster (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/Broadcaster;
 	public final fun maxClient (Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/client/MaxClient;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration$ReactiveWebhookConfiguration {
+	public fun <init> ()V
+	public final fun maxBotWebhookEndpoint (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lorg/springframework/web/reactive/function/server/RouterFunction;
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration$WebhookConfiguration {
@@ -15,6 +21,9 @@ public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration$Webhook
 
 public abstract interface class ru/securitytrip/maxapi/spring/MaxBotConfigurer {
 	public abstract fun configure (Lru/securitytrip/maxapi/bot/MaxBot;)V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotHealthIndicator : org/springframework/boot/health/contributor/AbstractHealthIndicator {
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotLifecycle : org/springframework/context/SmartLifecycle {
@@ -27,6 +36,7 @@ public final class ru/securitytrip/maxapi/spring/MaxBotLifecycle : org/springfra
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public fun <init> ()V
 	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getHealth ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Health;
 	public final fun getJdbc ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Jdbc;
 	public final fun getMode ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
 	public final fun getRateLimit ()Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;
@@ -44,6 +54,14 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public final fun setSyncCommands (Z)V
 	public final fun setToken (Ljava/lang/String;)V
 	public final fun setTrustRussianRootCa (Z)V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Health {
+	public fun <init> ()V
+	public final fun getCacheTtl ()Ljava/time/Duration;
+	public final fun getTimeout ()Ljava/time/Duration;
+	public final fun setCacheTtl (Ljava/time/Duration;)V
+	public final fun setTimeout (Ljava/time/Duration;)V
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Jdbc {
@@ -130,9 +148,19 @@ public abstract interface class ru/securitytrip/maxapi/spring/MaxClientConfigCus
 	public abstract fun customize (Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;)V
 }
 
+public final class ru/securitytrip/maxapi/spring/MaxHealthAutoConfiguration {
+	public fun <init> ()V
+	public final fun maxHealthContributor (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/context/ApplicationContext;)Lorg/springframework/boot/health/contributor/CompositeHealthContributor;
+}
+
 public final class ru/securitytrip/maxapi/spring/MaxMetricsAutoConfiguration {
 	public fun <init> ()V
 	public final fun maxMetrics (Lio/micrometer/core/instrument/MeterRegistry;)Lru/securitytrip/maxapi/micrometer/MaxMetrics;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxRuntimeHints : org/springframework/aot/hint/RuntimeHintsRegistrar {
+	public fun <init> ()V
+	public fun registerHints (Lorg/springframework/aot/hint/RuntimeHints;Ljava/lang/ClassLoader;)V
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration {
@@ -157,6 +185,11 @@ public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration$Red
 	public final fun maxRedisMarkerStore (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisMarkerStore;
 	public final fun maxRedisStateStorage (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisStateStorage;
 	public final fun maxRedisUpdateDeduplicator (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisUpdateDeduplicator;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxTracingAutoConfiguration {
+	public fun <init> ()V
+	public final fun maxTracing (Lio/opentelemetry/api/OpenTelemetry;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/opentelemetry/MaxTracing;
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxWebAppArgumentResolver : org/springframework/web/method/support/HandlerMethodArgumentResolver {

@@ -8,6 +8,10 @@ import ru.securitytrip.maxapi.model.update.Update
  * Drops updates the bot has already seen, set with [BotConfig.deduplicator]. Max redelivers a webhook
  * update until it gets `200 OK`, for up to 8 hours, and polling with a [MarkerStore] may repeat updates
  * after a restart, so the same update can arrive more than once.
+ *
+ * [isNew] blocks the thread that dispatches the update. A store with a non-blocking client should
+ * implement [SuspendUpdateDeduplicator] instead, or as well: the bot calls [SuspendUpdateDeduplicator.markSeen]
+ * of a deduplicator that implements both.
  */
 public fun interface UpdateDeduplicator {
     /** `true` if [update] is seen for the first time and should be handled; `false` for a duplicate. */
@@ -25,6 +29,24 @@ public fun interface UpdateDeduplicator {
             else -> "${update.updateType}:${update.timestamp}:${update.chatId}:${update.user?.userId}"
         }
     }
+}
+
+/**
+ * Non-blocking version of [UpdateDeduplicator] for stores with an asynchronous client, set with
+ * [BotConfig.suspendDeduplicator] (or with [BotConfig.deduplicator] by a class that implements both
+ * interfaces, like `RedisUpdateDeduplicator`).
+ *
+ * ```kotlin
+ * val deduplicator = SuspendUpdateDeduplicator { update -> seenKeys.addIfAbsent(UpdateDeduplicator.keyOf(update)) }
+ * val bot = MaxBot(token, BotConfig(suspendDeduplicator = deduplicator))
+ * ```
+ */
+public fun interface SuspendUpdateDeduplicator {
+    /**
+     * Records [update] as seen. `true` if it is seen for the first time and should be handled; `false`
+     * for a duplicate. Like `Set.add`, only the first call for an update returns `true`.
+     */
+    public suspend fun markSeen(update: Update): Boolean
 }
 
 /**

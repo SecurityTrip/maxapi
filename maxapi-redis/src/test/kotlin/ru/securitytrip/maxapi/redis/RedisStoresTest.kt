@@ -100,6 +100,20 @@ class RedisStoresTest {
     }
 
     @Test
+    fun `the non-blocking check shares keys with the blocking one`(): Unit = runBlocking {
+        val deduplicator = RedisUpdateDeduplicator(connection, prefix, Duration.ofMinutes(5))
+
+        assertTrue(deduplicator.markSeen(message("mid.3")))
+        assertFalse(deduplicator.markSeen(message("mid.3")))
+        assertFalse(deduplicator.isNew(message("mid.3")))
+        assertTrue(deduplicator.isNew(message("mid.4")))
+        assertFalse(deduplicator.markSeen(message("mid.4")))
+
+        val ttl = connection.sync().pttl(prefix + ru.securitytrip.maxapi.bot.UpdateDeduplicator.keyOf(message("mid.3")))
+        assertTrue(ttl in 1..300_000, "ttl was $ttl")
+    }
+
+    @Test
     fun `chats are saved only when newer`(): Unit = runBlocking {
         val store: ChatStore = RedisChatStore(connection, prefix + "chats")
         assertNull(store.get(1))

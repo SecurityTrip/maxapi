@@ -2,6 +2,8 @@ package ru.securitytrip.maxapi.events
 
 import ru.securitytrip.maxapi.model.update.Update
 import java.time.Duration
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Receives events about API requests and handled updates, for metrics, tracing and logging.
@@ -20,6 +22,18 @@ public interface MaxEventListener {
     public fun onUpdate(event: UpdateEvent) {}
 
     /**
+     * Coroutine context elements the bot adds while it dispatches [update]: deduplication, middleware,
+     * the handler and its API requests, and the [onUpdate] event of the update run with them. Use it to
+     * make tracing or logging context current in the handler's coroutines, e.g. an OpenTelemetry span
+     * (`maxapi-opentelemetry` starts the span of the update here) or an SLF4J MDC.
+     *
+     * Called first thing when the bot receives [update], on the thread that dispatches it. Return
+     * [EmptyCoroutineContext] (the default) to add nothing. The elements should not include a
+     * dispatcher or a `Job`.
+     */
+    public fun updateContext(update: Update): CoroutineContext = EmptyCoroutineContext
+
+    /**
      * The bot found its webhook subscription missing and subscribed again
      * (see `MaxBot.ensureWebhook`): Max drops a subscription after 8 hours without successful deliveries.
      */
@@ -30,7 +44,10 @@ public interface MaxEventListener {
         @JvmField
         public val NONE: MaxEventListener = object : MaxEventListener {}
 
-        /** A listener that passes every event to each of [listeners] in order. */
+        /**
+         * A listener that passes every event to each of [listeners] in order. Its [updateContext] combines
+         * the contexts of [listeners]; of elements with the same key, the last one wins.
+         */
         @JvmStatic
         public fun composite(listeners: List<MaxEventListener>): MaxEventListener = when (listeners.size) {
             0 -> NONE
@@ -38,6 +55,12 @@ public interface MaxEventListener {
             else -> object : MaxEventListener {
                 override fun onRequest(event: RequestEvent) = listeners.forEach { it.onRequest(event) }
                 override fun onUpdate(event: UpdateEvent) = listeners.forEach { it.onUpdate(event) }
+                override fun updateContext(update: Update): CoroutineContext =
+                    listeners.fold(EmptyCoroutineContext as CoroutineContext) { context, listener ->
+                        var element: CoroutineContext = EmptyCoroutineContext
+                        listener.safely { element = updateContext(update) }
+                        context + element
+                    }
                 override fun onWebhookResubscribe(event: WebhookResubscribeEvent) =
                     listeners.forEach { it.onWebhookResubscribe(event) }
             }
