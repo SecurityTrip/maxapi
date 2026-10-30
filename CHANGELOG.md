@@ -15,6 +15,9 @@ their own section if there is one, and the `x.y.z` section otherwise.
 The current rules of the Max platform: its limits, its rate limits and its webhook upkeep; and the
 backend side of mini apps.
 
+Tools for writing bots: scenes, paged and confirmation keyboards, translations, a registry of
+the bot's chats and broadcasts.
+
 ### Added
 
 - Mini app backends, in the new package `ru.securitytrip.maxapi.webapp` of `maxapi` with no new
@@ -71,6 +74,39 @@ backend side of mini apps.
   webhook mode with `max.bot.webhook.url` the bot checks its subscription every
   `max.bot.webhook.check-interval` (default 10 minutes, `0` turns it off) and subscribes again when
   it is gone.
+
+- Scenes: `scene("name") { ... }` (`Scene.builder` in Java) describes a wizard on top of the dialog
+  state, so it works with any `StateStorage`. Steps have a prompt, checks (`validate`, with an error
+  text or an `onInvalid` reaction) and an optional `input` that reads other kinds of answers; answers
+  are kept in `DialogState.data` under the step names. A scene is entered with `enterOnCommand`,
+  `enterOnCallback` or `Scene.enter(ctx, data)`; `/back` or `backButton` returns a step, `/cancel` or
+  `cancelButton` runs `onCancel`, and `option(text, value)` buttons answer only the current step.
+  `BaseRouter.include(scene)` adds it to a bot; `SceneContext` gives prompts and callbacks the handler
+  context with `answers`. The `QuestionnaireBot` example is rewritten on a scene, with a `BotTester`
+  test.
+- Keyboards: `Paginator` shows a long list page by page with a `◀ 2/7 ▶` row packed by `CallbackData`
+  (page and argument), and `Confirmation` is a "Yes / No" question with `yes()` and `no()` filters.
+  Both keep to the keyboard limits of Max: 7 buttons in a row, 3 with a wide button, 30 rows.
+- `Translations` picks texts by `UpdateContext.locale` with a fallback language, from maps or
+  `ResourceBundle`s (`Translations.fromBundles`), with `{0}` and `{name}` placeholders and plural
+  forms (`one`/`few`/`many` for Russian, Ukrainian and Belarusian, `one`/`other` otherwise).
+- Chat registry: Max has no method that lists the chats of a bot, so with `BotConfig.chatStore` set
+  the bot remembers them from `bot_added`, `bot_removed`, `bot_started`, `bot_stopped`,
+  `chat_title_changed` and the first message from an unknown chat, and `MaxBot.chats(vararg types)`
+  (`chatsBlocking`) lists the active ones as `KnownChat`. Records keep the time of their event, so a
+  repeated or late delivery never undoes a newer one. Stores: `InMemoryChatStore`,
+  `BlockingChatStore` for Java, `JdbcChatStore` in `maxapi-jdbc` and `RedisChatStore` in
+  `maxapi-redis`. These update types are requested even without handlers for them.
+- Broadcasts: `Broadcaster.send(id, targets, message)` (`sendBlocking`) sends a message, the same or
+  per target, to users and chats (`BroadcastTarget`) at up to 25 requests per second by default,
+  waits for `Retry-After` on 429, records 403 and 404 as unavailable without retrying, and returns a
+  `BroadcastReport`. The outcome of every target goes to a `BroadcastStore` right away, so running the
+  broadcast again with the same id continues where it stopped. Stores: `InMemoryBroadcastStore`,
+  `BlockingBroadcastStore`, `JdbcBroadcastStore` and `RedisBroadcastStore` (with an optional TTL).
+- Spring Boot starter: `max.bot.storage=jdbc|redis` also creates the chat store (`<prefix>chat`,
+  `<prefix>chats`) and the broadcast store (`<prefix>broadcast`, `<prefix>broadcast:`); a `ChatStore`
+  bean goes to the bot, and a `Broadcaster` bean uses the `BroadcastStore` bean (in memory without one).
+- `maxapi-test`: `TestUpdates.botAdded`, `botRemoved`, `botStopped` and `chatTitleChanged`.
 
 ### Changed
 

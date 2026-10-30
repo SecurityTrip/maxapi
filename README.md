@@ -44,6 +44,11 @@ bot.startPolling()
   - [Middleware](#middleware)
   - [Роутеры](#роутеры)
   - [Состояние диалога](#состояние-диалога)
+  - [Сцены и мастера](#сцены-и-мастера)
+  - [Клавиатуры: страницы и подтверждение](#клавиатуры-страницы-и-подтверждение)
+  - [Переводы](#переводы)
+  - [Реестр чатов](#реестр-чатов)
+  - [Рассылки](#рассылки)
   - [Обработка ошибок](#обработка-ошибок)
   - [Long polling](#long-polling)
   - [Вебхуки](#вебхуки)
@@ -90,6 +95,9 @@ bot.startPolling()
 - Kotlin DSL для сообщений и клавиатур.
 - Строительные блоки бота: комбинируемые фильтры, middleware, роутеры для модулей, состояния
   диалогов со сменным хранилищем, типизированные payload кнопок, меню команд из обработчиков.
+- Инструменты для ботов: сцены-мастера с проверкой ответов, шагом назад и отменой; постраничные
+  клавиатуры и «Да / Нет»; переводы по локали пользователя; реестр чатов бота; рассылки в пределах
+  лимитов Max, которые продолжаются после перезапуска.
 - Загрузка файлов одним вызовом; токен бота никогда не отправляется на хост загрузки.
 - Автоматические повторы с экспоненциальной задержкой при 429/503, а для идемпотентных запросов —
   и при 502/504 и сетевых ошибках; повторная отправка, пока вложение ещё обрабатывается
@@ -567,6 +575,189 @@ val bot = MaxBot(token, BotConfig(stateStorage = RedisStateStorage(redis)))
 Бот читает состояние один раз на событие до запуска фильтров, поэтому фильтры видят его без
 обращения к хранилищу.
 
+### Сцены и мастера
+
+`Scene` описывает мастер поверх состояния диалога: вопросы задаются по очереди, ответы проверяются,
+пользователь может вернуться на шаг назад или отменить. Сцена работает с любым `StateStorage`:
+состояние диалога называется `scene:<сцена>:<шаг>`, а ответы лежат в `DialogState.data` под именами
+шагов.
+
+```kotlin
+val survey = scene("survey") {
+    enterOnCommand("survey", "Пройти опрос")       // вход по команде (и пункт меню)
+    enterOnCallback("survey")                       // и по кнопке с этим payload
+    step("name") { prompt("Как вас зовут?") }
+    step("age") {
+        prompt { reply("Сколько вам лет, ${answers["name"]}?") }
+        validate("Отправьте число от 1 до 120") { it.toIntOrNull() in 1..120 }
+    }
+    step("rating") {
+        prompt {
+            reply {
+                text("Как вам бот?")
+                keyboard {
+                    row((1..5).map { option("$it ⭐", "$it") })
+                    row(backButton("◀ Назад"), cancelButton("Отмена"))
+                }
+            }
+        }
+    }
+    onFinish { reply("Спасибо, ${answers["name"]}! Оценка: ${answers["rating"]}") }
+    onCancel { reply("Опрос отменён") }
+}
+bot.include(survey)          // до обработчиков вроде onMessage { }, иначе они заберут ответы
+```
+
+```java
+Scene survey = Scene.builder("survey")
+        .enterOnCommand("survey")
+        .step("name", step -> step.prompt("Как вас зовут?"))
+        .step("age", step -> step
+                .prompt(ctx -> ctx.replyBlocking("Сколько вам лет?"))
+                .validate("Отправьте число", answer -> answer.matches("\\d+")))
+        .onFinish(ctx -> ctx.replyBlocking("Спасибо, " + ctx.getAnswers().get("name")))
+        .build();
+bot.include(survey);
+```
+
+- Ответ — текст сообщения или значение кнопки `option(text, value)` текущего шага. Нажатия кнопок
+  прошлых шагов не принимаются. `input { ctx -> ... }` читает другие ответы, например телефон из
+  присланного контакта; `null` считается неверным ответом.
+- Неверный ответ получает текст ошибки из `validate` (или реакцию из `onInvalid`, например
+  переведённую) и вопрос заново; `repeatPrompt(false)` отключает повтор вопроса.
+- `/back` или `backButton` возвращают к предыдущему шагу, `/cancel` или `cancelButton` очищают
+  состояние и вызывают `onCancel`. Команды меняются через `backCommand(...)` и `cancelCommand(...)`,
+  `null` их отключает. Другие команды сцена не считает ответами, их получают остальные обработчики.
+- `survey.enter(ctx, mapOf("order" to "42"))` входит в сцену из любого обработчика с начальными
+  данными; `isActive(ctx)`, `currentStep(ctx)` и `filter()` говорят, где диалог.
+- В `prompt`, `onFinish`, `onCancel` и `onInvalid` приходит `SceneContext`: это обычный контекст
+  обработчика (`reply`, `locale`, `client`, ...) плюс `answers`, `step` и `answer`.
+- Нажатия кнопок сцены подтверждаются уведомлением с текстом кнопки.
+
+Пример [QuestionnaireBot](examples/src/main/kotlin/ru/securitytrip/maxapi/examples/QuestionnaireBot.kt)
+— анкета на сцене с переводами, а её тест показывает, как проверять сцены через `BotTester`.
+
+### Клавиатуры: страницы и подтверждение
+
+`Paginator` показывает длинный список по страницам: кнопки элементов текущей страницы и ряд
+`◀ 2/7 ▶`, payload которого упакован через `CallbackData` вместе с номером страницы и необязательным
+аргументом (например, категорией):
+
+```kotlin
+val catalog = Paginator("catalog", pageSize = 5, columns = 1)
+
+fun page(number: Int) = message {
+    text("Товары")
+    attach(catalog.keyboard(products, number) { Buttons.callback(it.name, "product:${it.id}") })
+}
+
+bot.onCommand("catalog") { reply(page(0)) }
+bot.onCallback(catalog.filter()) { editMessage(page(catalog.page(this))) }
+```
+
+`Confirmation` — вопрос «Да / Нет»:
+
+```kotlin
+val delete = Confirmation("delete")
+
+bot.onCommand("delete") { reply { text("Удалить заказ 42?"); attach(delete.keyboard("42", "Да", "Нет")) } }
+bot.onCallback(delete.yes()) { orders.delete(delete.arg(this)); editMessage(message { text("Удалено") }) }
+bot.onCallback(delete.no()) { editMessage(message { text("Оставили") }) }
+```
+
+Раскладка учитывает лимиты Max: не больше 7 кнопок в ряду и 3 в ряду с кнопкой-ссылкой или другой
+широкой кнопкой, не больше 30 рядов (и тем самым 210 кнопок). `Paginator`, страница которого не
+помещается, отклоняется с `IllegalArgumentException` при создании, а страница из широких кнопок,
+которая не влезает, — при сборке. `rows(...)` и `buttons(...)` возвращают ряды для своей клавиатуры.
+
+### Переводы
+
+`Translations` выбирает текст по `ctx.locale` пользователя, а для незнакомых языков берёт запасной.
+Тексты задаются картой или файлами `ResourceBundle`, без новых зависимостей:
+
+```kotlin
+val texts = Translations.of(
+    fallback = "ru",
+    texts = mapOf(
+        "ru" to mapOf("hello" to "Привет, {0}!", "apples.one" to "{0} яблоко", "apples.few" to "{0} яблока", "apples.many" to "{0} яблок"),
+        "en" to mapOf("hello" to "Hello, {0}!", "apples.one" to "{0} apple", "apples.other" to "{0} apples"),
+    ),
+)
+bot.onCommand("start") { reply(texts.text(this, "hello", user?.firstName)) }
+texts.plural("ru", "apples", 22)            // "22 яблока"
+```
+
+```java
+// messages_ru.properties и messages_en.properties в classpath, в UTF-8
+Translations texts = Translations.fromBundles("messages", "ru", "en");
+ctx.replyBlocking(texts.text(ctx, "hello", ctx.getUser().getFirstName()));
+```
+
+Текст ищется для полной локали (`pt-BR`), затем для языка (`pt`), затем для запасного языка;
+отсутствующий ключ возвращается как есть. `{0}`, `{1}` заменяются аргументами, `{name}` — значениями
+карты. `plural` выбирает форму числа по ключам `<ключ>.one`, `.few`, `.many` (русский, украинский,
+белорусский) или `.one`, `.other` (остальные языки), а `{0}` в ней — само число.
+
+### Реестр чатов
+
+В Max нет метода, который перечисляет чаты бота (`GET /chats` удалён в июне 2026), поэтому бот сам
+запоминает их по событиям. Включите хранилище чатов в `BotConfig.chatStore`:
+
+```kotlin
+val bot = MaxBot(token, BotConfig(chatStore = JdbcChatStore(dataSource).createTable()))
+
+val groups = bot.chats(ChatType.CHAT, ChatType.CHANNEL)        // группы и каналы
+val dialogs = bot.chats(ChatType.DIALOG)                       // пользователи, запустившие бота
+```
+
+```java
+List<KnownChat> chats = bot.chatsBlocking();
+```
+
+- `bot_added` добавляет группу или канал (название берётся через `getChat`), `bot_started` — диалог
+  с пользователем, `bot_removed` и `bot_stopped` помечают чат неактивным, `chat_title_changed`
+  обновляет название. Чат, о котором бот ещё не знает, запоминается и по первому сообщению из него,
+  так что чаты, где бот был до подключения реестра, тоже попадают в список.
+- Эти типы событий запрашиваются у polling и вебхука, даже если обработчиков для них нет.
+- Событие может прийти дважды или с опозданием: у записи хранится время события, и более старое
+  событие никогда не заменяет более новое. Удалённый чат остаётся неактивной записью, чтобы поздняя
+  повторная доставка `bot_added` не вернула его.
+- Хранилища: `InMemoryChatStore`, `JdbcChatStore`, `RedisChatStore`; своё — реализация `ChatStore`
+  или наследник `BlockingChatStore`. Со стартером его создаёт `max.bot.storage=jdbc|redis`.
+
+### Рассылки
+
+`Broadcaster` отправляет сообщение списку пользователей или чатов в пределах лимитов Max и хранит
+прогресс, поэтому прерванная рассылка продолжается после перезапуска:
+
+```kotlin
+val broadcaster = Broadcaster(bot.client, JdbcBroadcastStore(dataSource).createTable())
+val targets = BroadcastTarget.users(subscriberIds) + bot.chats(ChatType.CHAT).map(BroadcastTarget::of)
+
+val report = broadcaster.send("sale-2026-11", targets) { target -> message { text("Скидки до пятницы!") } }
+println("Отправлено ${report.sent}, недоступны ${report.unavailable.size}, ошибки ${report.failed.size}")
+```
+
+```java
+BroadcastReport report = broadcaster.sendBlocking("sale-2026-11", targets,
+        NewMessageBody.builder().text("Скидки до пятницы!").build());
+```
+
+- Сообщения уходят не быстрее `requestsPerSecond` (25 по умолчанию: Max разрешает боту 30 запросов в
+  секунду, остаток — обработчикам) и не больше `parallelism` одновременно.
+- На 429 вся рассылка ждёт `Retry-After` (секунду, если заголовка нет) и повторяет сообщение, всего
+  до `maxAttempts` раз.
+- `ForbiddenException` (пользователь остановил бота, бота нет в чате) и 404 записываются как
+  `UNAVAILABLE` и не повторяются; другие ошибки — как `FAILED`.
+- Результат по каждому адресату сразу пишется в `BroadcastStore`. Повторный `send` с тем же id
+  пропускает отправленных и недоступных и пробует снова ошибочных. При падении между отправкой и
+  записью адресат получит сообщение ещё раз.
+- `BroadcastReport` — итоги запуска: `total`, `skipped` (обработаны раньше), `sent`, `unavailable`,
+  `failed` с ошибками, `duration` и `isComplete`. Полный прогресс — `store.outcomes(id)`, а
+  `store.delete(id)` удаляет его.
+- Хранилища: `InMemoryBroadcastStore`, `JdbcBroadcastStore`, `RedisBroadcastStore` (с необязательным
+  TTL). Стартер создаёт бин `Broadcaster` с хранилищем из `max.bot.storage`.
+
 ### Обработка ошибок
 
 Исключения из обработчиков никогда не останавливают бота. Они передаются в обработчик ошибок вместе
@@ -987,8 +1178,9 @@ MaxBotConfigurer handlers() {
 
 `max.bot.rate-limit=max` включает `RateLimit.MAX` (см. [Надёжность](#надёжность-и-мониторинг)); по
 умолчанию ограничения нет, как и в предыдущих версиях. Бины `MaxEventListener` (и `MaxMetrics`, если
-подключён `maxapi-micrometer` и есть `MeterRegistry`) получают события клиента и бота. Бины `StateStorage`, `MarkerStore` и `UpdateDeduplicator`
-используются ботом, см. [Хранилища](#хранилища).
+подключён `maxapi-micrometer` и есть `MeterRegistry`) получают события клиента и бота. Бины `StateStorage`, `MarkerStore`,
+`UpdateDeduplicator` и `ChatStore` используются ботом, а бин `Broadcaster` отправляет рассылки с
+прогрессом в бине `BroadcastStore`, см. [Хранилища](#хранилища).
 
 Endpoint вебхука отвечает 200 на принятые события, 401 на неверный секрет, 400 на тело, которое не
 является событием, и 503, когда бот закрыт. Чтобы заменить бин по умолчанию, объявите свой
@@ -1200,7 +1392,10 @@ try (BotTester tester = new BotTester()) {
   `test_bot`, остальные методы — `{"success":true}`. `stub("GET", "/chats/42", json)` задаёт ответ
   для вызовов, результат которых читает обработчик, а со статусом вроде 404 — для проверки обработки
   ошибок.
-- `TestUpdates` собирает другие события: `TestUpdates.message("hi", chatType = ChatType.CHAT)`.
+- `TestUpdates` собирает другие события: `TestUpdates.message("hi", chatType = ChatType.CHAT)`,
+  а для реестра чатов — `botAdded`, `botRemoved`, `botStopped` и `chatTitleChanged`.
+- Сцены, клавиатуры и рассылки проверяются так же: `tester.pressButton(payload)` нажимает кнопку
+  сцены или страницы, а `Broadcaster(tester.client)` отправляет рассылку в записываемый клиент.
 
 ## Модели
 
@@ -1440,15 +1635,17 @@ val bot = MaxBot(client, BotConfig(eventListener = metrics))
 
 По умолчанию состояния диалогов хранятся в памяти: они теряются при перезапуске, а экземпляры бота
 не видят состояний друг друга. `maxapi-jdbc` и `maxapi-redis` хранят состояния диалогов, marker
-polling и ключи обработанных событий в SQL-базе или в Redis. Так они переживают перезапуск, общие
-для всех экземпляров, а повторная доставка события отбрасывается, даже если первую получил другой
-экземпляр.
+polling, ключи обработанных событий, [чаты бота](#реестр-чатов) и прогресс [рассылок](#рассылки) в
+SQL-базе или в Redis. Так они переживают перезапуск, общие для всех экземпляров, а повторная
+доставка события отбрасывается, даже если первую получил другой экземпляр.
 
 | Что                         | JDBC (любая база)          | Redis (Lettuce)            |
 |-----------------------------|----------------------------|----------------------------|
 | состояния диалогов          | `JdbcStateStorage`         | `RedisStateStorage`        |
 | marker polling              | `JdbcMarkerStore`          | `RedisMarkerStore`         |
 | повторные события (9 ч)     | `JdbcUpdateDeduplicator`   | `RedisUpdateDeduplicator`  |
+| чаты бота                   | `JdbcChatStore`            | `RedisChatStore`           |
+| прогресс рассылок           | `JdbcBroadcastStore`       | `RedisBroadcastStore`      |
 
 ```kotlin
 // JDBC: любой DataSource; createTable() создаёт недостающую таблицу стандартным SQL
@@ -1458,10 +1655,12 @@ val bot = MaxBot(
         stateStorage = JdbcStateStorage(dataSource).createTable(),
         markerStore = JdbcMarkerStore(dataSource).createTable(),
         deduplicator = JdbcUpdateDeduplicator(dataSource).createTable(),
+        chatStore = JdbcChatStore(dataSource).createTable(),
     ),
 )
+val broadcaster = Broadcaster(bot.client, JdbcBroadcastStore(dataSource).createTable())
 
-// Redis: одного соединения хватает на все три
+// Redis: одного соединения хватает на все хранилища
 val redis = RedisClient.create("redis://localhost:6379").connect()
 val bot = MaxBot(
     token,
@@ -1469,12 +1668,14 @@ val bot = MaxBot(
         stateStorage = RedisStateStorage(redis, ttl = Duration.ofDays(7)),
         markerStore = RedisMarkerStore(redis),
         deduplicator = RedisUpdateDeduplicator(redis),
+        chatStore = RedisChatStore(redis),
     ),
 )
 ```
 
 JDBC-хранилища используют только стандартный SQL и проверены на H2 и PostgreSQL. По умолчанию
-таблицы называются `max_dialog_state`, `max_bot_marker` и `max_seen_update`; их `CREATE TABLE`
+таблицы называются `max_dialog_state`, `max_bot_marker`, `max_seen_update`, `max_chat` и
+`max_broadcast`; их `CREATE TABLE`
 для миграций есть в KDoc каждого класса. Ключи Redis начинаются с `max:`. Если одну базу делят
 несколько ботов, передайте другие имена таблиц, префиксы ключей или `botId`.
 `JdbcStateStorage.deleteOlderThan(age)` и `ttl` у `RedisStateStorage` удаляют брошенные диалоги.
@@ -1486,7 +1687,7 @@ max:
   bot:
     storage: jdbc              # memory (по умолчанию), jdbc или redis
     jdbc:
-      table-prefix: max_       # max_dialog_state, max_bot_marker, max_seen_update
+      table-prefix: max_       # max_dialog_state, max_bot_marker, max_seen_update, max_chat, max_broadcast
       create-tables: true      # false, если таблицы создают миграции
     redis:
       url: redis://localhost:6379
@@ -1494,8 +1695,10 @@ max:
       state-ttl: 7d            # по умолчанию состояния хранятся, пока их не очистят
 ```
 
-`jdbc` использует `DataSource` приложения. Свой бин `StateStorage`, `MarkerStore` или
-`UpdateDeduplicator` заменяет соответствующее хранилище, в том числе без `max.bot.storage`.
+`jdbc` использует `DataSource` приложения. С `jdbc` и `redis` бот ещё и ведёт реестр чатов, а бин
+`Broadcaster` хранит прогресс рассылок там же. Свой бин `StateStorage`, `MarkerStore`,
+`UpdateDeduplicator`, `ChatStore` или `BroadcastStore` заменяет соответствующее хранилище, в том
+числе без `max.bot.storage`: например, бин `InMemoryChatStore` включает реестр чатов в памяти.
 
 ## Потоки и жизненный цикл
 
@@ -1523,7 +1726,8 @@ maxapi/                        библиотека
     client/   MaxClient, настройки, исключения, JSON, загрузка файлов, HTTP-транспорт
     java/     фасады MaxBlockingClient и MaxAsyncClient
     dsl/      билдеры сообщений и клавиатур, Buttons
-    bot/      MaxBot, роутеры, фильтры, контексты, состояние диалога, long polling, WebhookHandler
+    bot/      MaxBot, роутеры, фильтры, контексты, состояние диалога, long polling, WebhookHandler,
+              сцены, клавиатуры, переводы, реестр чатов, рассылки
     webapp/   мини-приложения: проверка initData, телефона и контакта, диплинки
   src/test/   тесты (Kotlin и Java) на имитации HTTP-сервера
   api/        дамп публичного API для проверки бинарной совместимости

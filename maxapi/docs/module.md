@@ -9,7 +9,8 @@ It has two layers that can be used separately:
   [MaxBlockingClient][ru.securitytrip.maxapi.java.MaxBlockingClient] and the `CompletableFuture`-based
   [MaxAsyncClient][ru.securitytrip.maxapi.java.MaxAsyncClient];
 - the bot framework, [MaxBot][ru.securitytrip.maxapi.bot.MaxBot]: update handlers, filters, middleware, routers,
-  dialog states, long polling and a webhook handler.
+  dialog states, long polling and a webhook handler, plus tools for common bot tasks: wizards, paged keyboards,
+  translations, the list of the bot's chats and broadcasts.
 
 ```kotlin
 val bot = MaxBot(System.getenv("MAX_BOT_TOKEN"))
@@ -151,6 +152,12 @@ for Java ([MessageBuilder][ru.securitytrip.maxapi.dsl.MessageBuilder], [Keyboard
 The bot framework: [MaxBot][ru.securitytrip.maxapi.bot.MaxBot] routes updates to handlers, receives them by long polling
 or from a webhook through [WebhookHandler][ru.securitytrip.maxapi.bot.WebhookHandler], and passes each handler a context
 with shortcuts to answer ([UpdateContext][ru.securitytrip.maxapi.bot.UpdateContext] and its subclasses).
+
+Tools built on it: [Scene][ru.securitytrip.maxapi.bot.Scene] (wizards over the dialog state),
+[Paginator][ru.securitytrip.maxapi.bot.Paginator] and [Confirmation][ru.securitytrip.maxapi.bot.Confirmation]
+(keyboards), [Translations][ru.securitytrip.maxapi.bot.Translations] (texts by the user's locale),
+[ChatStore][ru.securitytrip.maxapi.bot.ChatStore] (the chats of the bot, read with `MaxBot.chats`) and
+[Broadcaster][ru.securitytrip.maxapi.bot.Broadcaster] (messages to many users or chats).
 
 # Package ru.securitytrip.maxapi.webapp
 
