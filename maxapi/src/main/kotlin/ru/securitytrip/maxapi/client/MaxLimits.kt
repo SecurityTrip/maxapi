@@ -53,6 +53,9 @@ public object MaxLimits {
     /** Characters in the payload of an `open_app` button, which may hold only `A-Z`, `a-z`, `0-9`, `_` and `-`. */
     public const val OPEN_APP_PAYLOAD_LENGTH: Int = 512
 
+    /** Characters in the payload of a link that starts the bot, `https://max.ru/<botName>?start=<payload>`. */
+    public const val BOT_START_PAYLOAD_LENGTH: Int = 128
+
     /** Commands in the bot menu. */
     public const val COMMANDS: Int = 32
 
@@ -64,7 +67,32 @@ public object MaxLimits {
 
     private val OPEN_APP_PAYLOAD = Regex("[A-Za-z0-9_-]*")
 
+    /**
+     * `true` if [payload] fits a mini app: an `open_app` button or a `startapp` link
+     * ([MaxLinks.miniApp][ru.securitytrip.maxapi.webapp.MaxLinks.miniApp]). Max drops other payloads silently.
+     */
+    @JvmStatic
+    public fun isValidOpenAppPayload(payload: String): Boolean =
+        payload.length <= OPEN_APP_PAYLOAD_LENGTH && OPEN_APP_PAYLOAD.matches(payload)
+
+    /**
+     * Throws [IllegalArgumentException] that says what is wrong if [payload] is not [valid][isValidOpenAppPayload].
+     * [Buttons.openApp][ru.securitytrip.maxapi.dsl.Buttons.openApp] and sending a message with an
+     * `open_app` button check it too.
+     */
+    @JvmStatic
+    public fun checkOpenAppPayload(payload: String) {
+        checkOpenAppPayload(payload, "Mini app payload")
+    }
+
     // ------------------------------------------------------------ checks
+
+    private fun checkOpenAppPayload(payload: String, what: String) {
+        require(payload.length <= OPEN_APP_PAYLOAD_LENGTH) {
+            "$what is ${payload.length} characters long; Max allows at most $OPEN_APP_PAYLOAD_LENGTH"
+        }
+        require(OPEN_APP_PAYLOAD.matches(payload)) { "$what may hold only A-Z, a-z, 0-9, _ and -: \"${payload.short()}\"" }
+    }
 
     internal fun check(body: NewMessageBody) {
         checkText(body.text, "Message")
@@ -132,14 +160,7 @@ public object MaxLimits {
             is LinkButton -> require(button.url.length <= LINK_URL_LENGTH) {
                 "URL of button \"${button.text}\" is ${button.url.length} characters long; Max allows at most $LINK_URL_LENGTH"
             }
-            is OpenAppButton -> button.payload?.let { payload ->
-                require(payload.length <= OPEN_APP_PAYLOAD_LENGTH) {
-                    "Payload of button \"${button.text}\" is ${payload.length} characters long; Max allows at most $OPEN_APP_PAYLOAD_LENGTH"
-                }
-                require(OPEN_APP_PAYLOAD.matches(payload)) {
-                    "Payload of button \"${button.text}\" may hold only A-Z, a-z, 0-9, _ and -: \"${payload.short()}\""
-                }
-            }
+            is OpenAppButton -> button.payload?.let { checkOpenAppPayload(it, "Payload of button \"${button.text}\"") }
             else -> Unit
         }
     }

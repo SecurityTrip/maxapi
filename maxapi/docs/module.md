@@ -151,3 +151,12 @@ for Java ([MessageBuilder][ru.securitytrip.maxapi.dsl.MessageBuilder], [Keyboard
 The bot framework: [MaxBot][ru.securitytrip.maxapi.bot.MaxBot] routes updates to handlers, receives them by long polling
 or from a webhook through [WebhookHandler][ru.securitytrip.maxapi.bot.WebhookHandler], and passes each handler a context
 with shortcuts to answer ([UpdateContext][ru.securitytrip.maxapi.bot.UpdateContext] and its subclasses).
+
+# Package ru.securitytrip.maxapi.webapp
+
+Backend side of mini apps and deep links. [WebAppData.validate][ru.securitytrip.maxapi.webapp.WebAppData.Companion.validate]
+checks the `initData` a mini app sends and returns its user, chat and other fields;
+[WebAppPhone][ru.securitytrip.maxapi.webapp.WebAppPhone] checks the phone number from `requestContact()`, and
+[ContactAttachment.verify][ru.securitytrip.maxapi.model.attachment.ContactAttachment.verify] the contact shared with a
+`request_contact` button. [MaxLinks][ru.securitytrip.maxapi.webapp.MaxLinks] builds links that start the bot or open
+its mini app.

@@ -29,6 +29,8 @@ coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", ve
 spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
 spring-boot-test = { module = "org.springframework.boot:spring-boot-test", version.ref = "spring-boot" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+# Jackson 3 Kotlin support for Spring MVC applications; the version comes from the Spring Boot BOM.
+jackson3-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc", version.ref = "spring-boot" }
 spring-webmvc = { module = "org.springframework:spring-webmvc" }
 spring-test = { module = "org.springframework:spring-test" }

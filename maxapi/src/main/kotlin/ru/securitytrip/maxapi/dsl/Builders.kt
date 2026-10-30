@@ -1,5 +1,6 @@
 package ru.securitytrip.maxapi.dsl
 
+import ru.securitytrip.maxapi.client.MaxLimits
 import ru.securitytrip.maxapi.model.attachment.AttachmentRequest
 import ru.securitytrip.maxapi.model.attachment.InlineKeyboardAttachmentRequest
 import ru.securitytrip.maxapi.model.keyboard.Button
@@ -61,11 +62,14 @@ public object Buttons {
     /**
      * An [OpenAppButton] that opens the mini app of the bot [webApp].
      * @param payload data passed to the mini app, up to 512 characters of `[A-Za-z0-9_-]`.
+     * @throws IllegalArgumentException if [payload] breaks these limits, which Max would drop it for.
      */
     @JvmStatic
     @JvmOverloads
-    public fun openApp(text: String, webApp: String, payload: String? = null, contactId: Long? = null): OpenAppButton =
-        OpenAppButton(text, webApp, payload, contactId)
+    public fun openApp(text: String, webApp: String, payload: String? = null, contactId: Long? = null): OpenAppButton {
+        payload?.let(MaxLimits::checkOpenAppPayload)
+        return OpenAppButton(text, webApp, payload, contactId)
+    }
 
     /** A [ClipboardButton] that copies [payload] to the clipboard. */
     @JvmStatic
