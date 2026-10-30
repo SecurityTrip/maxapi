@@ -12,6 +12,50 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+The current rules of the Max platform: its limits, its rate limits and its webhook upkeep.
+
+### Added
+
+- `MaxLimits` holds the limits of Max, and `MaxClient` checks them before sending: text of a message
+  or a comment up to 4000 characters; keyboards of up to 30 rows, 1 to 210 buttons and 7 buttons in
+  a row (3 in a row with a `link`, `open_app`, `request_geo_location` or `request_contact` button,
+  as the live API enforces it); button text
+  of 1–128 characters, `callback` and `clipboard` payloads up to 1024, `link` URLs up to 2048,
+  `open_app` payloads up to 512 of `[A-Za-z0-9_-]`; up to 32 bot commands with names of 1–64 and
+  descriptions of 1–128 characters. `sendMessage`, `editMessage`, `answerOnCallback`, `sendComment`,
+  `editComment`, `editMyCommands` and `MaxBot.syncCommands` throw `IllegalArgumentException` with
+  the broken limit instead of making a request. Lengths are counted in UTF-16 code units, as the
+  server counts them (checked against the live API: an emoji takes 2 characters).
+- `MaxClient.sendLongMessage` (with `sendLongMessageToChat` and `sendLongMessageToUser`, in the
+  blocking and async facades too) and `UpdateContext.replyLong` (`replyLongBlocking`) send text
+  longer than 4000 characters as several messages; the keyboard and other attachments go with the
+  last one. `TextSplitter` does the splitting: between paragraphs, then lines, then words, never
+  inside a surrogate pair, and with Markdown and HTML markup closed and opened again at every cut.
+- `RateLimit.MAX`: the limits of Max, 30 requests per second and 2 answers to button presses per
+  second in a chat. `RateLimit.withPerChatAnswers` sets the per-chat limit of answers in any
+  `RateLimit`; `MaxBot` tells the client the chat of every press it dispatches, because
+  `POST /answers` carries only the `callback_id`.
+- `MaxBot.ensureWebhook` (and `ensureWebhookBlocking`) subscribes to a webhook again if Max dropped
+  the subscription after 8 hours without successful deliveries, and reports it to the new
+  `MaxEventListener.onWebhookResubscribe`. `maxapi-micrometer` counts it in
+  `max.bot.webhook.resubscriptions`.
+- Spring Boot starter: `max.bot.rate-limit=none|max` (default `none`) sets `RateLimit.MAX`, and in
+  webhook mode with `max.bot.webhook.url` the bot checks its subscription every
+  `max.bot.webhook.check-interval` (default 10 minutes, `0` turns it off) and subscribes again when
+  it is gone.
+
+### Changed
+
+- Messages, comments, answers and commands that break the limits of Max now fail with
+  `IllegalArgumentException` before the request instead of `MaxApiException` (400) from the server.
+- With a per-chat limit set (`RateLimit.perChatRequestsPerSecond`), answers to button presses
+  dispatched by `MaxBot` count towards the limit of their chat.
+
+### Deprecated
+
+- `MaxClient.addMembers` and its blocking and async versions: Max restricted
+  `POST /chats/{chatId}/members` on 2026-09-09 and removed it on 2026-09-30. There is no replacement.
+
 ## [1.3.0] - 2026-10-26
 
 Storage for production: dialog states, the polling marker and seen updates in SQL or Redis.

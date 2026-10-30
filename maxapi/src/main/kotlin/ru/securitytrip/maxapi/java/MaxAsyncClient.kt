@@ -94,8 +94,10 @@ public class MaxAsyncClient internal constructor(public val client: MaxClient) {
         count: Int? = null,
     ): CompletableFuture<ChatMembersList> = async { client.getMembers(chatId, userIds, marker, count) }
 
+    /** Not served by Max any more; see [MaxClient.addMembers]. */
+    @Deprecated("Max removed POST /chats/{chatId}/members (restricted on 2026-09-09, removed on 2026-09-30), so the server rejects this call. The Bot API has no replacement.")
     public fun addMembers(chatId: Long, userIds: List<Long>): CompletableFuture<ModifyMembersResult> =
-        async { client.addMembers(chatId, userIds) }
+        async { @Suppress("DEPRECATION") client.addMembers(chatId, userIds) }
 
     @JvmOverloads
     public fun removeMember(chatId: Long, userId: Long, block: Boolean? = null): CompletableFuture<SimpleQueryResult> =
@@ -161,6 +163,26 @@ public class MaxAsyncClient internal constructor(public val client: MaxClient) {
 
     public fun sendMessageToUser(userId: Long, text: String): CompletableFuture<Message> =
         async { client.sendMessageToUser(userId, text) }
+
+    @JvmOverloads
+    public fun sendLongMessage(
+        body: NewMessageBody,
+        userId: Long? = null,
+        chatId: Long? = null,
+        disableLinkPreview: Boolean? = null,
+    ): CompletableFuture<List<Message>> = async { client.sendLongMessage(body, userId, chatId, disableLinkPreview) }
+
+    public fun sendLongMessageToChat(chatId: Long, body: NewMessageBody): CompletableFuture<List<Message>> =
+        async { client.sendLongMessageToChat(chatId, body) }
+
+    public fun sendLongMessageToChat(chatId: Long, text: String): CompletableFuture<List<Message>> =
+        async { client.sendLongMessageToChat(chatId, text) }
+
+    public fun sendLongMessageToUser(userId: Long, body: NewMessageBody): CompletableFuture<List<Message>> =
+        async { client.sendLongMessageToUser(userId, body) }
+
+    public fun sendLongMessageToUser(userId: Long, text: String): CompletableFuture<List<Message>> =
+        async { client.sendLongMessageToUser(userId, text) }
 
     public fun editMessage(messageId: String, body: NewMessageBody): CompletableFuture<SimpleQueryResult> =
         async { client.editMessage(messageId, body) }

@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import ru.securitytrip.maxapi.client.MaxJson
 import ru.securitytrip.maxapi.events.RequestEvent
 import ru.securitytrip.maxapi.events.UpdateEvent
+import ru.securitytrip.maxapi.events.WebhookResubscribeEvent
 import java.io.IOException
 import java.time.Duration
 import kotlin.test.Test
@@ -43,5 +44,15 @@ class MaxMetricsTest {
         assertEquals(1, count("type", "bot_started", "handled", "true", "outcome", "SUCCESS", "exception", "none"))
         assertEquals(1, count("handled", "false"))
         assertEquals(1, count("outcome", "ERROR", "exception", "IllegalStateException"))
+    }
+
+    @Test
+    fun `renewed webhook subscriptions are counted`() {
+        metrics.onWebhookResubscribe(WebhookResubscribeEvent("https://bot/hook", null))
+        metrics.onWebhookResubscribe(WebhookResubscribeEvent("https://bot/hook", null))
+        metrics.onWebhookResubscribe(WebhookResubscribeEvent("https://bot/hook", IOException("down")))
+        fun count(vararg tags: String) = registry.get(MaxMetrics.RESUBSCRIPTIONS).tags(*tags).counter().count()
+        assertEquals(2.0, count("outcome", "SUCCESS", "exception", "none"))
+        assertEquals(1.0, count("outcome", "ERROR", "exception", "IOException"))
     }
 }

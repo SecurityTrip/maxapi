@@ -2,6 +2,7 @@ package ru.securitytrip.maxapi.spring
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import ru.securitytrip.maxapi.client.MaxClientConfig
+import ru.securitytrip.maxapi.client.RateLimit
 import java.time.Duration
 
 /**
@@ -13,10 +14,12 @@ import java.time.Duration
  *     token: ${MAX_BOT_TOKEN}
  *     mode: webhook            # polling (default), webhook or none
  *     sync-commands: true
+ *     rate-limit: max          # none (default) or max
  *     webhook:
  *       path: /max/webhook
  *       url: https://bot.example.com/max/webhook
  *       secret: ${MAX_WEBHOOK_SECRET}
+ *       check-interval: 10m    # subscribe again if Max dropped the subscription
  * ```
  */
 @ConfigurationProperties("max.bot")
@@ -32,6 +35,13 @@ public class MaxBotProperties {
      * issued under and which JDKs do not include. Turn it off only if the JVM already trusts that CA.
      */
     public var trustRussianRootCa: Boolean = true
+
+    /**
+     * Client-side rate limit: [RateLimitPreset.MAX] keeps to the limits of Max (30 requests per second,
+     * 2 answers to button presses per second in a chat); [RateLimitPreset.NONE] (default) does not limit.
+     * A [MaxClientConfigCustomizer] can set any other `RateLimit`.
+     */
+    public var rateLimit: RateLimitPreset = RateLimitPreset.NONE
 
     /** How the bot receives updates. */
     public var mode: Mode = Mode.POLLING
@@ -54,6 +64,18 @@ public class MaxBotProperties {
 
     /** Settings of [Storage.REDIS]. */
     public val redis: Redis = Redis()
+
+    /** Client-side rate limits. */
+    public enum class RateLimitPreset(
+        /** The limit set on the client; `null` for none. */
+        public val limit: RateLimit?,
+    ) {
+        /** Requests go as fast as they come; the server's 429 answers are retried. */
+        NONE(null),
+
+        /** [RateLimit.MAX]: the limits of Max. */
+        MAX(RateLimit.MAX),
+    }
 
     /** Where the bot keeps its state. */
     public enum class Storage {
@@ -116,5 +138,12 @@ public class MaxBotProperties {
          * `false` (default) answers after the handler completes.
          */
         public var async: Boolean = false
+
+        /**
+         * How often to check that the subscription to [url] still exists, and to subscribe again if it
+         * does not: Max drops a subscription after 8 hours without successful deliveries. Used only
+         * when [url] is set; `0` turns the check off.
+         */
+        public var checkInterval: Duration = Duration.ofMinutes(10)
     }
 }

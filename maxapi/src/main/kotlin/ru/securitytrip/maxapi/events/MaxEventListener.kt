@@ -19,6 +19,12 @@ public interface MaxEventListener {
     /** The bot finished dispatching an update. */
     public fun onUpdate(event: UpdateEvent) {}
 
+    /**
+     * The bot found its webhook subscription missing and subscribed again
+     * (see `MaxBot.ensureWebhook`): Max drops a subscription after 8 hours without successful deliveries.
+     */
+    public fun onWebhookResubscribe(event: WebhookResubscribeEvent) {}
+
     public companion object {
         /** A listener that ignores all events. */
         @JvmField
@@ -32,6 +38,8 @@ public interface MaxEventListener {
             else -> object : MaxEventListener {
                 override fun onRequest(event: RequestEvent) = listeners.forEach { it.onRequest(event) }
                 override fun onUpdate(event: UpdateEvent) = listeners.forEach { it.onUpdate(event) }
+                override fun onWebhookResubscribe(event: WebhookResubscribeEvent) =
+                    listeners.forEach { it.onWebhookResubscribe(event) }
             }
         }
     }
@@ -69,6 +77,17 @@ public data class UpdateEvent(
     val update: Update,
     val handled: Boolean,
     val duration: Duration,
+    val error: Throwable?,
+)
+
+/**
+ * A webhook subscription that was found missing and renewed.
+ *
+ * @property url the URL the bot subscribed to again.
+ * @property error why subscribing again failed, or `null` if it succeeded.
+ */
+public data class WebhookResubscribeEvent(
+    val url: String,
     val error: Throwable?,
 )
 

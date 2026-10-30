@@ -149,6 +149,28 @@ public open class UpdateContext<U : Update> internal constructor(
     public suspend fun reply(block: MessageBuilder.() -> Unit): Message = reply(MessageBuilder().apply(block).build())
 
     /**
+     * Sends text of any length to [chatId], or to [user] if the chat is unknown: text longer than
+     * 4000 characters goes as several messages (see [MaxClient.sendLongMessage]).
+     */
+    public suspend fun replyLong(text: String): List<Message> = replyLong(NewMessageBody(text = text))
+
+    /**
+     * Sends a message of any length to [chatId], or to [user] if the chat is unknown. Text longer
+     * than 4000 characters goes as several messages; the keyboard and other attachments go with
+     * the last one (see [MaxClient.sendLongMessage]).
+     *
+     * @throws IllegalStateException if neither the chat nor the user is known for this update.
+     */
+    public suspend fun replyLong(body: NewMessageBody): List<Message> {
+        chatId?.let { return client.sendLongMessageToChat(it, body) }
+        user?.let { return client.sendLongMessageToUser(it.userId, body) }
+        throw IllegalStateException("Cannot reply to ${update.updateType}: neither chat nor user is known")
+    }
+
+    /** Sends a message of any length built with the DSL. See [replyLong]. */
+    public suspend fun replyLong(block: MessageBuilder.() -> Unit): List<Message> = replyLong(MessageBuilder().apply(block).build())
+
+    /**
      * Shows a bot activity in [chatId], e.g. [SenderAction.SENDING_PHOTO].
      * @throws IllegalArgumentException if the chat is unknown.
      */
@@ -163,6 +185,12 @@ public open class UpdateContext<U : Update> internal constructor(
 
     /** Blocking version of [reply] for Java handlers. */
     public fun replyBlocking(body: NewMessageBody): Message = runBlocking { reply(body) }
+
+    /** Blocking version of [replyLong] for Java handlers. */
+    public fun replyLongBlocking(text: String): List<Message> = runBlocking { replyLong(text) }
+
+    /** Blocking version of [replyLong] for Java handlers. */
+    public fun replyLongBlocking(body: NewMessageBody): List<Message> = runBlocking { replyLong(body) }
 
     /** Blocking version of [sendAction] for Java handlers. */
     public fun sendActionBlocking(action: SenderAction): SimpleQueryResult = runBlocking { sendAction(action) }

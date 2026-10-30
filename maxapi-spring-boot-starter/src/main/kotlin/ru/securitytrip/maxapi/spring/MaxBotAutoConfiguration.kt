@@ -48,6 +48,7 @@ public class MaxBotAutoConfiguration {
         val builder = MaxClientConfig.builder(properties.token)
             .baseUrl(properties.baseUrl)
             .trustRussianRootCa(properties.trustRussianRootCa)
+            .rateLimit(properties.rateLimit.limit)
             .eventListener(MaxEventListener.composite(listeners.orderedStream().toList()))
         customizers.orderedStream().forEach { it.customize(builder) }
         return MaxClient(builder.build())

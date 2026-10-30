@@ -24,6 +24,7 @@ import ru.securitytrip.maxapi.bot.WebhookHandler
 import ru.securitytrip.maxapi.client.MaxClient
 import ru.securitytrip.maxapi.client.MaxJson
 import ru.securitytrip.maxapi.micrometer.MaxMetrics
+import ru.securitytrip.maxapi.client.RateLimit
 import ru.securitytrip.maxapi.client.RetryPolicy
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -226,6 +227,20 @@ class MaxBotAutoConfigurationTest {
         assertFalse(properties.webhook.async)
         assertFalse(properties.syncCommands)
         assertTrue(properties.trustRussianRootCa)
+        assertEquals(MaxBotProperties.RateLimitPreset.NONE, properties.rateLimit)
+        assertEquals(java.time.Duration.ofMinutes(10), properties.webhook.checkInterval)
+    }
+
+    @Test
+    fun `the Max rate limit is opt-in`() {
+        runner.withPropertyValues(*props("max.bot.mode=none"))
+            .run { assertEquals(null, it.getBean(MaxClient::class.java).config.rateLimit) }
+        runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.rate-limit=max"))
+            .run { assertSame(RateLimit.MAX, it.getBean(MaxClient::class.java).config.rateLimit) }
+        // A customizer still has the last word.
+        runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.rate-limit=max"))
+            .withBean(MaxClientConfigCustomizer::class.java, { MaxClientConfigCustomizer { it.rateLimit(null) } })
+            .run { assertEquals(null, it.getBean(MaxClient::class.java).config.rateLimit) }
     }
 
     @Test

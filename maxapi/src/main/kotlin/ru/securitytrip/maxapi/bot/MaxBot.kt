@@ -6,6 +6,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withTimeoutOrNull
 import ru.securitytrip.maxapi.events.MaxEventListener
 import ru.securitytrip.maxapi.events.UpdateEvent
+import ru.securitytrip.maxapi.events.WebhookResubscribeEvent
 import ru.securitytrip.maxapi.events.safely
 import java.time.Duration
 import kotlinx.coroutines.CoroutineName
@@ -30,6 +31,7 @@ import ru.securitytrip.maxapi.client.MaxException
 import ru.securitytrip.maxapi.client.UnauthorizedException
 import ru.securitytrip.maxapi.model.SimpleQueryResult
 import ru.securitytrip.maxapi.model.user.BotCommandsInfo
+import ru.securitytrip.maxapi.model.update.MessageCallbackUpdate
 import ru.securitytrip.maxapi.model.update.MessageCreatedUpdate
 import ru.securitytrip.maxapi.model.update.Update
 import java.io.Closeable
@@ -148,6 +150,7 @@ public class MaxBot private constructor(
         }
         var handled = false
         try {
+            rememberCallbackChat(update)
             if (username == null && isAddressedCommand(update)) username = client.getMyInfo().username
             val key = StateKey.of(update)
             val dispatch = Dispatch(this, update, key, key?.let { config.stateStorage.get(it) })
@@ -177,6 +180,12 @@ public class MaxBot private constructor(
         if (listener === MaxEventListener.NONE) return
         val duration = Duration.ofNanos(System.nanoTime() - started)
         listener.safely { onUpdate(UpdateEvent(update, handled, duration, error)) }
+    }
+
+    /** `POST /answers` does not name the chat, so the per-chat limit of answers learns it here. */
+    private fun rememberCallbackChat(update: Update) {
+        if (update !is MessageCallbackUpdate || client.config.rateLimit?.perChatAnswersPerSecond == null) return
+        update.chatId?.let { client.transport.callbackChats.remember(update.callback.callbackId, it) }
     }
 
     private fun isAddressedCommand(update: Update): Boolean =
@@ -348,6 +357,43 @@ public class MaxBot private constructor(
 
     /** Blocking version of [deleteWebhook] for Java. */
     public fun deleteWebhookBlocking(): List<String> = runBlocking { deleteWebhook() }
+
+    /**
+     * Subscribes to [url] again if the bot is no longer subscribed to it, and does nothing otherwise.
+     *
+     * Max drops a subscription after 8 hours without successful deliveries, e.g. while the server
+     * was down or unreachable; updates then wait until the bot subscribes again. Call this method
+     * periodically; the Spring Boot starter does it every `max.bot.webhook.check-interval`.
+     * Subscribing to the same URL again is harmless, so several instances may check at once.
+     *
+     * A renewed subscription is logged and reported to [MaxEventListener.onWebhookResubscribe] of
+     * [BotConfig.eventListener], a failed one too.
+     *
+     * @param url the URL passed to [setWebhook].
+     * @param secret the secret passed to [setWebhook].
+     * @return `true` if the subscription was missing and the bot subscribed again.
+     * @throws MaxException if subscribing again failed or the server answered `success = false`.
+     */
+    public suspend fun ensureWebhook(url: String, secret: String? = null): Boolean {
+        if (client.getSubscriptions().any { it.url == url }) return false
+        log.log(System.Logger.Level.WARNING, "The webhook subscription to $url is missing; subscribing again")
+        val error = try {
+            val result = setWebhook(url, secret)
+            if (result.success) null else MaxException("Cannot subscribe to $url again: ${result.message}")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            e
+        }
+        config.eventListener.safely { onWebhookResubscribe(WebhookResubscribeEvent(url, error)) }
+        if (error != null) throw error
+        log.log(System.Logger.Level.INFO, "Subscribed to $url again")
+        return true
+    }
+
+    /** Blocking version of [ensureWebhook] for Java. */
+    @JvmOverloads
+    public fun ensureWebhookBlocking(url: String, secret: String? = null): Boolean = runBlocking { ensureWebhook(url, secret) }
 
     /**
      * Fails if the bot is subscribed to a webhook. The check is best effort: if the subscriptions
