@@ -56,6 +56,13 @@ bot.startPolling()
   - [Постраничная выдача](#постраничная-выдача)
 - [Spring Boot](#spring-boot)
 - [Ktor](#ktor)
+- [Мини-приложения](#мини-приложения)
+  - [Проверка initData](#проверка-initdata)
+  - [Телефон из requestContact](#телефон-из-requestcontact)
+  - [Контакт от кнопки request_contact](#контакт-от-кнопки-request_contact)
+  - [Диплинки](#диплинки)
+  - [Бэкенд на Spring MVC](#бэкенд-на-spring-mvc)
+  - [Бэкенд на Ktor](#бэкенд-на-ktor)
 - [Тестирование ботов](#тестирование-ботов)
 - [Модели](#модели)
 - [Ошибки и повторы](#ошибки-и-повторы)
@@ -90,6 +97,9 @@ bot.startPolling()
 - Правила платформы: лимиты Max (длина текста, размер клавиатуры, кнопки, команды) проверяются до
   отправки, длинный текст уходит несколькими сообщениями без поломки разметки, `RateLimit.MAX`
   соблюдает лимиты частоты запросов, а стартер возобновляет подписку на вебхук, если Max её снял.
+- Бэкенд мини-приложений: проверка `initData`, телефона из `requestContact()` и контакта от кнопки
+  `request_contact` по формулам Max, построители диплинков, аргумент `@MaxWebAppUser` для Spring MVC
+  и плагин `MaxWebApp` для Ktor.
 - Long polling с ограниченной параллельностью, порядком внутри чата и обратным давлением.
 - Обработчик вебхуков с проверкой секрета за постоянное время, который подключается к Spring, Ktor,
   Javalin или сервлетам.
@@ -411,7 +421,8 @@ NewMessageBody.builder()
 ### Ссылки с параметром
 
 Ссылка `https://max.ru/<botName>?start=<payload>` (deep link) открывает диалог с ботом и передаёт
-параметр (до 128 символов) в событии `bot_started`:
+параметр (до 128 символов) в событии `bot_started`. Такую ссылку строит
+`MaxLinks.botStart("shop_bot", "ref-42")`, см. [Диплинки](#диплинки).
 
 ```kotlin
 bot.onBotStarted {
@@ -984,6 +995,9 @@ Endpoint вебхука отвечает 200 на принятые событи�
 `MaxClient`, `MaxBot` или `BotConfig`; бины `MaxClientConfigCustomizer` меняют настройки клиента
 (политику повторов, `OkHttpClient`).
 
+Аргумент `@MaxWebAppUser` в контроллерах бэкенда мини-приложения настраивается свойствами
+`max.bot.web-app.*`, см. [Бэкенд на Spring MVC](#бэкенд-на-spring-mvc).
+
 Полное приложение — в [examples-spring](examples-spring).
 
 ## Ktor
@@ -1003,7 +1017,152 @@ embeddedServer(Netty, port = 8080) {
 
 Ответы такие же, как в стартере Spring. `async = true` отвечает, не дожидаясь окончания
 обработчика. Снимайте подписку при остановке сервера, как в примере: пока она есть, long polling
-не получает событий. См. [examples-ktor](examples-ktor).
+не получает событий. См. [examples-ktor](examples-ktor). Плагин `MaxWebApp` для бэкенда
+мини-приложения описан в разделе [Бэкенд на Ktor](#бэкенд-на-ktor).
+
+## Мини-приложения
+
+Мини-приложение — это веб-страница, которую Max открывает внутри чата с ботом. Страница получает
+стартовые данные в `window.WebApp.initData` и передаёт их своему бэкенду; бэкенд проверяет подпись и
+только после этого доверяет пользователю. `initDataUnsafe` на стороне страницы не подписан, и
+полагаться на него нельзя. Всё нужное для бэкенда лежит в пакете `ru.securitytrip.maxapi.webapp`
+модуля `maxapi`, новых зависимостей не требуется.
+
+У Max три разные подписи, и путать их нельзя:
+
+| Что проверяется                         | Ключ HMAC-SHA256                      | Подписанные данные                                                 | Метод                      |
+|-----------------------------------------|---------------------------------------|--------------------------------------------------------------------|----------------------------|
+| `initData` мини-приложения              | `HMAC_SHA256("WebAppData", botToken)` | поля без `hash`, отсортированные по ключу, `key=value` через `\n` | `WebAppData.validate`      |
+| телефон из `requestContact()` в Bridge  | `botToken`                            | `authDate=…\nphone=<без +>\nuserId=…`                            | `WebAppPhone.verify`       |
+| вложение `contact` от `request_contact` | `botToken`                            | `vcf_info` ровно в том виде, в каком пришёл (с CRLF)               | `ContactAttachment.verify` |
+
+Хеши сравниваются за постоянное время.
+
+### Проверка initData
+
+```kotlin
+val data = WebAppData.validate(initData, botToken)                 // maxAge по умолчанию — 1 час
+val user = data.user!!                                              // userId, firstName, username, languageCode, photoUrl
+println("${user.firstName} открыл приложение из чата ${data.chat?.id}, start_param=${data.startParam}")
+```
+
+```java
+try {
+    WebAppData data = WebAppData.validate(initData, botToken, Duration.ofMinutes(30));
+} catch (WebAppDataException e) {
+    // e.getReason(): MALFORMED, MISSING_HASH, DUPLICATE_HASH, INVALID_SIGNATURE или EXPIRED
+}
+```
+
+`validate` проверяет данные [по документации Max](https://dev.max.ru/docs/webapps/validation):
+разбирает строку, URL-декодируя значения один раз, требует ровно один `hash`, сверяет подпись и
+отклоняет данные, у которых `auth_date` старше `maxAge`. В результате есть пользователь, чат
+(`id` и `ChatType`), `queryId`, `authDate`, `startParam`, `ip` и `fields` — все поля, в том числе
+те, для которых у класса нет свойства. Исключение `WebAppDataException` (непроверяемое, наследник
+`MaxException`) называет причину и никогда не содержит токен.
+
+`WebAppData.verifySignature(initData, botToken)` только проверяет подпись: не разбирает поля и не
+смотрит на `auth_date`, а вместо исключения возвращает `false`. Для авторизации используйте
+`validate`: старые данные могли быть перехвачены.
+
+### Телефон из requestContact
+
+`window.WebApp.requestContact()` возвращает `{ phone, authDate, hash }`. Страница отправляет этот
+объект бэкенду вместе с `initData`, а бэкенд проверяет его для пользователя из `initData`:
+
+```kotlin
+val user = WebAppData.validate(initData, botToken).user!!
+val phone = WebAppPhone(body.phone, body.authDate, body.hash)
+if (!phone.verify(user.userId, botToken)) throw Unauthorized()
+```
+
+Ведущий `+` в номере не мешает: перед проверкой он отбрасывается, как требует формула. Возраст
+`authDate` метод не проверяет.
+
+### Контакт от кнопки request_contact
+
+Когда пользователь нажимает кнопку `request_contact`, бот получает сообщение с вложением
+`ContactAttachment`, и `verify` проверяет, что Max подписал этот контакт для вашего бота:
+
+```kotlin
+bot.onMessage({ it.message.body?.attachments.orEmpty().any { a -> a is ContactAttachment } }) {
+    val contact = message.body!!.attachments!!.filterIsInstance<ContactAttachment>().first()
+    reply(if (contact.verify(token)) "Номер подтверждён" else "Контакт не подтверждён")
+}
+```
+
+Подпись есть только у контакта, которым пользователь поделился через кнопку; пересланная или
+набранная вручную визитка проверку не проходит, поэтому чужой номер за свой не выдать.
+
+### Диплинки
+
+```kotlin
+MaxLinks.bot("shop_bot")                          // https://max.ru/shop_bot
+MaxLinks.botStart("shop_bot", "ref-42")           // https://max.ru/shop_bot?start=ref-42
+MaxLinks.miniApp("shop_bot")                      // https://max.ru/shop_bot?startapp
+MaxLinks.miniApp("shop_bot", "promo_summer")      // https://max.ru/shop_bot?startapp=promo_summer
+MaxLinks.share("Смотри: https://example.com")     // https://max.ru/:share?text=...
+```
+
+Max молча отбрасывает параметр, который нарушает его ограничения, поэтому построители в таком случае
+выбрасывают `IllegalArgumentException`: `start` — от 1 до 128 символов (всё, кроме букв, цифр и
+`_-.~`, кодируется), `startapp` — до 512 символов только из `A-Za-z0-9_-`. Те же правила для payload
+кнопки `open_app` проверяют `MaxLimits.isValidOpenAppPayload` и `MaxLimits.checkOpenAppPayload`, а
+`Buttons.openApp` проверяет payload сразу при создании кнопки. Значение `startapp` мини-приложение
+получает в `WebAppData.startParam`.
+
+### Бэкенд на Spring MVC
+
+Если задан `max.bot.token`, стартер добавляет в Spring MVC аргумент `@MaxWebAppUser`. Параметр
+может иметь тип `WebAppUser` или `WebAppData`; без `initData` или с неверными данными запрос получает
+401 ещё до вызова метода.
+
+```kotlin
+@RestController
+class MiniAppController {
+    @GetMapping("/api/me")
+    fun me(@MaxWebAppUser user: WebAppUser) = mapOf("id" to user.userId, "name" to user.firstName)
+
+    @PostMapping("/api/order")
+    fun order(@MaxWebAppUser data: WebAppData, @RequestBody order: Order) = orders.create(data.user!!.userId, order)
+}
+```
+
+```yaml
+max:
+  bot:
+    web-app:
+      source: header           # header (по умолчанию), parameter (query или форма) или body
+      header: X-Max-Init-Data  # заголовок для source=header
+      parameter: initData      # параметр для source=parameter
+      max-age: 1h              # насколько старым может быть auth_date
+```
+
+На странице: `fetch('/api/me', { headers: { 'X-Max-Init-Data': window.WebApp.initData } })`.
+`@MaxWebAppUser(required = false)` передаёт `null`, если `initData` в запросе нет. При
+`source: body` всё тело запроса — это `initData`, и прочитать тело ещё раз контроллер не сможет.
+Пример бэкенда со страницей мини-приложения — в [examples-spring](examples-spring)
+(`MiniAppBackend.kt` и `static/index.html`).
+
+### Бэкенд на Ktor
+
+```kotlin
+routing {
+    route("/api") {
+        install(MaxWebApp) {
+            botToken = System.getenv("MAX_BOT_TOKEN")
+            maxAge = Duration.ofMinutes(30)       // по умолчанию 1 час
+            // header("X-Init") или initData { it.request.queryParameters["initData"] }
+        }
+        get("/me") { call.respondText("Привет, ${call.maxWebAppUser().firstName}") }
+        get("/start") { call.respondText(call.maxInitData().startParam.orEmpty()) }
+    }
+}
+```
+
+Плагин проверяет `initData` из заголовка `X-Max-Init-Data` при каждом вызове маршрутов, в которые
+он установлен, и отвечает 401, если данных нет, они неверны или устарели либо в них нет пользователя
+(`requireUser = false` пропускает данные без пользователя).
 
 ## Тестирование ботов
 
@@ -1365,12 +1524,13 @@ maxapi/                        библиотека
     java/     фасады MaxBlockingClient и MaxAsyncClient
     dsl/      билдеры сообщений и клавиатур, Buttons
     bot/      MaxBot, роутеры, фильтры, контексты, состояние диалога, long polling, WebhookHandler
+    webapp/   мини-приложения: проверка initData, телефона и контакта, диплинки
   src/test/   тесты (Kotlin и Java) на имитации HTTP-сервера
   api/        дамп публичного API для проверки бинарной совместимости
   spec/       спецификация Max Bot API, с которой сверяется библиотека
   docs/       описания модуля и пакетов для справочника API
 maxapi-spring-boot-starter/    автоконфигурация Spring Boot
-maxapi-ktor/                   маршрутизация вебхуков в Ktor
+maxapi-ktor/                   маршрутизация вебхуков и плагин мини-приложений для Ktor
 maxapi-test/                   BotTester и TestUpdates
 maxapi-micrometer/             MaxMetrics
 maxapi-jdbc/                   JDBC-хранилища (тесты на H2 и PostgreSQL)

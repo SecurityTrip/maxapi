@@ -12,9 +12,37 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
-The current rules of the Max platform: its limits, its rate limits and its webhook upkeep.
+The current rules of the Max platform: its limits, its rate limits and its webhook upkeep; and the
+backend side of mini apps.
 
 ### Added
+
+- Mini app backends, in the new package `ru.securitytrip.maxapi.webapp` of `maxapi` with no new
+  dependencies. `WebAppData.validate(initData, botToken, maxAge)` checks `window.WebApp.initData`
+  as https://dev.max.ru/docs/webapps/validation describes (values URL-decoded once, exactly one
+  `hash`, `HMAC_SHA256(HMAC_SHA256("WebAppData", botToken), sorted key=value lines)`, `auth_date`
+  no older than `maxAge`, one hour by default) and returns the user, the chat, `query_id`,
+  `auth_date`, `start_param`, `ip` and all other fields; it throws `WebAppDataException` with a
+  `reason`: `MALFORMED`, `MISSING_HASH`, `DUPLICATE_HASH`, `INVALID_SIGNATURE` or `EXPIRED`.
+  `WebAppData.verifySignature` only checks the signature and returns a `Boolean`.
+- `WebAppPhone.verify` checks the phone number from `requestContact()` of MAX Bridge
+  (`HMAC_SHA256(botToken, "authDate=…\nphone=…\nuserId=…")`), and `ContactAttachment.verify` (also on
+  `ContactAttachmentPayload`) the contact shared with a `request_contact` button
+  (`HMAC_SHA256(botToken, vcf_info)`; checked against the live API). All hashes are compared in
+  constant time.
+- `MaxLinks` builds deep links: `bot`, `botStart` (`?start=`, 1–128 characters), `miniApp`
+  (`?startapp=`, up to 512 characters of `[A-Za-z0-9_-]`) and `share` (`:share?text=`), and throws
+  `IllegalArgumentException` for a payload Max would drop. `MaxLimits.BOT_START_PAYLOAD_LENGTH`,
+  `MaxLimits.isValidOpenAppPayload` and `MaxLimits.checkOpenAppPayload` are public.
+- Spring Boot starter: controller parameters annotated with `@MaxWebAppUser` get the checked
+  `WebAppUser` or `WebAppData`, and requests without valid `initData` get 401. `max.bot.web-app.source`
+  says where `initData` is (`header` by default, `parameter` or `body`), with `max.bot.web-app.header`
+  (`X-Max-Init-Data`), `max.bot.web-app.parameter` (`initData`) and `max.bot.web-app.max-age` (`1h`).
+- `maxapi-ktor`: the `MaxWebApp` route plugin answers 401 to calls without valid `initData` (from the
+  `X-Max-Init-Data` header by default), and `call.maxInitData()` and `call.maxWebAppUser()` return
+  the checked data.
+- `examples-spring` has a mini app backend with a page that calls it, an `open_app` button, a
+  `startapp` link and a verified `request_contact` contact.
 
 - `MaxLimits` holds the limits of Max, and `MaxClient` checks them before sending: text of a message
   or a comment up to 4000 characters; keyboards of up to 30 rows, 1 to 210 buttons and 7 buttons in
@@ -46,6 +74,8 @@ The current rules of the Max platform: its limits, its rate limits and its webho
 
 ### Changed
 
+- `Buttons.openApp` and `openApp` of the keyboard DSL check the payload when the button is created,
+  not only when the message is sent.
 - Messages, comments, answers and commands that break the limits of Max now fail with
   `IllegalArgumentException` before the request instead of `MaxApiException` (400) from the server.
 - With a per-chat limit set (`RateLimit.perChatRequestsPerSecond`), answers to button presses

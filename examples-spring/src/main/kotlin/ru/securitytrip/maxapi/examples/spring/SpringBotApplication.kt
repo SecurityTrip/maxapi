@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
 open class SpringBotApplication {
     @Bean
     open fun greetings(): MaxBotConfigurer = MaxBotConfigurer { bot ->
-        bot.onBotStarted { reply("Hi! Send /time, /long or /buttons") }
+        bot.onBotStarted { reply("Hi! Send /time, /long, /buttons, /app or /contact") }
     }
 
     @Bean
@@ -33,7 +33,7 @@ open class SpringBotApplication {
             .onCallback("press") {
                 editMessage(message { text("Pressed ${presses.incrementAndGet()} times"); keyboard { row { callback("Press", "press") } } })
             }
-            .onMessage { reply("Send /time, /long or /buttons") }
+            .onMessage { reply("Send /time, /long, /buttons, /app or /contact") }
     }
 
     private fun longText(): String = (1..12).joinToString("\n\n") { n ->

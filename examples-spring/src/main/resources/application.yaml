@@ -6,3 +6,8 @@ max:
     sync-commands: true
     # Keep to the limits of Max: 30 requests per second, 2 answers to button presses per second in a chat.
     rate-limit: max
+    # The mini app backend (MiniAppBackend.kt): where the page sends window.WebApp.initData, and how old it may be.
+    web-app:
+      source: header
+      header: X-Max-Init-Data
+      max-age: 1h

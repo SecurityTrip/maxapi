@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>maxapi mini app</title>
+  <script src="https://st.max.ru/js/max-web-app.js"></script>
+</head>
+<body>
+<p id="hello">Loading…</p>
+<button id="phone">Share phone number</button>
+<p id="result"></p>
+<script>
+  // The backend checks initData; initDataUnsafe is never trusted.
+  const headers = { 'X-Max-Init-Data': window.WebApp.initData, 'Content-Type': 'application/json' };
+
+  fetch('/api/me', { headers })
+    .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+    .then((me) => { document.getElementById('hello').textContent = `Hello, ${me.name}! start_param: ${me.startParam}`; })
+    .catch((status) => { document.getElementById('hello').textContent = `Not authorized (${status})`; });
+
+  document.getElementById('phone').onclick = async () => {
+    const contact = await window.WebApp.requestContact(); // { phone, authDate, hash }
+    const r = await fetch('/api/phone', { method: 'POST', headers, body: JSON.stringify(contact) });
+    document.getElementById('result').textContent = r.ok ? `Verified: ${(await r.json()).phone}` : `Rejected (${r.status})`;
+  };
+</script>
+</body>
+</html>
