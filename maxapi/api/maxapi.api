@@ -501,6 +501,7 @@ public final class ru/securitytrip/maxapi/client/MaxJson {
 }
 
 public final class ru/securitytrip/maxapi/client/MaxLimits {
+	public static final field BOT_START_PAYLOAD_LENGTH I
 	public static final field BUTTONS_PER_ROW I
 	public static final field BUTTON_PAYLOAD_LENGTH I
 	public static final field BUTTON_TEXT_LENGTH I
@@ -515,6 +516,8 @@ public final class ru/securitytrip/maxapi/client/MaxLimits {
 	public static final field TEXT_LENGTH I
 	public static final field WIDE_BUTTONS_PER_ROW I
 	public static final field WIDE_BUTTON_TYPES Ljava/util/Set;
+	public static final fun checkOpenAppPayload (Ljava/lang/String;)V
+	public static final fun isValidOpenAppPayload (Ljava/lang/String;)Z
 }
 
 public final class ru/securitytrip/maxapi/client/MaxNetworkException : ru/securitytrip/maxapi/client/MaxException {
@@ -1008,6 +1011,7 @@ public final class ru/securitytrip/maxapi/model/attachment/ContactAttachment : r
 	public fun getType ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+	public final fun verify (Ljava/lang/String;)Z
 }
 
 public final class ru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload {
@@ -1025,6 +1029,7 @@ public final class ru/securitytrip/maxapi/model/attachment/ContactAttachmentPayl
 	public final fun getVcfInfo ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+	public final fun verify (Ljava/lang/String;)Z
 }
 
 public final class ru/securitytrip/maxapi/model/attachment/ContactAttachmentRequest : ru/securitytrip/maxapi/model/attachment/AttachmentRequest {
@@ -3032,6 +3037,129 @@ public final class ru/securitytrip/maxapi/model/user/UserWithPhoto : ru/security
 	public fun getUsername ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun isBot ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/webapp/MaxLinks {
+	public static final field BASE_URL Ljava/lang/String;
+	public static final field INSTANCE Lru/securitytrip/maxapi/webapp/MaxLinks;
+	public static final fun bot (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun botStart (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static final fun miniApp (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun miniApp (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun miniApp$default (Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun share (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/webapp/WebAppChat {
+	public fun <init> (JLru/securitytrip/maxapi/model/chat/ChatType;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lru/securitytrip/maxapi/model/chat/ChatType;
+	public final fun copy (JLru/securitytrip/maxapi/model/chat/ChatType;)Lru/securitytrip/maxapi/webapp/WebAppChat;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/webapp/WebAppChat;JLru/securitytrip/maxapi/model/chat/ChatType;ILjava/lang/Object;)Lru/securitytrip/maxapi/webapp/WebAppChat;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()J
+	public final fun getType ()Lru/securitytrip/maxapi/model/chat/ChatType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/webapp/WebAppData {
+	public static final field Companion Lru/securitytrip/maxapi/webapp/WebAppData$Companion;
+	public static final field DEFAULT_MAX_AGE Ljava/time/Duration;
+	public fun <init> (Lru/securitytrip/maxapi/webapp/WebAppUser;Lru/securitytrip/maxapi/webapp/WebAppChat;Ljava/lang/String;Ljava/time/Instant;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public final fun component1 ()Lru/securitytrip/maxapi/webapp/WebAppUser;
+	public final fun component2 ()Lru/securitytrip/maxapi/webapp/WebAppChat;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/time/Instant;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/util/Map;
+	public final fun copy (Lru/securitytrip/maxapi/webapp/WebAppUser;Lru/securitytrip/maxapi/webapp/WebAppChat;Ljava/lang/String;Ljava/time/Instant;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/webapp/WebAppData;Lru/securitytrip/maxapi/webapp/WebAppUser;Lru/securitytrip/maxapi/webapp/WebAppChat;Ljava/lang/String;Ljava/time/Instant;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthDate ()Ljava/time/Instant;
+	public final fun getChat ()Lru/securitytrip/maxapi/webapp/WebAppChat;
+	public final fun getFields ()Ljava/util/Map;
+	public final fun getHash ()Ljava/lang/String;
+	public final fun getIp ()Ljava/lang/String;
+	public final fun getQueryId ()Ljava/lang/String;
+	public final fun getStartParam ()Ljava/lang/String;
+	public final fun getUser ()Lru/securitytrip/maxapi/webapp/WebAppUser;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public static final fun validate (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public static final fun validate (Ljava/lang/String;Ljava/lang/String;Ljava/time/Duration;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public static final fun validate (Ljava/lang/String;Ljava/lang/String;Ljava/time/Duration;Ljava/time/Instant;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public static final fun verifySignature (Ljava/lang/String;Ljava/lang/String;)Z
+}
+
+public final class ru/securitytrip/maxapi/webapp/WebAppData$Companion {
+	public final fun validate (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public final fun validate (Ljava/lang/String;Ljava/lang/String;Ljava/time/Duration;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public final fun validate (Ljava/lang/String;Ljava/lang/String;Ljava/time/Duration;Ljava/time/Instant;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public static synthetic fun validate$default (Lru/securitytrip/maxapi/webapp/WebAppData$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/time/Duration;Ljava/time/Instant;ILjava/lang/Object;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public final fun verifySignature (Ljava/lang/String;Ljava/lang/String;)Z
+}
+
+public final class ru/securitytrip/maxapi/webapp/WebAppDataException : ru/securitytrip/maxapi/client/MaxException {
+	public fun <init> (Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getReason ()Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;
+}
+
+public final class ru/securitytrip/maxapi/webapp/WebAppDataException$Reason : java/lang/Enum {
+	public static final field DUPLICATE_HASH Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;
+	public static final field EXPIRED Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;
+	public static final field INVALID_SIGNATURE Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;
+	public static final field MALFORMED Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;
+	public static final field MISSING_HASH Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;
+	public static fun values ()[Lru/securitytrip/maxapi/webapp/WebAppDataException$Reason;
+}
+
+public final class ru/securitytrip/maxapi/webapp/WebAppPhone {
+	public static final field Companion Lru/securitytrip/maxapi/webapp/WebAppPhone$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/webapp/WebAppPhone;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/webapp/WebAppPhone;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/webapp/WebAppPhone;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthDate ()Ljava/lang/String;
+	public final fun getHash ()Ljava/lang/String;
+	public final fun getPhone ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public final fun verify (JLjava/lang/String;)Z
+	public static final fun verify (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;)Z
+}
+
+public final class ru/securitytrip/maxapi/webapp/WebAppPhone$Companion {
+	public final fun verify (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;)Z
+}
+
+public final class ru/securitytrip/maxapi/webapp/WebAppUser {
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/webapp/WebAppUser;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/webapp/WebAppUser;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/webapp/WebAppUser;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFirstName ()Ljava/lang/String;
+	public final fun getLanguageCode ()Ljava/lang/String;
+	public final fun getLastName ()Ljava/lang/String;
+	public final fun getPhotoUrl ()Ljava/lang/String;
+	public final fun getUserId ()J
+	public final fun getUsername ()Ljava/lang/String;
+	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
