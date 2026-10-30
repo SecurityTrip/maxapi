@@ -1,3 +1,35 @@
+public final class ru/securitytrip/maxapi/redis/RedisBroadcastStore : ru/securitytrip/maxapi/bot/BroadcastStore {
+	public static final field Companion Lru/securitytrip/maxapi/redis/RedisBroadcastStore$Companion;
+	public static final field DEFAULT_PREFIX Ljava/lang/String;
+	public fun <init> (Lio/lettuce/core/api/StatefulRedisConnection;)V
+	public fun <init> (Lio/lettuce/core/api/StatefulRedisConnection;Ljava/lang/String;)V
+	public fun <init> (Lio/lettuce/core/api/StatefulRedisConnection;Ljava/lang/String;Ljava/time/Duration;)V
+	public synthetic fun <init> (Lio/lettuce/core/api/StatefulRedisConnection;Ljava/lang/String;Ljava/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun delete (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getPrefix ()Ljava/lang/String;
+	public final fun getTtl ()Ljava/time/Duration;
+	public fun outcomes (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun record (Ljava/lang/String;Lru/securitytrip/maxapi/bot/BroadcastTarget;Lru/securitytrip/maxapi/bot/BroadcastOutcome;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class ru/securitytrip/maxapi/redis/RedisBroadcastStore$Companion {
+}
+
+public final class ru/securitytrip/maxapi/redis/RedisChatStore : ru/securitytrip/maxapi/bot/ChatStore {
+	public static final field Companion Lru/securitytrip/maxapi/redis/RedisChatStore$Companion;
+	public static final field DEFAULT_KEY Ljava/lang/String;
+	public fun <init> (Lio/lettuce/core/api/StatefulRedisConnection;)V
+	public fun <init> (Lio/lettuce/core/api/StatefulRedisConnection;Ljava/lang/String;)V
+	public synthetic fun <init> (Lio/lettuce/core/api/StatefulRedisConnection;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun get (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getKey ()Ljava/lang/String;
+	public fun list (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun save (Lru/securitytrip/maxapi/bot/KnownChat;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class ru/securitytrip/maxapi/redis/RedisChatStore$Companion {
+}
+
 public final class ru/securitytrip/maxapi/redis/RedisMarkerStore : ru/securitytrip/maxapi/bot/MarkerStore {
 	public static final field Companion Lru/securitytrip/maxapi/redis/RedisMarkerStore$Companion;
 	public static final field DEFAULT_KEY Ljava/lang/String;

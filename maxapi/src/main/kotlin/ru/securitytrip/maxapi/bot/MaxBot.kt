@@ -30,6 +30,8 @@ import ru.securitytrip.maxapi.client.MaxClient
 import ru.securitytrip.maxapi.client.MaxException
 import ru.securitytrip.maxapi.client.UnauthorizedException
 import ru.securitytrip.maxapi.model.SimpleQueryResult
+import ru.securitytrip.maxapi.model.chat.ChatType
+import ru.securitytrip.maxapi.model.update.UpdateType
 import ru.securitytrip.maxapi.model.user.BotCommandsInfo
 import ru.securitytrip.maxapi.model.update.MessageCallbackUpdate
 import ru.securitytrip.maxapi.model.update.MessageCreatedUpdate
@@ -112,6 +114,8 @@ public class MaxBot private constructor(
     @Volatile
     private var stopRequested = false
 
+    private val chatTracker = config.chatStore?.let { ChatTracker(it, client) }
+
     /**
      * Username of the bot, without `@`. Commands with a suffix (`/start@name`) are handled only when
      * the suffix matches it. If not set, it is fetched with `getMyInfo` the first time such a command
@@ -148,6 +152,7 @@ public class MaxBot private constructor(
             updateEvent(update, false, started, null)
             return
         }
+        trackChat(update)
         var handled = false
         try {
             rememberCallbackChat(update)
@@ -180,6 +185,18 @@ public class MaxBot private constructor(
         if (listener === MaxEventListener.NONE) return
         val duration = Duration.ofNanos(System.nanoTime() - started)
         listener.safely { onUpdate(UpdateEvent(update, handled, duration, error)) }
+    }
+
+    /** Updates [BotConfig.chatStore]; a failure is reported and does not keep handlers from running. */
+    private suspend fun trackChat(update: Update) {
+        val tracker = chatTracker ?: return
+        try {
+            tracker.track(update)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            reportError(e, update)
+        }
     }
 
     /** `POST /answers` does not name the chat, so the per-chat limit of answers learns it here. */
@@ -328,7 +345,7 @@ public class MaxBot private constructor(
      * @throws IllegalStateException if no handlers are registered.
      */
     public suspend fun setWebhook(url: String, secret: String? = null): SimpleQueryResult {
-        val types = subscribedUpdateTypes()
+        val types = requestedUpdateTypes()
         check(types == null || types.isNotEmpty()) { "Register handlers before calling setWebhook" }
         return client.subscribe(url, secret, types)
     }
@@ -342,6 +359,28 @@ public class MaxBot private constructor(
 
     /** Blocking version of [syncCommands] for Java. */
     public fun syncCommandsBlocking(): BotCommandsInfo = runBlocking { syncCommands() }
+
+    // --------------------------------------------------------------- chats
+
+    /**
+     * The chats the bot is in, as [BotConfig.chatStore] remembers them: only those of [types], or all
+     * when no type is given.
+     *
+     * ```kotlin
+     * val groups = bot.chats(ChatType.CHAT, ChatType.CHANNEL)
+     * val subscribers = bot.chats(ChatType.DIALOG).mapNotNull { it.userId }
+     * ```
+     *
+     * @throws IllegalStateException if no chat store is set.
+     */
+    public suspend fun chats(vararg types: ChatType): List<KnownChat> {
+        val store = checkNotNull(config.chatStore) { "Set BotConfig.chatStore to keep the chats of the bot" }
+        val chats = store.list()
+        return if (types.isEmpty()) chats else chats.filter { it.type in types }
+    }
+
+    /** Blocking version of [chats] for Java. */
+    public fun chatsBlocking(vararg types: ChatType): List<KnownChat> = runBlocking { chats(*types) }
 
     /** Blocking version of [setWebhook] for Java. */
     @JvmOverloads
@@ -446,7 +485,7 @@ public class MaxBot private constructor(
     }
 
     private suspend fun pollLoop(queues: List<SendChannel<Delivery>>, pages: SendChannel<Page>?, initialMarker: Long?) {
-        val types = subscribedUpdateTypes()
+        val types = requestedUpdateTypes()
         var marker: Long? = initialMarker
         var backoff = 0L
         while (true) {
@@ -487,6 +526,12 @@ public class MaxBot private constructor(
             val wait = config.minPollInterval.toMillis() - elapsedMs
             if (wait > 0) delay(wait)
         }
+    }
+
+    /** The types of [subscribedUpdateTypes] and those [BotConfig.chatStore] needs; `null` for all types. */
+    private fun requestedUpdateTypes(): Set<UpdateType>? {
+        val types = subscribedUpdateTypes() ?: return null
+        return if (chatTracker == null) types else types + ChatTracker.UPDATE_TYPES
     }
 
     private fun nextBackoff(current: Long): Long =

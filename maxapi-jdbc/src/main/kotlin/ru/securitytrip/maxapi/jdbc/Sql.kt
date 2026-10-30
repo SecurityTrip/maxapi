@@ -35,16 +35,18 @@ internal object Sql {
     /**
      * Updates a row with [update] and inserts it with [insert] when there was none. If another
      * instance inserts the same row in between, the insert fails with a duplicate key and the row
-     * is updated again.
+     * is updated again. Returns `false` if neither wrote a row: an [update] with an extra condition
+     * matched none while the row exists.
      */
-    fun upsert(connection: Connection, update: String, insert: String, bindUpdate: (PreparedStatement) -> Unit, bindInsert: (PreparedStatement) -> Unit) {
+    fun upsert(connection: Connection, update: String, insert: String, bindUpdate: (PreparedStatement) -> Unit, bindInsert: (PreparedStatement) -> Unit): Boolean {
         val updated = connection.prepareStatement(update).use { bindUpdate(it); it.executeUpdate() }
-        if (updated > 0) return
-        try {
+        if (updated > 0) return true
+        return try {
             connection.prepareStatement(insert).use { bindInsert(it); it.executeUpdate() }
+            true
         } catch (e: SQLException) {
             if (!isDuplicateKey(e)) throw e
-            connection.prepareStatement(update).use { bindUpdate(it); it.executeUpdate() }
+            connection.prepareStatement(update).use { bindUpdate(it); it.executeUpdate() } > 0
         }
     }
 

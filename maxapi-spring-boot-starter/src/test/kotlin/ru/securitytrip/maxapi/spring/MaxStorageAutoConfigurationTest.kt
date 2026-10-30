@@ -8,14 +8,23 @@ import org.springframework.boot.test.context.FilteredClassLoader
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.testcontainers.containers.GenericContainer
 import ru.securitytrip.maxapi.bot.BotConfig
+import ru.securitytrip.maxapi.bot.BroadcastStore
+import ru.securitytrip.maxapi.bot.Broadcaster
+import ru.securitytrip.maxapi.bot.ChatStore
+import ru.securitytrip.maxapi.bot.InMemoryBroadcastStore
+import ru.securitytrip.maxapi.bot.InMemoryChatStore
 import ru.securitytrip.maxapi.bot.DialogState
 import ru.securitytrip.maxapi.bot.InMemoryStateStorage
 import ru.securitytrip.maxapi.bot.MaxBot
 import ru.securitytrip.maxapi.bot.StateKey
 import ru.securitytrip.maxapi.bot.StateStorage
+import ru.securitytrip.maxapi.jdbc.JdbcBroadcastStore
+import ru.securitytrip.maxapi.jdbc.JdbcChatStore
 import ru.securitytrip.maxapi.jdbc.JdbcMarkerStore
 import ru.securitytrip.maxapi.jdbc.JdbcStateStorage
 import ru.securitytrip.maxapi.jdbc.JdbcUpdateDeduplicator
+import ru.securitytrip.maxapi.redis.RedisBroadcastStore
+import ru.securitytrip.maxapi.redis.RedisChatStore
 import ru.securitytrip.maxapi.redis.RedisMarkerStore
 import ru.securitytrip.maxapi.redis.RedisStateStorage
 import ru.securitytrip.maxapi.redis.RedisUpdateDeduplicator
@@ -53,7 +62,9 @@ class MaxStorageAutoConfigurationTest {
             assertIs<InMemoryStateStorage>(config.stateStorage)
             assertNull(config.markerStore)
             assertNull(config.deduplicator)
+            assertNull(config.chatStore)
             assertSame(config, context.getBean(BotConfig::class.java))
+            assertIs<InMemoryBroadcastStore>(context.getBean(Broadcaster::class.java).store)
         }
     }
 
@@ -67,9 +78,13 @@ class MaxStorageAutoConfigurationTest {
                 assertEquals("max_dialog_state", assertIs<JdbcStateStorage>(config.stateStorage).table)
                 assertEquals("max_bot_marker", assertIs<JdbcMarkerStore>(config.markerStore).table)
                 assertEquals("max_seen_update", assertIs<JdbcUpdateDeduplicator>(config.deduplicator).table)
+                assertEquals("max_chat", assertIs<JdbcChatStore>(config.chatStore).table)
+                assertEquals("max_broadcast", assertIs<JdbcBroadcastStore>(context.getBean(Broadcaster::class.java).store).table)
                 runBlocking { config.stateStorage.set(StateKey(1, 1), DialogState("step")) }
             }
-        for (table in listOf("max_dialog_state", "max_bot_marker", "max_seen_update")) assertTrue(tableExists(dataSource, table), table)
+        for (table in listOf("max_dialog_state", "max_bot_marker", "max_seen_update", "max_chat", "max_broadcast")) {
+            assertTrue(tableExists(dataSource, table), table)
+        }
     }
 
     @Test
@@ -82,21 +97,40 @@ class MaxStorageAutoConfigurationTest {
                 assertEquals("bot1_dialog_state", assertIs<JdbcStateStorage>(config.stateStorage).table)
                 assertEquals("bot1_bot_marker", assertIs<JdbcMarkerStore>(config.markerStore).table)
                 assertEquals("bot1_seen_update", assertIs<JdbcUpdateDeduplicator>(config.deduplicator).table)
+                assertEquals("bot1_chat", assertIs<JdbcChatStore>(config.chatStore).table)
+                assertEquals("bot1_broadcast", context.getBean(JdbcBroadcastStore::class.java).table)
             }
         assertTrue(!tableExists(dataSource, "bot1_dialog_state"))
+        assertTrue(!tableExists(dataSource, "bot1_chat"))
     }
 
     @Test
     fun `own storage beans take precedence`() {
         val own = InMemoryStateStorage()
+        val chats = InMemoryChatStore()
+        val broadcasts = InMemoryBroadcastStore()
         runner.withPropertyValues("max.bot.storage=jdbc")
             .withBean(DataSource::class.java, { dataSource() })
             .withBean(StateStorage::class.java, { own })
+            .withBean(ChatStore::class.java, { chats })
+            .withBean(BroadcastStore::class.java, { broadcasts })
             .run { context ->
                 val config = context.getBean(MaxBot::class.java).config
                 assertSame(own, config.stateStorage)
                 assertIs<JdbcMarkerStore>(config.markerStore)
+                assertSame(chats, config.chatStore)
+                assertSame(broadcasts, context.getBean(Broadcaster::class.java).store)
             }
+    }
+
+    @Test
+    fun `an in-memory chat store bean turns the registry on`() {
+        val chats = InMemoryChatStore()
+        runner.withBean(ChatStore::class.java, { chats }).run { context ->
+            val bot = context.getBean(MaxBot::class.java)
+            assertSame(chats, bot.config.chatStore)
+            runBlocking { assertEquals(emptyList(), bot.chats()) }
+        }
     }
 
     @Test
@@ -116,6 +150,8 @@ class MaxStorageAutoConfigurationTest {
                 assertEquals(Duration.ofHours(1), storage.ttl)
                 assertEquals("max:marker", assertIs<RedisMarkerStore>(config.markerStore).key)
                 assertEquals("max:seen:", assertIs<RedisUpdateDeduplicator>(config.deduplicator).prefix)
+                assertEquals("max:chats", assertIs<RedisChatStore>(config.chatStore).key)
+                assertEquals("max:broadcast:", assertIs<RedisBroadcastStore>(context.getBean(Broadcaster::class.java).store).prefix)
                 runBlocking {
                     storage.set(StateKey(1, 1), DialogState("step"))
                     assertEquals("step", storage.get(StateKey(1, 1))?.name)
@@ -132,6 +168,8 @@ class MaxStorageAutoConfigurationTest {
                 assertNull((config.stateStorage as RedisStateStorage).ttl)
                 assertEquals("bot1:marker", assertIs<RedisMarkerStore>(config.markerStore).key)
                 assertEquals("bot1:seen:", assertIs<RedisUpdateDeduplicator>(config.deduplicator).prefix)
+                assertEquals("bot1:chats", assertIs<RedisChatStore>(config.chatStore).key)
+                assertEquals("bot1:broadcast:", context.getBean(RedisBroadcastStore::class.java).prefix)
                 assertIs<RedisClient>(context.getBean(RedisClient::class.java))
             }
     }

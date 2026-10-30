@@ -1,8 +1,10 @@
 public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration {
 	public fun <init> ()V
 	public final fun maxBot (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/MaxBot;
-	public final fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
+	public final synthetic fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
+	public final fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
 	public final fun maxBotLifecycle (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/spring/MaxBotLifecycle;
+	public final fun maxBroadcaster (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/Broadcaster;
 	public final fun maxClient (Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/client/MaxClient;
 }
 
@@ -139,6 +141,8 @@ public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration {
 
 public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration$Jdbc {
 	public fun <init> ()V
+	public final fun maxJdbcBroadcastStore (Ljavax/sql/DataSource;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/jdbc/JdbcBroadcastStore;
+	public final fun maxJdbcChatStore (Ljavax/sql/DataSource;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/jdbc/JdbcChatStore;
 	public final fun maxJdbcMarkerStore (Ljavax/sql/DataSource;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/jdbc/JdbcMarkerStore;
 	public final fun maxJdbcStateStorage (Ljavax/sql/DataSource;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/jdbc/JdbcStateStorage;
 	public final fun maxJdbcUpdateDeduplicator (Ljavax/sql/DataSource;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/jdbc/JdbcUpdateDeduplicator;
@@ -146,6 +150,8 @@ public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration$Jdb
 
 public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration$Redis {
 	public fun <init> ()V
+	public final fun maxRedisBroadcastStore (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisBroadcastStore;
+	public final fun maxRedisChatStore (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisChatStore;
 	public final fun maxRedisClient (Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lio/lettuce/core/RedisClient;
 	public final fun maxRedisConnection (Lio/lettuce/core/RedisClient;)Lio/lettuce/core/api/StatefulRedisConnection;
 	public final fun maxRedisMarkerStore (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisMarkerStore;

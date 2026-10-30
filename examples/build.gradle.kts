@@ -5,10 +5,17 @@ plugins {
 
 dependencies {
     implementation(project(":maxapi"))
+
+    testImplementation(kotlin("test"))
+    testImplementation(project(":maxapi-test"))
 }
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 application {

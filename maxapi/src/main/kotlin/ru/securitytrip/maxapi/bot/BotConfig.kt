@@ -45,7 +45,28 @@ public class BotConfig(
     public val markerStore: MarkerStore? = null,
     /** Receives an event for every dispatched update, e.g. for metrics. */
     public val eventListener: MaxEventListener = MaxEventListener.NONE,
+    /** Where the bot remembers the chats it is in, read with [MaxBot.chats]; `null` (default) does not remember them. */
+    public val chatStore: ChatStore? = null,
 ) {
+    /** The constructor before 1.6, kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        parallelism: Int = 4,
+        queueCapacity: Int = 64,
+        pollTimeoutSeconds: Int = 30,
+        pollLimit: Int = 100,
+        minPollInterval: Duration = Duration.ofMillis(300),
+        maxErrorBackoff: Duration = Duration.ofSeconds(30),
+        stateStorage: StateStorage = InMemoryStateStorage(),
+        handlerTimeout: Duration? = null,
+        deduplicator: UpdateDeduplicator? = null,
+        markerStore: MarkerStore? = null,
+        eventListener: MaxEventListener = MaxEventListener.NONE,
+    ) : this(
+        parallelism, queueCapacity, pollTimeoutSeconds, pollLimit, minPollInterval, maxErrorBackoff,
+        stateStorage, handlerTimeout, deduplicator, markerStore, eventListener, null,
+    )
+
     init {
         require(parallelism >= 1) { "parallelism must be >= 1" }
         require(queueCapacity >= 1) { "queueCapacity must be >= 1" }
@@ -67,6 +88,7 @@ public class BotConfig(
         private var deduplicator: UpdateDeduplicator? = null
         private var markerStore: MarkerStore? = null
         private var eventListener = MaxEventListener.NONE
+        private var chatStore: ChatStore? = null
 
         public fun parallelism(value: Int): Builder = apply { parallelism = value }
         public fun queueCapacity(value: Int): Builder = apply { queueCapacity = value }
@@ -79,11 +101,12 @@ public class BotConfig(
         public fun deduplicator(value: UpdateDeduplicator?): Builder = apply { deduplicator = value }
         public fun markerStore(value: MarkerStore?): Builder = apply { markerStore = value }
         public fun eventListener(value: MaxEventListener): Builder = apply { eventListener = value }
+        public fun chatStore(value: ChatStore?): Builder = apply { chatStore = value }
 
         public fun build(): BotConfig = BotConfig(
             parallelism, queueCapacity, pollTimeoutSeconds, pollLimit, minPollInterval, maxErrorBackoff,
             stateStorage ?: InMemoryStateStorage(),
-            handlerTimeout, deduplicator, markerStore, eventListener,
+            handlerTimeout, deduplicator, markerStore, eventListener, chatStore,
         )
     }
 

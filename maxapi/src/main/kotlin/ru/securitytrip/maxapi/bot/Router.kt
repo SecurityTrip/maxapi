@@ -227,6 +227,9 @@ public abstract class BaseRouter<R : BaseRouter<R>> internal constructor() {
         return self
     }
 
+    /** Adds the handlers of [scene] at this point of the handler list, like [include] with a router. */
+    public fun include(scene: Scene): R = include(scene.router)
+
     private fun includes(router: BaseRouter<*>): Boolean =
         entries.any { it is Child && (it.router === router || it.router.includes(router)) }
 

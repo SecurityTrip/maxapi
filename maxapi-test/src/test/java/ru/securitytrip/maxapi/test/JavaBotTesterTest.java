@@ -35,4 +35,12 @@ class JavaBotTesterTest {
             assertEquals(7L, TestUpdates.user(7L).getUserId());
         }
     }
+
+    @Test
+    void chatEvents() {
+        assertEquals(-10L, TestUpdates.botAdded(-10L).getChatId());
+        assertEquals(true, TestUpdates.botRemoved(-10L, 1L, true).isChannel());
+        assertEquals(7L, TestUpdates.botStopped(7L).getUser().getUserId());
+        assertEquals("Team", TestUpdates.chatTitleChanged("Team").getTitle());
+    }
 }

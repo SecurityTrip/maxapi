@@ -12,6 +12,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.servlet.function.RouterFunction
 import org.springframework.web.servlet.function.ServerResponse
 import ru.securitytrip.maxapi.bot.BotConfig
+import ru.securitytrip.maxapi.bot.BroadcastStore
+import ru.securitytrip.maxapi.bot.Broadcaster
+import ru.securitytrip.maxapi.bot.ChatStore
+import ru.securitytrip.maxapi.bot.InMemoryBroadcastStore
 import ru.securitytrip.maxapi.bot.InMemoryStateStorage
 import ru.securitytrip.maxapi.bot.MarkerStore
 import ru.securitytrip.maxapi.bot.MaxBot
@@ -30,8 +34,9 @@ import ru.securitytrip.maxapi.events.MaxEventListener
  * is included, both in `@Order` order. Define your own `MaxClient`, `MaxBot` or [BotConfig] bean to
  * replace the default one; [MaxClientConfigCustomizer] beans adjust the client settings.
  * [MaxEventListener] beans receive the events of the client and, unless you define a `BotConfig`
- * bean, of the bot. So do [StateStorage], [MarkerStore] and [UpdateDeduplicator] beans, e.g. those
- * that `max.bot.storage` creates.
+ * bean, of the bot. So do [StateStorage], [MarkerStore], [UpdateDeduplicator] and [ChatStore] beans,
+ * e.g. those that `max.bot.storage` creates. The [Broadcaster] bean sends broadcasts with the client
+ * and keeps their progress in the [BroadcastStore] bean.
  */
 @AutoConfiguration
 @ConditionalOnClass(MaxBot::class)
@@ -62,12 +67,37 @@ public class MaxBotAutoConfiguration {
         stateStorage: ObjectProvider<StateStorage>,
         markerStore: ObjectProvider<MarkerStore>,
         deduplicator: ObjectProvider<UpdateDeduplicator>,
+        chatStore: ObjectProvider<ChatStore>,
+    ): BotConfig = botConfig(listeners, stateStorage, markerStore, deduplicator, chatStore.ifAvailable)
+
+    /** The factory method before 1.6, kept for binary compatibility; Spring calls only the `@Bean` one. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    public fun maxBotConfig(
+        listeners: ObjectProvider<MaxEventListener>,
+        stateStorage: ObjectProvider<StateStorage>,
+        markerStore: ObjectProvider<MarkerStore>,
+        deduplicator: ObjectProvider<UpdateDeduplicator>,
+    ): BotConfig = botConfig(listeners, stateStorage, markerStore, deduplicator, null)
+
+    private fun botConfig(
+        listeners: ObjectProvider<MaxEventListener>,
+        stateStorage: ObjectProvider<StateStorage>,
+        markerStore: ObjectProvider<MarkerStore>,
+        deduplicator: ObjectProvider<UpdateDeduplicator>,
+        chatStore: ChatStore?,
     ): BotConfig = BotConfig(
         stateStorage = stateStorage.getIfAvailable(::InMemoryStateStorage),
         markerStore = markerStore.ifAvailable,
         deduplicator = deduplicator.ifAvailable,
         eventListener = MaxEventListener.composite(listeners.orderedStream().toList()),
+        chatStore = chatStore,
     )
+
+    /** Sends broadcasts with the client, keeping their progress in the [BroadcastStore] bean, or in memory without one. */
+    @Bean
+    @ConditionalOnMissingBean
+    public fun maxBroadcaster(client: MaxClient, store: ObjectProvider<BroadcastStore>): Broadcaster =
+        Broadcaster(client, store.getIfAvailable(::InMemoryBroadcastStore))
 
     /** The bot; [listeners] is no longer used, they go to the [BotConfig] of [maxBotConfig]. */
     @Bean

@@ -5,7 +5,11 @@ import ru.securitytrip.maxapi.model.message.Callback
 import ru.securitytrip.maxapi.model.message.Message
 import ru.securitytrip.maxapi.model.message.MessageBody
 import ru.securitytrip.maxapi.model.message.Recipient
+import ru.securitytrip.maxapi.model.update.BotAddedToChatUpdate
+import ru.securitytrip.maxapi.model.update.BotRemovedFromChatUpdate
 import ru.securitytrip.maxapi.model.update.BotStartedUpdate
+import ru.securitytrip.maxapi.model.update.BotStoppedUpdate
+import ru.securitytrip.maxapi.model.update.ChatTitleChangedUpdate
 import ru.securitytrip.maxapi.model.update.MessageCallbackUpdate
 import ru.securitytrip.maxapi.model.update.MessageCreatedUpdate
 import ru.securitytrip.maxapi.model.user.User
@@ -68,4 +72,28 @@ public object TestUpdates {
     @JvmOverloads
     public fun botStarted(payload: String? = null, userId: Long = USER_ID, chatId: Long = CHAT_ID): BotStartedUpdate =
         BotStartedUpdate(System.currentTimeMillis(), chatId, user(userId), payload)
+
+    /** A user stopping the bot in the dialog [chatId]. */
+    @JvmStatic
+    @JvmOverloads
+    public fun botStopped(userId: Long = USER_ID, chatId: Long = CHAT_ID): BotStoppedUpdate =
+        BotStoppedUpdate(System.currentTimeMillis(), chatId, user(userId))
+
+    /** The bot added by [userId] to the group chat [chatId], or to a channel if [isChannel]. */
+    @JvmStatic
+    @JvmOverloads
+    public fun botAdded(chatId: Long = CHAT_ID, userId: Long = USER_ID, isChannel: Boolean = false): BotAddedToChatUpdate =
+        BotAddedToChatUpdate(System.currentTimeMillis(), chatId, user(userId), isChannel)
+
+    /** The bot removed by [userId] from the group chat [chatId], or from a channel if [isChannel]. */
+    @JvmStatic
+    @JvmOverloads
+    public fun botRemoved(chatId: Long = CHAT_ID, userId: Long = USER_ID, isChannel: Boolean = false): BotRemovedFromChatUpdate =
+        BotRemovedFromChatUpdate(System.currentTimeMillis(), chatId, user(userId), isChannel)
+
+    /** [userId] changing the title of the chat [chatId] to [title]. */
+    @JvmStatic
+    @JvmOverloads
+    public fun chatTitleChanged(title: String, chatId: Long = CHAT_ID, userId: Long = USER_ID): ChatTitleChangedUpdate =
+        ChatTitleChangedUpdate(System.currentTimeMillis(), chatId, user(userId), title)
 }
