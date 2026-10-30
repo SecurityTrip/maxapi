@@ -12,14 +12,10 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
-The current rules of the Max platform: its limits, its rate limits and its webhook upkeep; and the
-backend side of mini apps.
+## [1.4.0] - 2026-10-30
 
-Tools for writing bots: scenes, paged and confirmation keyboards, translations, a registry of
-the bot's chats and broadcasts.
-
-Running bots in production: a health indicator, OpenTelemetry tracing, a WebFlux webhook endpoint,
-GraalVM native image metadata and non-blocking deduplication.
+The current rules of Max, mini app backends, tools for writing bots, and production operations:
+health, tracing, a WebFlux webhook, native image and non-blocking deduplication.
 
 ### Added
 
@@ -315,7 +311,8 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/SecurityTrip/maxapi/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/SecurityTrip/maxapi/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/SecurityTrip/maxapi/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/SecurityTrip/maxapi/compare/v1.0.0...v1.1.0
