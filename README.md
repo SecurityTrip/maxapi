@@ -87,6 +87,9 @@ bot.startPolling()
 - Автоматические повторы с экспоненциальной задержкой при 429/503, а для идемпотентных запросов —
   и при 502/504 и сетевых ошибках; повторная отправка, пока вложение ещё обрабатывается
   (`attachment.not.ready`).
+- Правила платформы: лимиты Max (длина текста, размер клавиатуры, кнопки, команды) проверяются до
+  отправки, длинный текст уходит несколькими сообщениями без поломки разметки, `RateLimit.MAX`
+  соблюдает лимиты частоты запросов, а стартер возобновляет подписку на вебхук, если Max её снял.
 - Long polling с ограниченной параллельностью, порядком внутри чата и обратным давлением.
 - Обработчик вебхуков с проверкой секрета за постоянное время, который подключается к Spring, Ktor,
   Javalin или сервлетам.
@@ -292,8 +295,9 @@ bot.onMessage { ... }                                  // 3. всё осталь
 | `state`, `stateData`           | состояние диалога и его значения, см. [Состояние диалога](#состояние-диалога) |
 | `setState`, `updateStateData`, `clearState` | изменить состояние диалога                               |
 | `reply(text)`, `reply(body)`, `reply { DSL }` | отправить сообщение в чат (или пользователю, если чата нет) |
+| `replyLong(text)`, `replyLong(body)`, `replyLong { DSL }` | то же для текста любой длины, см. [Длинный текст](#длинный-текст) |
 | `sendAction(action)`, `typing()` | показать «печатает…» или другое действие                           |
-| `replyBlocking`, `sendActionBlocking`, `setStateBlocking`, ... | версии для Java                       |
+| `replyBlocking`, `replyLongBlocking`, `sendActionBlocking`, `setStateBlocking`, ... | версии для Java |
 
 `MessageContext` добавляет `message`, `text`, `messageId`, `command`, `commandArgs`,
 `replyToMessage(...)` (ответ с цитатой) и `replyToMessageBlocking(...)`. У сообщений без текста
@@ -668,6 +672,12 @@ Long polling ограничен по скорости и по времени х�
 обрабатываться не по порядку, а после `bot.close()` метод выбрасывает `IllegalStateException`:
 тогда отвечайте ошибкой, чтобы Max доставил событие позже.
 
+Если 8 часов подряд ни одна доставка не удалась (сервер лежал или был недоступен), Max снимает
+подписку, и события копятся, пока бот не подпишется снова. `bot.ensureWebhook(url, secret)` проверяет
+подписку и, если её нет, подписывается заново: вызывайте его периодически (стартер Spring Boot делает
+это сам). Повторная подписка на тот же адрес безвредна. Возобновление пишется в лог и приходит в
+`MaxEventListener.onWebhookResubscribe`.
+
 Чтобы вернуться к long polling, снимите подписку через `bot.deleteWebhook()` или
 `bot.client.unsubscribe(url)`.
 
@@ -687,21 +697,25 @@ client.pinMessage(chatId, sent.body!!.mid, notify = false)
 client.close()
 ```
 
-Все 33 метода по разделам:
+Все 33 метода по разделам (`addMembers` Max больше не обслуживает, см. ниже):
 
 | Раздел        | Методы                                                                                                    |
 |---------------|-----------------------------------------------------------------------------------------------------------|
 | Бот           | `getMyInfo`, `editMyCommands`                                                                             |
 | Чаты          | `getChat`, `editChat`, `sendAction`, `getPinnedMessage`, `pinMessage`, `unpinMessage`, `leaveChat`        |
-| Участники     | `getMembership`, `getMembers`, `addMembers`, `removeMember`, `getAdmins`, `postAdmins`, `deleteAdmins`    |
+| Участники     | `getMembership`, `getMembers`, ~~`addMembers`~~, `removeMember`, `getAdmins`, `postAdmins`, `deleteAdmins` |
 | Сообщения     | `getMessages`, `getMessageById`, `sendMessage`, `editMessage`, `deleteMessage`, `answerOnCallback`, `getVideoAttachmentDetails` |
 | Комментарии   | `getComments`, `getCommentById`, `sendComment`, `editComment`, `deleteComment`                            |
 | События       | `getUpdates`, `getSubscriptions`, `subscribe`, `unsubscribe`                                              |
 | Загрузка      | `getUploadUrl`                                                                                            |
 
-Поверх них есть удобные методы: `sendMessageToChat`, `sendMessageToUser`,
-`answerOnCallback(callbackId, notification)`, `upload`, `uploadImage`, `uploadVideo`, `uploadAudio`
-и `uploadFile`.
+Поверх них есть удобные методы: `sendMessageToChat`, `sendMessageToUser`, `sendLongMessage*`
+(см. [Длинный текст](#длинный-текст)), `answerOnCallback(callbackId, notification)`, `upload`,
+`uploadImage`, `uploadVideo`, `uploadAudio` и `uploadFile`.
+
+`addMembers` (`POST /chats/{chatId}/members`) помечен `@Deprecated`: Max ограничил этот метод
+9 сентября 2026 года и удалил 30 сентября, поэтому сервер его отклоняет. Метод оставлен ради
+совместимости (в спецификации он ещё есть), замены нет.
 
 Необязательные параметры — аргументы Kotlin по умолчанию:
 
@@ -778,6 +792,60 @@ ContactAttachmentRequest(ContactAttachmentRequestPayload(name = "Support", vcfPh
 
 Сообщение без текста, без вложений и без пересылки `sendMessage` отклоняет сразу с
 `IllegalArgumentException`: сервер такие сообщения всё равно не принимает.
+
+Так же, без запроса к серверу, отклоняется всё, что нарушает лимиты Max (константы — в `MaxLimits`).
+Проверяют `sendMessage`, `editMessage`, `answerOnCallback` (новое содержимое сообщения),
+`sendComment`, `editComment`, `editMyCommands` и `MaxBot.syncCommands`:
+
+| Что                                   | Лимит                                                          |
+|---------------------------------------|----------------------------------------------------------------|
+| текст сообщения или комментария       | до 4000 символов                                               |
+| клавиатура                            | 1–30 рядов, до 210 кнопок, до 7 кнопок в ряду                  |
+| кнопки `link`, `open_app`, `request_geo_location`, `request_contact` | до 3 в ряду                     |
+| текст кнопки                          | 1–128 символов                                                 |
+| payload кнопок `callback` и `clipboard` | до 1024 символов                                             |
+| `url` кнопки `link`                   | до 2048 символов                                               |
+| payload кнопки `open_app`             | до 512 символов, только `A-Z`, `a-z`, `0-9`, `_` и `-`         |
+| команды бота                          | до 32; имя 1–64 символа, описание 1–128                        |
+
+Длина считается как `String.length`, в кодовых единицах UTF-16, потому что так её считает сервер:
+эмодзи 😀 занимает 2 символа из 4000, флаг — 4, разметка Markdown и HTML тоже считается.
+
+### Длинный текст
+
+В одно сообщение помещается 4000 символов. `sendLongMessage` (и `sendLongMessageToChat`,
+`sendLongMessageToUser`, `replyLong` в обработчиках) отправляет текст длиннее несколькими
+сообщениями, а короткий — одним, как `sendMessage`:
+
+```kotlin
+client.sendLongMessageToChat(chatId, message {
+    markdown(report)
+    keyboard { row { callback("OK", "ok") } }
+})
+
+bot.onCommand("report") { replyLong(message { markdown(report) }) }
+```
+
+```java
+client.blocking().sendLongMessageToChat(chatId, NewMessageBody.builder().markdown(report).build());
+bot.onCommand("report", ctx -> ctx.replyLongBlocking(report));
+```
+
+- Текст режется между абзацами, иначе между строками, иначе между словами; более мелкая граница
+  выбирается, только если крупная оставила бы часть заполненной меньше чем наполовину. Слово
+  длиннее сообщения режется там, где придётся, но не посреди суррогатной пары (эмодзи), не перед
+  диакритикой и не рядом с соединителем нулевой ширины.
+- Разметка остаётся корректной в каждой части. В Markdown ссылки и экранирование вроде `\*` не
+  разрываются, а `**жирный**`, `` `код` `` и другие участки, через которые проходит разрез, закрываются
+  в конце части и открываются снова в начале следующей; цитата `> ` и заголовок `# ` продолжаются в
+  следующей части. В HTML не разрываются теги и сущности, а открытые теги закрываются и открываются
+  снова вместе с атрибутами.
+- Клавиатура и другие вложения уходят в последнее сообщение, ответ или пересылка (`link`) — в
+  первое; `notify` и формат у всех частей одинаковые. Если отправка части не удалась, уже
+  отправленные части остаются.
+
+`TextSplitter.split(text, format)` возвращает части, не отправляя их, например чтобы отправить
+текст в комментариях.
 
 ### Форматирование
 
@@ -868,12 +936,14 @@ max:
     mode: polling            # polling (по умолчанию), webhook или none
     sync-commands: true      # показать команды с описаниями в меню бота при запуске
     trust-russian-root-ca: true  # по умолчанию; см. «TLS-сертификат» ниже
+    rate-limit: max          # none (по умолчанию) или max: лимиты частоты запросов Max
     storage: memory          # memory (по умолчанию), jdbc или redis; см. «Хранилища»
     webhook:
       path: /max/webhook     # endpoint в вашем Spring MVC-сервере
       url: https://bot.example.com/max/webhook   # подписаться при запуске (необязательно)
       secret: ${MAX_WEBHOOK_SECRET}
       async: false           # true: отвечать, не дожидаясь обработчика
+      check-interval: 10m    # как часто проверять подписку на url; 0 отключает проверку
 ```
 
 Обработчики берутся из бинов: каждый `MaxBotConfigurer` вызывается с ботом, каждый бин `Router`
@@ -901,11 +971,12 @@ MaxBotConfigurer handlers() {
 | Режим     | Что происходит                                                                            |
 |-----------|-------------------------------------------------------------------------------------------|
 | `polling` | long polling запускается вместе с контекстом; при остановке бот прекращает polling и дообрабатывает уже полученные события |
-| `webhook` | `POST max.bot.webhook.path` принимает доставки (сервлетные веб-приложения); если задан `webhook.url`, бот подписывается при запуске |
+| `webhook` | `POST max.bot.webhook.path` принимает доставки (сервлетные веб-приложения); если задан `webhook.url`, бот подписывается при запуске и каждые `webhook.check-interval` проверяет, что подписка на месте, а если Max её снял, подписывается заново |
 | `none`    | ничего не запускается; доставляйте события сами                                           |
 
-Бины `MaxEventListener` (и `MaxMetrics`, если подключён `maxapi-micrometer` и есть `MeterRegistry`)
-получают события клиента и бота. Бины `StateStorage`, `MarkerStore` и `UpdateDeduplicator`
+`max.bot.rate-limit=max` включает `RateLimit.MAX` (см. [Надёжность](#надёжность-и-мониторинг)); по
+умолчанию ограничения нет, как и в предыдущих версиях. Бины `MaxEventListener` (и `MaxMetrics`, если
+подключён `maxapi-micrometer` и есть `MeterRegistry`) получают события клиента и бота. Бины `StateStorage`, `MarkerStore` и `UpdateDeduplicator`
 используются ботом, см. [Хранилища](#хранилища).
 
 Endpoint вебхука отвечает 200 на принятые события, 401 на неверный секрет, 400 на тело, которое не
@@ -1093,7 +1164,7 @@ MaxClient client = MaxClient.create(MaxClientConfig.builder(token)
 | `attachmentReadyRetries`  | `5`                             | повторы, пока сервер отвечает `attachment.not.ready`         |
 | `attachmentReadyDelay`    | 1 секунда                       | пауза между этими повторами                                  |
 | `userAgent`               | `maxapi-jvm`                    | заголовок `User-Agent`                                       |
-| `rateLimit`               | нет                             | ограничение частоты запросов на клиенте, см. [Надёжность](#надёжность-и-мониторинг) |
+| `rateLimit`               | нет                             | ограничение частоты запросов на клиенте, например `RateLimit.MAX`, см. [Надёжность](#надёжность-и-мониторинг) |
 | `eventListener`           | нет                             | получает событие на каждую HTTP-попытку (метрики, трассировка) |
 | `trustRussianRootCa`      | `true`                          | HTTP-клиент библиотеки доверяет Russian Trusted Root CA, см. [TLS-сертификат](#tls-сертификат) |
 
@@ -1148,11 +1219,21 @@ val client = MaxClient(MaxClientConfig(token, httpClient = http))
 Всё перечисленное ниже по умолчанию выключено.
 
 **Ограничение частоты.** `RateLimit` заставляет клиент ждать, а не получать ответы 429: token
-bucket для всех запросов и, при желании, отдельный для каждого чата.
+bucket для всех запросов и, при желании, отдельный для каждого чата и для ответов на нажатия кнопок
+в каждом чате. `RateLimit.MAX` соблюдает лимиты Max: 30 запросов в секунду и не больше 2 ответов на
+нажатия (`POST /answers`) в секунду в одном чате; запросы идут равномерно, без пачек.
 
 ```kotlin
+MaxClientConfig(token, rateLimit = RateLimit.MAX)
 MaxClientConfig(token, rateLimit = RateLimit(requestsPerSecond = 25.0, perChatRequestsPerSecond = 1.0))
+MaxClientConfig(token, rateLimit = RateLimit(20.0).withPerChatAnswers(1.0))
 ```
+
+В `POST /answers` нет `chat_id`, только `callback_id`, поэтому чат нажатия клиент узнаёт из события
+`message_callback`, которое обрабатывает `MaxBot`: ответы из его обработчиков (`answer`,
+`editMessage` или `client.answerOnCallback`) ограничиваются по чату, а ответы на нажатия, которые бот
+не видел или чьё сообщение удалено, — только общим лимитом. Лимит действует в пределах одного
+клиента: у нескольких экземпляров бота с одним токеном бюджеты свои.
 
 **Marker polling.** С `MarkerStore` бот после перезапуска продолжает polling с того места, где
 остановился. Marker сохраняется только после того, как обработаны все события, полученные до него,
@@ -1184,7 +1265,8 @@ val bot = MaxBot(
 **Метрики.** `MaxEventListener` получает событие на каждую HTTP-попытку (`RequestEvent`: метод,
 шаблон пути вида `/chats/{id}`, статус, длительность, номер попытки) и на каждое обработанное
 событие (`UpdateEvent`: событие, обработано ли, длительность, ошибка). `maxapi-micrometer` превращает
-их в таймеры `max.client.requests` и `max.bot.updates`:
+их в таймеры `max.client.requests` и `max.bot.updates`, а возобновлённые подписки на вебхук
+(`WebhookResubscribeEvent`) — в счётчик `max.bot.webhook.resubscriptions`:
 
 ```kotlin
 val metrics = MaxMetrics(meterRegistry)

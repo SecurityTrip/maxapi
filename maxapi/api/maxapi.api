@@ -222,6 +222,11 @@ public final class ru/securitytrip/maxapi/bot/MaxBot : ru/securitytrip/maxapi/bo
 	public fun close ()V
 	public final fun deleteWebhook (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun deleteWebhookBlocking ()Ljava/util/List;
+	public final fun ensureWebhook (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun ensureWebhook$default (Lru/securitytrip/maxapi/bot/MaxBot;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun ensureWebhookBlocking (Ljava/lang/String;)Z
+	public final fun ensureWebhookBlocking (Ljava/lang/String;Ljava/lang/String;)Z
+	public static synthetic fun ensureWebhookBlocking$default (Lru/securitytrip/maxapi/bot/MaxBot;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Z
 	public final fun getClient ()Lru/securitytrip/maxapi/client/MaxClient;
 	public final fun getConfig ()Lru/securitytrip/maxapi/bot/BotConfig;
 	public final fun getUsername ()Ljava/lang/String;
@@ -310,6 +315,11 @@ public class ru/securitytrip/maxapi/bot/UpdateContext {
 	public final fun reply (Lru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun replyBlocking (Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/Message;
 	public final fun replyBlocking (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun replyLong (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun replyLong (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun replyLong (Lru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun replyLongBlocking (Ljava/lang/String;)Ljava/util/List;
+	public final fun replyLongBlocking (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/List;
 	public final fun sendAction (Lru/securitytrip/maxapi/model/chat/SenderAction;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun sendActionBlocking (Lru/securitytrip/maxapi/model/chat/SenderAction;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
 	public final fun setState (Ljava/lang/String;Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -409,6 +419,12 @@ public final class ru/securitytrip/maxapi/client/MaxClient : java/io/Closeable {
 	public final fun sendAction (JLru/securitytrip/maxapi/model/chat/SenderAction;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun sendComment$default (Lru/securitytrip/maxapi/client/MaxClient;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun sendLongMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun sendLongMessage$default (Lru/securitytrip/maxapi/client/MaxClient;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun sendLongMessageToChat (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendLongMessageToChat (JLru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendLongMessageToUser (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendLongMessageToUser (JLru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun sendMessage$default (Lru/securitytrip/maxapi/client/MaxClient;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun sendMessageToChat (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -484,6 +500,23 @@ public final class ru/securitytrip/maxapi/client/MaxJson {
 	public static final fun parseUpdate ([B)Lru/securitytrip/maxapi/model/update/Update;
 }
 
+public final class ru/securitytrip/maxapi/client/MaxLimits {
+	public static final field BUTTONS_PER_ROW I
+	public static final field BUTTON_PAYLOAD_LENGTH I
+	public static final field BUTTON_TEXT_LENGTH I
+	public static final field COMMANDS I
+	public static final field COMMAND_DESCRIPTION_LENGTH I
+	public static final field COMMAND_NAME_LENGTH I
+	public static final field INSTANCE Lru/securitytrip/maxapi/client/MaxLimits;
+	public static final field KEYBOARD_BUTTONS I
+	public static final field KEYBOARD_ROWS I
+	public static final field LINK_URL_LENGTH I
+	public static final field OPEN_APP_PAYLOAD_LENGTH I
+	public static final field TEXT_LENGTH I
+	public static final field WIDE_BUTTONS_PER_ROW I
+	public static final field WIDE_BUTTON_TYPES Ljava/util/Set;
+}
+
 public final class ru/securitytrip/maxapi/client/MaxNetworkException : ru/securitytrip/maxapi/client/MaxException {
 	public fun <init> (Ljava/lang/String;Ljava/io/IOException;)V
 }
@@ -501,16 +534,26 @@ public final class ru/securitytrip/maxapi/client/NotFoundException : ru/security
 }
 
 public final class ru/securitytrip/maxapi/client/RateLimit {
+	public static final field Companion Lru/securitytrip/maxapi/client/RateLimit$Companion;
+	public static final field MAX Lru/securitytrip/maxapi/client/RateLimit;
 	public fun <init> (D)V
 	public fun <init> (DI)V
 	public fun <init> (DILjava/lang/Double;)V
 	public fun <init> (DILjava/lang/Double;I)V
 	public synthetic fun <init> (DILjava/lang/Double;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBurst ()I
+	public final fun getPerChatAnswersBurst ()I
+	public final fun getPerChatAnswersPerSecond ()Ljava/lang/Double;
 	public final fun getPerChatBurst ()I
 	public final fun getPerChatRequestsPerSecond ()Ljava/lang/Double;
 	public final fun getRequestsPerSecond ()D
 	public fun toString ()Ljava/lang/String;
+	public final fun withPerChatAnswers (Ljava/lang/Double;)Lru/securitytrip/maxapi/client/RateLimit;
+	public final fun withPerChatAnswers (Ljava/lang/Double;I)Lru/securitytrip/maxapi/client/RateLimit;
+	public static synthetic fun withPerChatAnswers$default (Lru/securitytrip/maxapi/client/RateLimit;Ljava/lang/Double;IILjava/lang/Object;)Lru/securitytrip/maxapi/client/RateLimit;
+}
+
+public final class ru/securitytrip/maxapi/client/RateLimit$Companion {
 }
 
 public final class ru/securitytrip/maxapi/client/RetryPolicy {
@@ -531,6 +574,15 @@ public final class ru/securitytrip/maxapi/client/RetryPolicy {
 }
 
 public final class ru/securitytrip/maxapi/client/RetryPolicy$Companion {
+}
+
+public final class ru/securitytrip/maxapi/client/TextSplitter {
+	public static final field INSTANCE Lru/securitytrip/maxapi/client/TextSplitter;
+	public static final field MIN_LIMIT I
+	public static final fun split (Ljava/lang/String;)Ljava/util/List;
+	public static final fun split (Ljava/lang/String;Lru/securitytrip/maxapi/model/markup/TextFormat;)Ljava/util/List;
+	public static final fun split (Ljava/lang/String;Lru/securitytrip/maxapi/model/markup/TextFormat;I)Ljava/util/List;
+	public static synthetic fun split$default (Ljava/lang/String;Lru/securitytrip/maxapi/model/markup/TextFormat;IILjava/lang/Object;)Ljava/util/List;
 }
 
 public final class ru/securitytrip/maxapi/client/TooManyRequestsException : ru/securitytrip/maxapi/client/MaxApiException {
@@ -630,6 +682,7 @@ public abstract interface class ru/securitytrip/maxapi/events/MaxEventListener {
 	public static fun composite (Ljava/util/List;)Lru/securitytrip/maxapi/events/MaxEventListener;
 	public fun onRequest (Lru/securitytrip/maxapi/events/RequestEvent;)V
 	public fun onUpdate (Lru/securitytrip/maxapi/events/UpdateEvent;)V
+	public fun onWebhookResubscribe (Lru/securitytrip/maxapi/events/WebhookResubscribeEvent;)V
 }
 
 public final class ru/securitytrip/maxapi/events/MaxEventListener$Companion {
@@ -670,6 +723,19 @@ public final class ru/securitytrip/maxapi/events/UpdateEvent {
 	public final fun getError ()Ljava/lang/Throwable;
 	public final fun getHandled ()Z
 	public final fun getUpdate ()Lru/securitytrip/maxapi/model/update/Update;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/events/WebhookResubscribeEvent {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Throwable;)Lru/securitytrip/maxapi/events/WebhookResubscribeEvent;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/events/WebhookResubscribeEvent;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lru/securitytrip/maxapi/events/WebhookResubscribeEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/Throwable;
+	public final fun getUrl ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -734,6 +800,15 @@ public final class ru/securitytrip/maxapi/java/MaxAsyncClient {
 	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;)Ljava/util/concurrent/CompletableFuture;
 	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;)Ljava/util/concurrent/CompletableFuture;
 	public static synthetic fun sendComment$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendLongMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendLongMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendLongMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendLongMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun sendLongMessage$default (Lru/securitytrip/maxapi/java/MaxAsyncClient;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendLongMessageToChat (JLjava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendLongMessageToChat (JLru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendLongMessageToUser (JLjava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun sendLongMessageToUser (JLru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/concurrent/CompletableFuture;
 	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/concurrent/CompletableFuture;
 	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
 	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;)Ljava/util/concurrent/CompletableFuture;
@@ -816,6 +891,15 @@ public final class ru/securitytrip/maxapi/java/MaxBlockingClient {
 	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;)Lru/securitytrip/maxapi/model/message/CommentMessage;
 	public final fun sendComment (Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;)Lru/securitytrip/maxapi/model/message/CommentMessage;
 	public static synthetic fun sendComment$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;Ljava/lang/String;Lru/securitytrip/maxapi/model/message/NewCommentBody;Ljava/lang/Boolean;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/message/CommentMessage;
+	public final fun sendLongMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/List;
+	public final fun sendLongMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;)Ljava/util/List;
+	public final fun sendLongMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;)Ljava/util/List;
+	public final fun sendLongMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;)Ljava/util/List;
+	public static synthetic fun sendLongMessage$default (Lru/securitytrip/maxapi/java/MaxBlockingClient;Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;ILjava/lang/Object;)Ljava/util/List;
+	public final fun sendLongMessageToChat (JLjava/lang/String;)Ljava/util/List;
+	public final fun sendLongMessageToChat (JLru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/List;
+	public final fun sendLongMessageToUser (JLjava/lang/String;)Ljava/util/List;
+	public final fun sendLongMessageToUser (JLru/securitytrip/maxapi/model/message/NewMessageBody;)Ljava/util/List;
 	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;)Lru/securitytrip/maxapi/model/message/Message;
 	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/message/Message;
 	public final fun sendMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Ljava/lang/Long;Ljava/lang/Long;)Lru/securitytrip/maxapi/model/message/Message;

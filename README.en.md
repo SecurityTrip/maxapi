@@ -86,6 +86,9 @@ bot.startPolling()
 - File uploads in one call; the bot token is never sent to the upload host.
 - Automatic retries with exponential backoff on 429/503, and on 502/504 and network errors of
   idempotent requests, plus re-sending while an attachment is still being processed (`attachment.not.ready`).
+- Platform rules: the limits of Max (text length, keyboard size, buttons, commands) are checked
+  before sending, long text goes as several messages with its markup intact, `RateLimit.MAX` keeps
+  to the request rate limits, and the starter renews a webhook subscription that Max dropped.
 - Long polling with bounded parallelism, per-chat ordering and backpressure.
 - Webhook handler with constant-time secret verification that plugs into Spring, Ktor, Javalin or servlets.
 - Few dependencies: OkHttp, Jackson, kotlinx.coroutines. Logging goes to `System.Logger`, so it
@@ -288,8 +291,9 @@ A handler receives a context with the update and shortcuts to answer it.
 | `state`, `stateData`           | dialog state and its values, see [Dialog state](#dialog-state)        |
 | `setState`, `updateStateData`, `clearState` | change the dialog state                                  |
 | `reply(text)`, `reply(body)`, `reply { DSL }` | send a message to the chat (or to the user if there is no chat) |
+| `replyLong(text)`, `replyLong(body)`, `replyLong { DSL }` | the same for text of any length, see [Long text](#long-text) |
 | `sendAction(action)`, `typing()` | show "typing…" or another activity                                  |
-| `replyBlocking`, `sendActionBlocking`, `setStateBlocking`, ... | Java versions                        |
+| `replyBlocking`, `replyLongBlocking`, `sendActionBlocking`, `setStateBlocking`, ... | Java versions |
 
 `MessageContext` adds `message`, `text`, `messageId`, `command`, `commandArgs`,
 `replyToMessage(...)` (reply with a quote) and `replyToMessageBlocking(...)`. `text` is `null` for
@@ -657,6 +661,12 @@ All of them return `false` when the secret does not match (respond with 401), an
 may be handled out of order, and after `bot.close()` it throws `IllegalStateException`: respond with
 an error then, so that Max delivers the update again later.
 
+When no delivery succeeds for 8 hours (the server was down or unreachable), Max drops the
+subscription, and updates wait until the bot subscribes again. `bot.ensureWebhook(url, secret)`
+checks the subscription and subscribes again if it is gone: call it periodically (the Spring Boot
+starter does it for you). Subscribing to the same URL again is harmless. A renewal is logged and
+reported to `MaxEventListener.onWebhookResubscribe`.
+
 To go back to long polling, remove the subscription with `bot.deleteWebhook()` or
 `bot.client.unsubscribe(url)`.
 
@@ -676,21 +686,25 @@ client.pinMessage(chatId, sent.body!!.mid, notify = false)
 client.close()
 ```
 
-All 33 operations, by area:
+All 33 operations, by area (Max no longer serves `addMembers`, see below):
 
 | Area          | Methods                                                                                                   |
 |---------------|-----------------------------------------------------------------------------------------------------------|
 | Bot           | `getMyInfo`, `editMyCommands`                                                                             |
 | Chats         | `getChat`, `editChat`, `sendAction`, `getPinnedMessage`, `pinMessage`, `unpinMessage`, `leaveChat`        |
-| Members       | `getMembership`, `getMembers`, `addMembers`, `removeMember`, `getAdmins`, `postAdmins`, `deleteAdmins`    |
+| Members       | `getMembership`, `getMembers`, ~~`addMembers`~~, `removeMember`, `getAdmins`, `postAdmins`, `deleteAdmins` |
 | Messages      | `getMessages`, `getMessageById`, `sendMessage`, `editMessage`, `deleteMessage`, `answerOnCallback`, `getVideoAttachmentDetails` |
 | Comments      | `getComments`, `getCommentById`, `sendComment`, `editComment`, `deleteComment`                            |
 | Updates       | `getUpdates`, `getSubscriptions`, `subscribe`, `unsubscribe`                                              |
 | Uploads       | `getUploadUrl`                                                                                            |
 
 On top of them there are convenience methods: `sendMessageToChat`, `sendMessageToUser`,
-`answerOnCallback(callbackId, notification)`, `upload`, `uploadImage`, `uploadVideo`, `uploadAudio`
-and `uploadFile`.
+`sendLongMessage*` (see [Long text](#long-text)), `answerOnCallback(callbackId, notification)`,
+`upload`, `uploadImage`, `uploadVideo`, `uploadAudio` and `uploadFile`.
+
+`addMembers` (`POST /chats/{chatId}/members`) is `@Deprecated`: Max restricted the method on
+2026-09-09 and removed it on 2026-09-30, so the server rejects it. It is kept for compatibility (the
+specification still lists it); there is no replacement.
 
 Optional parameters are Kotlin default arguments:
 
@@ -765,6 +779,60 @@ them all. In the builder, `clearAttachments()` sends the empty list.
 
 `sendMessage` rejects a message without text, attachments or a forward at once with
 `IllegalArgumentException`: the server does not accept such messages anyway.
+
+Everything that breaks the limits of Max (constants in `MaxLimits`) is rejected the same way,
+without a request. `sendMessage`, `editMessage`, `answerOnCallback` (the new message content),
+`sendComment`, `editComment`, `editMyCommands` and `MaxBot.syncCommands` check:
+
+| What                                  | Limit                                                          |
+|---------------------------------------|----------------------------------------------------------------|
+| text of a message or a comment        | up to 4000 characters                                          |
+| keyboard                              | 1–30 rows, up to 210 buttons, up to 7 buttons in a row         |
+| `link`, `open_app`, `request_geo_location`, `request_contact` buttons | up to 3 in a row               |
+| button text                           | 1–128 characters                                               |
+| payload of `callback` and `clipboard` buttons | up to 1024 characters                                  |
+| `url` of a `link` button              | up to 2048 characters                                          |
+| payload of an `open_app` button       | up to 512 characters, only `A-Z`, `a-z`, `0-9`, `_` and `-`    |
+| bot commands                          | up to 32; name of 1–64 characters, description of 1–128        |
+
+Lengths are counted like `String.length`, in UTF-16 code units, because the server counts them that
+way: the 😀 emoji takes 2 of the 4000 characters, a flag 4, and Markdown and HTML markup counts too.
+
+### Long text
+
+A message holds 4000 characters. `sendLongMessage` (and `sendLongMessageToChat`,
+`sendLongMessageToUser`, `replyLong` in handlers) sends longer text as several messages, and shorter
+text as one, like `sendMessage`:
+
+```kotlin
+client.sendLongMessageToChat(chatId, message {
+    markdown(report)
+    keyboard { row { callback("OK", "ok") } }
+})
+
+bot.onCommand("report") { replyLong(message { markdown(report) }) }
+```
+
+```java
+client.blocking().sendLongMessageToChat(chatId, NewMessageBody.builder().markdown(report).build());
+bot.onCommand("report", ctx -> ctx.replyLongBlocking(report));
+```
+
+- Text is cut between paragraphs, else between lines, else between words; a weaker break is used
+  only when the stronger one would leave the part less than half full. A word longer than a message
+  is cut where it must, but never inside a surrogate pair (an emoji), before a combining mark or
+  next to a zero-width joiner.
+- Markup stays valid in every part. In Markdown, links and escapes like `\*` are never cut, while
+  `**bold**`, `` `code` `` and other spans that cross a cut are closed at the end of one part and
+  opened again at the start of the next; a quote `> ` or a heading `# ` goes on in the next part. In
+  HTML, tags and entities are never cut, and open tags are closed and opened again with their
+  attributes.
+- The keyboard and other attachments go with the last message, the reply or forward (`link`) with
+  the first; every part has the same `notify` and format. If a part fails, the parts sent before it
+  stay sent.
+
+`TextSplitter.split(text, format)` returns the parts without sending them, e.g. to send the text as
+comments.
 
 ### Formatting
 

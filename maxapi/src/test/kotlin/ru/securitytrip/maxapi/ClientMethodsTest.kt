@@ -160,9 +160,9 @@ class ClientMethodsTest {
                 assertEquals(setOf(3L), it.failedUserIds)
                 assertEquals("add.participant.privacy", it.failedUserDetails!!.single().errorCode)
             },
-            kotlin = { addMembers(-5, listOf(2, 3)) },
-            blocking = { addMembers(-5, listOf(2, 3)) },
-            async = { addMembers(-5, listOf(2, 3)) },
+            kotlin = @Suppress("DEPRECATION") { addMembers(-5, listOf(2, 3)) },
+            blocking = @Suppress("DEPRECATION") { addMembers(-5, listOf(2, 3)) },
+            async = @Suppress("DEPRECATION") { addMembers(-5, listOf(2, 3)) },
         ),
         Case(
             "removeMember", SUCCESS, "DELETE", "/chats/-5/members", mapOf("user_id" to "2", "block" to "true"),

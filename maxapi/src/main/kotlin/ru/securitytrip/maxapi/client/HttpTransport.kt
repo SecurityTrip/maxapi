@@ -62,8 +62,11 @@ internal class HttpTransport(
     private val mapper: ObjectMapper,
 ) : Closeable {
     private val ownsClient = config.httpClient == null
-    private val limiter = config.rateLimit?.let { RateLimiter(it) }
+    internal val limiter = config.rateLimit?.let { RateLimiter(it) }
     private val baseUrl = config.baseUrl.toHttpUrl()
+
+    /** Chats of button presses, for the per-chat limit of answers. */
+    internal val callbackChats = CallbackChats()
 
     internal val http: OkHttpClient = config.httpClient ?: OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -105,11 +108,16 @@ internal class HttpTransport(
         val client = if (longPolling) pollingHttp else http
         val policy = config.retryPolicy
         val operation = "$method /${path.joinToString("/")}"
-        val chatId = query?.value("chat_id")?.toLongOrNull() ?: path.getOrNull(1)?.takeIf { path[0] == "chats" }?.toLongOrNull()
+        val answer = method == "POST" && path == ANSWERS_PATH
+        val chatId = if (answer) {
+            callbackChats.chatOf(query?.value("callback_id"))
+        } else {
+            query?.value("chat_id")?.toLongOrNull() ?: path.getOrNull(1)?.takeIf { path[0] == "chats" }?.toLongOrNull()
+        }
 
         var attempt = 0
         while (true) {
-            limiter?.acquire(chatId)
+            limiter?.acquire(chatId, answer)
             val started = System.nanoTime()
             val raw = try {
                 send(client, request)
@@ -223,6 +231,7 @@ internal class HttpTransport(
 }
 
 private val JSON = "application/json; charset=utf-8".toMediaType()
+private val ANSWERS_PATH = listOf("answers")
 private val METHODS_WITH_BODY = setOf("POST", "PUT", "PATCH")
 private val IDEMPOTENT_METHODS = setOf("GET", "PUT", "DELETE")
 private val REJECTED_STATUSES = setOf(429, 503)

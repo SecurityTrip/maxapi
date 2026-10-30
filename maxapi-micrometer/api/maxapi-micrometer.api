@@ -1,10 +1,12 @@
 public final class ru/securitytrip/maxapi/micrometer/MaxMetrics : ru/securitytrip/maxapi/events/MaxEventListener {
 	public static final field Companion Lru/securitytrip/maxapi/micrometer/MaxMetrics$Companion;
 	public static final field REQUESTS Ljava/lang/String;
+	public static final field RESUBSCRIPTIONS Ljava/lang/String;
 	public static final field UPDATES Ljava/lang/String;
 	public fun <init> (Lio/micrometer/core/instrument/MeterRegistry;)V
 	public fun onRequest (Lru/securitytrip/maxapi/events/RequestEvent;)V
 	public fun onUpdate (Lru/securitytrip/maxapi/events/UpdateEvent;)V
+	public fun onWebhookResubscribe (Lru/securitytrip/maxapi/events/WebhookResubscribeEvent;)V
 }
 
 public final class ru/securitytrip/maxapi/micrometer/MaxMetrics$Companion {

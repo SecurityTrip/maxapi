@@ -27,6 +27,7 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public final fun getBaseUrl ()Ljava/lang/String;
 	public final fun getJdbc ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Jdbc;
 	public final fun getMode ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+	public final fun getRateLimit ()Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;
 	public final fun getRedis ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Redis;
 	public final fun getStorage ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
 	public final fun getSyncCommands ()Z
@@ -35,6 +36,7 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public final fun getWebhook ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Webhook;
 	public final fun setBaseUrl (Ljava/lang/String;)V
 	public final fun setMode (Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;)V
+	public final fun setRateLimit (Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;)V
 	public final fun setStorage (Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;)V
 	public final fun setSyncCommands (Z)V
 	public final fun setToken (Ljava/lang/String;)V
@@ -56,6 +58,15 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Mode : java/la
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
 	public static fun values ()[Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset : java/lang/Enum {
+	public static final field MAX Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;
+	public static final field NONE Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getLimit ()Lru/securitytrip/maxapi/client/RateLimit;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;
+	public static fun values ()[Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Redis {
@@ -80,10 +91,12 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Storage : java
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Webhook {
 	public fun <init> ()V
 	public final fun getAsync ()Z
+	public final fun getCheckInterval ()Ljava/time/Duration;
 	public final fun getPath ()Ljava/lang/String;
 	public final fun getSecret ()Ljava/lang/String;
 	public final fun getUrl ()Ljava/lang/String;
 	public final fun setAsync (Z)V
+	public final fun setCheckInterval (Ljava/time/Duration;)V
 	public final fun setPath (Ljava/lang/String;)V
 	public final fun setSecret (Ljava/lang/String;)V
 	public final fun setUrl (Ljava/lang/String;)V

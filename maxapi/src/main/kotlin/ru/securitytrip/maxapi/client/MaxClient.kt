@@ -110,9 +110,13 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
      *
      * @param commands up to 32 commands; an empty list removes all commands.
      * @return the commands after the change.
+     * @throws IllegalArgumentException if the commands break the [MaxLimits] of Max: more than 32,
+     *   a name not of 1–64 characters, or a description not of 1–128.
      */
-    public suspend fun editMyCommands(commands: List<BotCommand>): BotCommandsInfo =
-        transport.execute("PATCH", listOf("me", "commands"), BotCommandsInfo::class.java, body = BotCommandsPatch(commands))
+    public suspend fun editMyCommands(commands: List<BotCommand>): BotCommandsInfo {
+        MaxLimits.checkCommands(commands)
+        return transport.execute("PATCH", listOf("me", "commands"), BotCommandsInfo::class.java, body = BotCommandsPatch(commands))
+    }
 
     // ---------------------------------------------------------------- chats
 
@@ -210,8 +214,13 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
 
     /**
      * Adds up to 100 users to a chat. The bot needs the `add_remove_members` permission.
+     *
+     * Max no longer serves this method: it was restricted on 2026-09-09 and removed on 2026-09-30.
+     * It is kept for compatibility (the API specification still lists it), but the call fails.
+     *
      * @return which users could not be added and why.
      */
+    @Deprecated("Max removed POST /chats/{chatId}/members (restricted on 2026-09-09, removed on 2026-09-30), so the server rejects this call. The Bot API has no replacement.")
     public suspend fun addMembers(chatId: Long, userIds: List<Long>): ModifyMembersResult =
         post(ModifyMembersResult::class.java, UserIdsList(userIds), "chats", chatId.toString(), "members")
 
@@ -377,8 +386,10 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
      *
      * @param disableLinkPreview `true` disables previews for links in the text.
      * @return the created message, including its [ru.securitytrip.maxapi.model.message.MessageBody.mid].
-     * @throws IllegalArgumentException if neither or both of [userId] and [chatId] are set, or if
-     *   [body] has no text, no attachments and does not forward a message (Max rejects such messages).
+     * @throws IllegalArgumentException if neither or both of [userId] and [chatId] are set, if
+     *   [body] has no text, no attachments and does not forward a message (Max rejects such messages),
+     *   or if it breaks the [MaxLimits] of Max, e.g. has more than 4000 characters of text (see
+     *   [sendLongMessage]) or a keyboard that is too large.
      * @throws ForbiddenException if the user stopped the bot, the bot cannot write to the chat,
      *   or forwarding from the source chat is prohibited.
      */
@@ -392,6 +403,7 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
         require(!body.text.isNullOrEmpty() || !body.attachments.isNullOrEmpty() || body.link?.type == MessageLinkType.FORWARD) {
             "A message needs text, attachments or a forwarded message"
         }
+        MaxLimits.check(body)
         val query = Query().add("user_id", userId).add("chat_id", chatId).add("disable_link_preview", disableLinkPreview)
         return retryWhileAttachmentNotReady {
             transport.execute("POST", listOf("messages"), SendMessageResult::class.java, query, body)
@@ -415,18 +427,77 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
         sendMessage(NewMessageBody(text = text), userId = userId)
 
     /**
+     * Sends a message whose text may be longer than the 4000 characters of one message: such text
+     * goes as several messages, split by [TextSplitter] in the [NewMessageBody.format] of [body]
+     * (between paragraphs, lines or words, with markup kept valid in every part). Text that fits
+     * goes as one message, exactly like [sendMessage].
+     *
+     * The attachments of [body], its keyboard included, go with the last message, the reply or
+     * forward [NewMessageBody.link] with the first; every message has the same `notify` and format.
+     * The messages are sent one after another, so if one fails, the earlier ones stay sent.
+     *
+     * ```kotlin
+     * client.sendLongMessageToChat(chatId, message { markdown(report); keyboard { row { callback("OK", "ok") } } })
+     * ```
+     *
+     * @return the sent messages in order.
+     * @throws IllegalArgumentException as [sendMessage] does, except for text longer than 4000 characters.
+     */
+    public suspend fun sendLongMessage(
+        body: NewMessageBody,
+        userId: Long? = null,
+        chatId: Long? = null,
+        disableLinkPreview: Boolean? = null,
+    ): List<Message> {
+        val text = body.text
+        if (text == null || text.length <= MaxLimits.TEXT_LENGTH) return listOf(sendMessage(body, userId, chatId, disableLinkPreview))
+        require((userId == null) != (chatId == null)) { "Exactly one of userId or chatId must be set" }
+        // Fail before the first part is sent rather than at the last one.
+        MaxLimits.check(body.copy(text = null))
+        val parts = TextSplitter.split(text, body.format)
+        return parts.mapIndexed { index, part ->
+            val message = body.copy(
+                text = part,
+                attachments = body.attachments.takeIf { index == parts.lastIndex },
+                link = body.link.takeIf { index == 0 },
+            )
+            sendMessage(message, userId, chatId, disableLinkPreview)
+        }
+    }
+
+    /** Sends a message of any length to a chat, channel or dialog. See [sendLongMessage]. */
+    public suspend fun sendLongMessageToChat(chatId: Long, body: NewMessageBody): List<Message> =
+        sendLongMessage(body, chatId = chatId)
+
+    /** Sends a plain text of any length to a chat, channel or dialog. See [sendLongMessage]. */
+    public suspend fun sendLongMessageToChat(chatId: Long, text: String): List<Message> =
+        sendLongMessage(NewMessageBody(text = text), chatId = chatId)
+
+    /** Sends a message of any length to a user in the dialog with the bot. See [sendLongMessage]. */
+    public suspend fun sendLongMessageToUser(userId: Long, body: NewMessageBody): List<Message> =
+        sendLongMessage(body, userId = userId)
+
+    /** Sends a plain text of any length to a user in the dialog with the bot. See [sendLongMessage]. */
+    public suspend fun sendLongMessageToUser(userId: Long, text: String): List<Message> =
+        sendLongMessage(NewMessageBody(text = text), userId = userId)
+
+    /**
      * Replaces the content of a message sent by the bot.
      *
      * [NewMessageBody.attachments] set to `null` keeps the current attachments; an empty list
      * removes all of them (see [ru.securitytrip.maxapi.dsl.MessageBuilder.clearAttachments]).
+     *
+     * @throws IllegalArgumentException if [body] breaks the [MaxLimits] of Max.
      */
-    public suspend fun editMessage(messageId: String, body: NewMessageBody): SimpleQueryResult =
-        retryWhileAttachmentNotReady {
+    public suspend fun editMessage(messageId: String, body: NewMessageBody): SimpleQueryResult {
+        MaxLimits.check(body)
+        return retryWhileAttachmentNotReady {
             transport.execute(
                 "PUT", listOf("messages"), SimpleQueryResult::class.java,
                 query = Query().add("message_id", messageId), body = body,
             )
         }
+    }
 
     /**
      * Deletes a message in a dialog, chat or channel. The bot needs permission to delete messages.
@@ -454,6 +525,8 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
      *
      * @param callbackId [ru.securitytrip.maxapi.model.message.Callback.callbackId] from the update.
      * @param disableLinkPreview `true` disables previews for links in the updated text.
+     * @throws IllegalArgumentException if [callbackId] is blank, or if [CallbackAnswer.message]
+     *   breaks the [MaxLimits] of Max.
      */
     public suspend fun answerOnCallback(
         callbackId: String,
@@ -461,6 +534,7 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
         disableLinkPreview: Boolean? = null,
     ): SimpleQueryResult {
         require(callbackId.isNotBlank()) { "callbackId must not be blank" }
+        MaxLimits.check(answer)
         return retryWhileAttachmentNotReady {
             transport.execute(
                 "POST", listOf("answers"), SimpleQueryResult::class.java,
@@ -501,22 +575,31 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
      *
      * @param messageId identifier of the commented post.
      * @param disableLinkPreview `true` disables previews for links in the text.
+     * @throws IllegalArgumentException if the text is longer than 4000 characters (see [MaxLimits]).
      */
     public suspend fun sendComment(
         messageId: String,
         body: NewCommentBody,
         disableLinkPreview: Boolean? = null,
-    ): CommentMessage = transport.execute(
-        "POST", listOf("messages", messageId, "comments"), SendCommentResult::class.java,
-        query = Query().add("disable_link_preview", disableLinkPreview), body = body,
-    ).message
+    ): CommentMessage {
+        MaxLimits.check(body)
+        return transport.execute(
+            "POST", listOf("messages", messageId, "comments"), SendCommentResult::class.java,
+            query = Query().add("disable_link_preview", disableLinkPreview), body = body,
+        ).message
+    }
 
-    /** Replaces the content of a comment. */
-    public suspend fun editComment(messageId: String, commentId: String, body: NewCommentBody): SimpleQueryResult =
-        transport.execute(
+    /**
+     * Replaces the content of a comment.
+     * @throws IllegalArgumentException if the text is longer than 4000 characters (see [MaxLimits]).
+     */
+    public suspend fun editComment(messageId: String, commentId: String, body: NewCommentBody): SimpleQueryResult {
+        MaxLimits.check(body)
+        return transport.execute(
             "PUT", listOf("messages", messageId, "comments"), SimpleQueryResult::class.java,
             query = Query().add("comment_id", commentId), body = body,
         )
+    }
 
     /** Deletes a comment. The bot needs permission to delete messages. */
     public suspend fun deleteComment(messageId: String, commentId: String): SimpleQueryResult =

@@ -4,3 +4,5 @@ max:
     # polling for local runs; in production use webhook with webhook.url and webhook.secret.
     mode: polling
     sync-commands: true
+    # Keep to the limits of Max: 30 requests per second, 2 answers to button presses per second in a chat.
+    rate-limit: max
