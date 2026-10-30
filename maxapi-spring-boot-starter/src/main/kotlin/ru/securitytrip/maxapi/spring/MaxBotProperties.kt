@@ -25,6 +25,8 @@ import java.time.Duration
  *       source: header         # header (default), parameter or body
  *       header: X-Max-Init-Data
  *       max-age: 1h
+ *     health:
+ *       cache-ttl: 30s         # how long the health indicator reuses its API request
  * ```
  */
 @ConfigurationProperties("max.bot")
@@ -72,6 +74,9 @@ public class MaxBotProperties {
 
     /** Settings of [Storage.REDIS]. */
     public val redis: Redis = Redis()
+
+    /** Settings of the health indicator `max`, registered with Spring Boot Actuator. */
+    public val health: Health = Health()
 
     /** Client-side rate limits. */
     public enum class RateLimitPreset(
@@ -143,12 +148,25 @@ public class MaxBotProperties {
         public var stateTtl: Duration? = null
     }
 
+    /** Settings of the health indicator, see `MaxHealthAutoConfiguration`. */
+    public class Health {
+        /**
+         * How long the indicator reuses the result of its request to the API (`getMyInfo`, or
+         * `getSubscriptions` in webhook mode), so that frequent health checks do not use up the limit of
+         * 30 requests per second. `0` asks on every check.
+         */
+        public var cacheTtl: Duration = Duration.ofSeconds(30)
+
+        /** How long a health check waits for the API and the storage before reporting them down. */
+        public var timeout: Duration = Duration.ofSeconds(5)
+    }
+
     /** How the bot receives updates. */
     public enum class Mode {
         /** Long polling, started with the application context and stopped gracefully with it. */
         POLLING,
 
-        /** A `POST` endpoint at [Webhook.path] in the application's Spring MVC server. */
+        /** A `POST` endpoint at [Webhook.path] in the application's Spring MVC or WebFlux server. */
         WEBHOOK,
 
         /** Nothing is started; deliver updates yourself, e.g. with `MaxBot.processUpdate`. */

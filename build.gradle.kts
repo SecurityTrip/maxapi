@@ -25,6 +25,7 @@ dependencies {
     dokka(project(":maxapi-micrometer"))
     dokka(project(":maxapi-jdbc"))
     dokka(project(":maxapi-redis"))
+    dokka(project(":maxapi-opentelemetry"))
 }
 
 subprojects {

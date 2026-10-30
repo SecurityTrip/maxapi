@@ -23,12 +23,14 @@ internal fun webhookEndpoint(bot: MaxBot, webhook: MaxBotProperties.Webhook): Ro
 private fun handle(handler: WebhookHandler, request: ServerRequest, async: Boolean): HttpStatus {
     val body = request.body(ByteArray::class.java)
     val secret = request.headers().firstHeader(WebhookHandler.SECRET_HEADER)
-    val accepted = try {
-        if (async) handler.handleAsync(body, secret) else handler.handleBlocking(body, secret)
-    } catch (_: MaxException) {
-        return HttpStatus.BAD_REQUEST
-    } catch (_: IllegalStateException) {
-        return HttpStatus.SERVICE_UNAVAILABLE
-    }
-    return if (accepted) HttpStatus.OK else HttpStatus.UNAUTHORIZED
+    return statusOf { if (async) handler.handleAsync(body, secret) else handler.handleBlocking(body, secret) }
+}
+
+/** The status for the result of a [WebhookHandler] call. */
+internal inline fun statusOf(accept: () -> Boolean): HttpStatus = try {
+    if (accept()) HttpStatus.OK else HttpStatus.UNAUTHORIZED
+} catch (_: MaxException) {
+    HttpStatus.BAD_REQUEST
+} catch (_: IllegalStateException) {
+    HttpStatus.SERVICE_UNAVAILABLE
 }

@@ -60,7 +60,7 @@ public final class ru/securitytrip/maxapi/redis/RedisStateStorage : ru/securityt
 public final class ru/securitytrip/maxapi/redis/RedisStateStorage$Companion {
 }
 
-public final class ru/securitytrip/maxapi/redis/RedisUpdateDeduplicator : ru/securitytrip/maxapi/bot/UpdateDeduplicator {
+public final class ru/securitytrip/maxapi/redis/RedisUpdateDeduplicator : ru/securitytrip/maxapi/bot/SuspendUpdateDeduplicator, ru/securitytrip/maxapi/bot/UpdateDeduplicator {
 	public static final field Companion Lru/securitytrip/maxapi/redis/RedisUpdateDeduplicator$Companion;
 	public static final field DEFAULT_PREFIX Ljava/lang/String;
 	public fun <init> (Lio/lettuce/core/api/StatefulRedisConnection;)V
@@ -70,6 +70,7 @@ public final class ru/securitytrip/maxapi/redis/RedisUpdateDeduplicator : ru/sec
 	public final fun getPrefix ()Ljava/lang/String;
 	public final fun getTtl ()Ljava/time/Duration;
 	public fun isNew (Lru/securitytrip/maxapi/model/update/Update;)Z
+	public fun markSeen (Lru/securitytrip/maxapi/model/update/Update;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class ru/securitytrip/maxapi/redis/RedisUpdateDeduplicator$Companion {

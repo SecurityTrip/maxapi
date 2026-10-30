@@ -1,0 +1,8 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern": "\\Qru/securitytrip/maxapi/client/russian-trusted-root-ca.pem\\E"},
+      {"pattern": "kotlin/.*\\.kotlin_builtins"}
+    ]
+  }
+}

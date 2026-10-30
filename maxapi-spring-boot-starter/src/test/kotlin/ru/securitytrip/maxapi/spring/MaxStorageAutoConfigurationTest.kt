@@ -18,6 +18,12 @@ import ru.securitytrip.maxapi.bot.InMemoryStateStorage
 import ru.securitytrip.maxapi.bot.MaxBot
 import ru.securitytrip.maxapi.bot.StateKey
 import ru.securitytrip.maxapi.bot.StateStorage
+import ru.securitytrip.maxapi.bot.SuspendUpdateDeduplicator
+import ru.securitytrip.maxapi.bot.UpdateDeduplicator
+import ru.securitytrip.maxapi.bot.InMemoryUpdateDeduplicator
+import org.springframework.boot.health.contributor.CompositeHealthContributor
+import org.springframework.boot.health.contributor.HealthIndicator
+import org.springframework.boot.health.contributor.Status
 import ru.securitytrip.maxapi.jdbc.JdbcBroadcastStore
 import ru.securitytrip.maxapi.jdbc.JdbcChatStore
 import ru.securitytrip.maxapi.jdbc.JdbcMarkerStore
@@ -120,6 +126,42 @@ class MaxStorageAutoConfigurationTest {
                 assertIs<JdbcMarkerStore>(config.markerStore)
                 assertSame(chats, config.chatStore)
                 assertSame(broadcasts, context.getBean(Broadcaster::class.java).store)
+            }
+    }
+
+    @Test
+    fun `a suspending deduplicator bean replaces the storage one`() {
+        val own = SuspendUpdateDeduplicator { true }
+        runner.withPropertyValues("max.bot.storage=jdbc")
+            .withBean(DataSource::class.java, { dataSource() })
+            .withBean(SuspendUpdateDeduplicator::class.java, { own })
+            .run { context ->
+                val config = context.getBean(MaxBot::class.java).config
+                assertSame(own, config.suspendDeduplicator)
+                assertNull(config.deduplicator)
+                assertTrue(context.getBeansOfType(JdbcUpdateDeduplicator::class.java).isEmpty())
+            }
+        // A blocking bean wins over a suspending one.
+        val blocking = InMemoryUpdateDeduplicator()
+        runner.withBean(SuspendUpdateDeduplicator::class.java, { own })
+            .withBean(UpdateDeduplicator::class.java, { blocking })
+            .run { context ->
+                val config = context.getBean(MaxBot::class.java).config
+                assertSame(blocking, config.deduplicator)
+                assertNull(config.suspendDeduplicator)
+            }
+    }
+
+    @Test
+    fun `redis storage is part of the health`() {
+        runner.withConfiguration(AutoConfigurations.of(MaxHealthAutoConfiguration::class.java))
+            .withPropertyValues("max.bot.storage=redis", "max.bot.redis.url=$redisUrl")
+            .run { context ->
+                val contributor = context.getBean("maxHealthContributor", CompositeHealthContributor::class.java)
+                val health = (contributor.getContributor("storage") as HealthIndicator).health(true)!!
+                assertEquals(Status.UP, health.status)
+                assertEquals("redis", health.details["storage"])
+                assertEquals("PONG", health.details["ping"])
             }
     }
 

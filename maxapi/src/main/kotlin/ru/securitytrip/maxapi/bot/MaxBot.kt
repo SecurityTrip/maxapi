@@ -37,6 +37,8 @@ import ru.securitytrip.maxapi.model.update.MessageCallbackUpdate
 import ru.securitytrip.maxapi.model.update.MessageCreatedUpdate
 import ru.securitytrip.maxapi.model.update.Update
 import java.io.Closeable
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.min
 
 /**
@@ -104,8 +106,14 @@ public class MaxBot private constructor(
     @Volatile
     private var pollingJob: Job? = null
 
+    /**
+     * The error that ended long polling started with [start] or [startBlocking], e.g. an invalid token;
+     * `null` while polling runs, after it stopped normally and before it started. Transient errors do
+     * not end polling: they are retried and only reported to [onError].
+     */
     @Volatile
-    private var pollingFailure: Throwable? = null
+    public var pollingFailure: Throwable? = null
+        private set
 
     /** The job requesting updates; cancelling it stops polling but lets workers drain their queues. */
     @Volatile
@@ -147,8 +155,27 @@ public class MaxBot private constructor(
      * Use it to feed updates from a custom source or in tests.
      */
     public suspend fun processUpdate(update: Update) {
+        val context = updateContext(update)
+        if (context === EmptyCoroutineContext) dispatch(update) else withContext(context) { dispatch(update) }
+    }
+
+    /** [MaxEventListener.updateContext] of [BotConfig.eventListener]. */
+    private fun updateContext(update: Update): CoroutineContext {
+        val listener = config.eventListener
+        var context: CoroutineContext = EmptyCoroutineContext
+        if (listener !== MaxEventListener.NONE) listener.safely { context = updateContext(update) }
+        return context
+    }
+
+    private suspend fun isNew(update: Update): Boolean {
+        config.suspendDeduplicator?.let { return it.markSeen(update) }
+        val deduplicator = config.deduplicator ?: return true
+        return if (deduplicator is SuspendUpdateDeduplicator) deduplicator.markSeen(update) else deduplicator.isNew(update)
+    }
+
+    private suspend fun dispatch(update: Update) {
         val started = System.nanoTime()
-        if (config.deduplicator?.isNew(update) == false) {
+        if (!isNew(update)) {
             updateEvent(update, false, started, null)
             return
         }
@@ -212,6 +239,14 @@ public class MaxBot private constructor(
     public fun processUpdateBlocking(update: Update): Unit = runBlocking { processUpdate(update) }
 
     // ------------------------------------------------------------- polling
+
+    /**
+     * Whether long polling is running: it was started with [startPolling], [start] or [startBlocking]
+     * and has not ended yet. It stays `true` after [stop] until the updates already received are
+     * handled. When polling ended with an error, [pollingFailure] holds it.
+     */
+    public val isPolling: Boolean
+        get() = pollingJob?.isActive == true || poller?.isActive == true
 
     /**
      * Receives updates by long polling until the calling coroutine is cancelled.

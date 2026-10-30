@@ -1,0 +1,20 @@
+public final class ru/securitytrip/maxapi/opentelemetry/MaxTracing : ru/securitytrip/maxapi/events/MaxEventListener {
+	public static final field CHAT_ID Lio/opentelemetry/api/common/AttributeKey;
+	public static final field Companion Lru/securitytrip/maxapi/opentelemetry/MaxTracing$Companion;
+	public static final field INSTRUMENTATION_SCOPE Ljava/lang/String;
+	public static final field MESSAGING_SYSTEM_MAX Ljava/lang/String;
+	public static final field RESUBSCRIBE_SPAN Ljava/lang/String;
+	public static final field UPDATE_HANDLED Lio/opentelemetry/api/common/AttributeKey;
+	public static final field UPDATE_TYPE Lio/opentelemetry/api/common/AttributeKey;
+	public fun <init> (Lio/opentelemetry/api/OpenTelemetry;)V
+	public fun <init> (Lio/opentelemetry/api/OpenTelemetry;Ljava/lang/String;)V
+	public synthetic fun <init> (Lio/opentelemetry/api/OpenTelemetry;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun onRequest (Lru/securitytrip/maxapi/events/RequestEvent;)V
+	public fun onUpdate (Lru/securitytrip/maxapi/events/UpdateEvent;)V
+	public fun onWebhookResubscribe (Lru/securitytrip/maxapi/events/WebhookResubscribeEvent;)V
+	public fun updateContext (Lru/securitytrip/maxapi/model/update/Update;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public final class ru/securitytrip/maxapi/opentelemetry/MaxTracing$Companion {
+}
+

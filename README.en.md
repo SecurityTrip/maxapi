@@ -60,6 +60,8 @@ bot.startPolling()
   - [Uploading files](#uploading-files)
   - [Pagination](#pagination)
 - [Spring Boot](#spring-boot)
+  - [Health](#health)
+  - [Native image](#native-image)
 - [Ktor](#ktor)
 - [Mini apps](#mini-apps)
   - [Validating initData](#validating-initdata)
@@ -111,8 +113,10 @@ bot.startPolling()
 - Webhook handler with constant-time secret verification that plugs into Spring, Ktor, Javalin or servlets.
 - Few dependencies: OkHttp, Jackson, kotlinx.coroutines. Logging goes to `System.Logger`, so it
   reaches SLF4J, Log4j or JUL through their usual bridges.
-- Spring Boot starter (polling or webhook from `application.yaml`), Ktor webhook routing, a test
-  kit that runs handlers without a network, and storage in SQL or Redis.
+- Spring Boot starter (polling or webhook from `application.yaml`, on Spring MVC or WebFlux), Ktor
+  webhook routing, a test kit that runs handlers without a network, and storage in SQL or Redis.
+- Production operations: an Actuator health indicator, Micrometer metrics, OpenTelemetry tracing
+  with the span of an update current in its handler, and reflection metadata for GraalVM native images.
 
 ## Requirements and installation
 
@@ -131,6 +135,7 @@ The library is published to Maven Central under the group `io.github.securitytri
 | `maxapi-micrometer`          | Micrometer metrics, see [Reliability and monitoring](#reliability-and-monitoring) |
 | `maxapi-jdbc`                | dialog states, marker and seen updates in an SQL database, see [Storage](#storage) |
 | `maxapi-redis`               | the same in Redis (Lettuce), see [Storage](#storage)            |
+| `maxapi-opentelemetry`       | OpenTelemetry tracing, see [Reliability and monitoring](#reliability-and-monitoring) |
 | `maxapi-bom`                 | versions of all of the above                                   |
 
 ```kotlin
@@ -187,6 +192,8 @@ checked on every build. Coming from 0.x? See [MIGRATION.md](MIGRATION.md).
 | Spring Boot       | 4.x (built and tested with 4.1)                        |
 | Ktor              | 3.x (built and tested with 3.6)                        |
 | Micrometer        | 1.x (built and tested with 1.17)                       |
+| OpenTelemetry     | API 1.x (built and tested with 1.62)                   |
+| GraalVM native    | metadata in the `maxapi` jar, Spring AOT hints in the starter; see [Native image](#native-image) |
 | Lettuce (Redis)   | 7.x (built and tested with 7.5 and Redis 7.4)          |
 | JDBC              | any database with standard SQL (tested on H2 2.4 and PostgreSQL 17) |
 
@@ -1115,7 +1122,7 @@ starts and stops the bot with the application. It is built and tested with Sprin
 ```kotlin
 dependencies {
     implementation("io.github.securitytrip:maxapi-spring-boot-starter:<version>")
-    implementation("org.springframework.boot:spring-boot-starter-web") // for webhook mode only
+    implementation("org.springframework.boot:spring-boot-starter-web") // webhook mode: Spring MVC or WebFlux
 }
 ```
 
@@ -1128,7 +1135,7 @@ max:
     trust-russian-root-ca: true  # default; see "TLS certificate" below
     storage: memory          # memory (default), jdbc or redis; see "Storage"
     webhook:
-      path: /max/webhook     # the endpoint in your Spring MVC server
+      path: /max/webhook     # the endpoint in your Spring MVC or WebFlux server
       url: https://bot.example.com/max/webhook   # subscribe on startup (optional)
       secret: ${MAX_WEBHOOK_SECRET}
       async: false           # true: respond before the handler finishes
@@ -1159,16 +1166,19 @@ MaxBotConfigurer handlers() {
 | Mode      | What happens                                                                              |
 |-----------|-------------------------------------------------------------------------------------------|
 | `polling` | long polling starts with the context; on shutdown the bot stops polling and finishes the updates already received |
-| `webhook` | `POST max.bot.webhook.path` accepts deliveries (servlet web applications); with `webhook.url` set the bot subscribes on startup |
+| `webhook` | `POST max.bot.webhook.path` accepts deliveries (servlet and reactive web applications); with `webhook.url` set the bot subscribes on startup |
 | `none`    | nothing starts; deliver updates yourself                                                  |
 
 `MaxEventListener` beans (and `MaxMetrics`, when `maxapi-micrometer` and a `MeterRegistry` are
-present) receive the events of the client and the bot. `StateStorage`, `MarkerStore`,
-`UpdateDeduplicator` and `ChatStore` beans are used by the bot, and the `Broadcaster` bean sends
+present, and `MaxTracing`, when `maxapi-opentelemetry` and an `OpenTelemetry` bean are present)
+receive the events of the client and the bot. `StateStorage`, `MarkerStore`,
+`UpdateDeduplicator` (or `SuspendUpdateDeduplicator`) and `ChatStore` beans are used by the bot, and the `Broadcaster` bean sends
 broadcasts with their progress in the `BroadcastStore` bean, see [Storage](#storage).
 
 The webhook endpoint answers 200 for accepted updates, 401 for a wrong secret, 400 for a body that
-is not an update and 503 when the bot is closed. Define your own `MaxClient`, `MaxBot` or
+is not an update and 503 when the bot is closed. In a Spring WebFlux application the endpoint is a
+reactive `RouterFunction` with the same answers: the handler runs on `Dispatchers.Default`, never on
+the event loop, and the response waits for it without blocking a thread (unless `webhook.async`). Define your own `MaxClient`, `MaxBot` or
 `BotConfig` bean to replace the default one, and `MaxClientConfigCustomizer` beans to adjust the
 client settings (retry policy, `OkHttpClient`).
 
@@ -1176,6 +1186,65 @@ The `@MaxWebAppUser` argument for controllers of a mini app backend is configure
 `max.bot.web-app.*` properties, see [Spring MVC backend](#spring-mvc-backend).
 
 A complete application is in [examples-spring](examples-spring).
+
+### Health
+
+With Spring Boot Actuator on the classpath the starter registers the health contributor `max`
+(`/actuator/health/max`):
+
+| Part      | `DOWN` when                                                                              |
+|-----------|-------------------------------------------------------------------------------------------|
+| `bot`     | polling ended (the error that ended it is in `pollingError`); in webhook mode there is no endpoint (not a web application) or the subscription to `webhook.url` is missing; the API does not answer or rejects the token |
+| `storage` | with `max.bot.storage=jdbc` or `redis`: the database or Redis does not answer             |
+
+The `bot` part asks the API (`getSubscriptions` in webhook mode, `getMyInfo` otherwise) at most once
+per `max.bot.health.cache-ttl`, so frequent probes do not use up the limit of 30 requests per second:
+
+```yaml
+max:
+  bot:
+    health:
+      cache-ttl: 30s     # default; 0 asks on every check
+      timeout: 5s        # how long a check waits for the API and the storage
+management:
+  endpoint:
+    health:
+      show-details: always
+  health:
+    max:
+      enabled: true      # false turns the contributor off
+```
+
+The contributor is not part of the `liveness` and `readiness` groups: add it to a group yourself
+(`management.endpoint.health.group.readiness.include=readinessState,max`) if an unreachable API
+should take the instance out of the load balancer.
+
+### Native image
+
+The `maxapi` jar carries reflection metadata for GraalVM in `META-INF/native-image`: every model
+class (Jackson creates them, the subclasses of `Update` and the other polymorphic hierarchies
+included), the Russian Trusted Root CA and the Kotlin built-ins. The starter adds the same hints to
+Spring AOT (`MaxRuntimeHints`, from `META-INF/spring/aot.factories`). The build checks them by
+processing an application with the starter ahead of time, compiling the generated code and running
+the bot from it.
+
+A native image of a Spring Boot bot is built as usual, with the Spring Boot and GraalVM Native Build
+Tools plugins and a GraalVM JDK 17 or newer:
+
+```kotlin
+plugins {
+    id("org.springframework.boot") version "4.1.1"
+    id("org.graalvm.buildtools.native") version "1.1.8"
+}
+```
+
+```bash
+./gradlew nativeCompile        # build/native/nativeCompile/<application>
+./gradlew nativeTest           # the tests of the application, compiled to native code
+```
+
+A full native build takes several minutes and a few gigabytes of memory, so the CI of the library
+does not run it on every change.
 
 ## Ktor
 
@@ -1571,7 +1640,10 @@ your own implements `MarkerStore` (or extends `BlockingMarkerStore` in Java).
 **Duplicates.** Max redelivers a webhook update until it gets 200, for up to 8 hours.
 `InMemoryUpdateDeduplicator` drops updates seen recently, by message id, callback id or, for other
 updates, type, time, chat and user (`UpdateDeduplicator.keyOf`). With several instances, use the
-shared stores of [Storage](#storage).
+shared stores of [Storage](#storage). `UpdateDeduplicator.isNew` blocks the thread that dispatches
+the update; a store with an asynchronous client implements `SuspendUpdateDeduplicator.markSeen`
+instead and is set with `BotConfig(suspendDeduplicator = ...)`. A class may implement both, like the
+Redis and JDBC deduplicators: the bot then calls the non-blocking method.
 
 **Handler timeout.** `handlerTimeout` cancels a handler that runs too long (Java handlers are
 interrupted) and passes `HandlerTimeoutException` to `onError`, so a stuck handler does not block its chat.
@@ -1600,6 +1672,30 @@ val bot = MaxBot(client, BotConfig(eventListener = metrics))
 
 With the Spring Boot starter, adding `maxapi-micrometer` is enough when the application has a
 `MeterRegistry` (e.g. from Actuator); other `MaxEventListener` beans are attached as well.
+
+**Tracing.** `maxapi-opentelemetry` records the events as OpenTelemetry spans, named and attributed
+by the semantic conventions:
+
+| Span                      | Kind     | Attributes                                                                   |
+|---------------------------|----------|------------------------------------------------------------------------------|
+| `GET /chats/{id}`         | CLIENT   | `http.request.method`, `url.template`, `http.response.status_code`, `server.address`, `server.port`, `http.request.resend_count`, `error.type` |
+| `process message_created` | CONSUMER | `messaging.system=max`, `messaging.operation.type=process`, `max.update.type`, `max.chat.id`, `max.update.handled`, `error.type` |
+| `max.webhook.resubscribe` | INTERNAL | `url.full`, `error.type`                                                     |
+
+```kotlin
+val tracing = MaxTracing(openTelemetry)
+val client = MaxClient(MaxClientConfig(token, eventListener = tracing))
+val bot = MaxBot(client, BotConfig(eventListener = tracing))
+```
+
+The span of an update starts when the bot receives it and is current in the coroutines of the
+handler (`MaxEventListener.updateContext` puts the OpenTelemetry context into the coroutine context),
+so the API requests of the handler and the spans of your own code in it are its children, even
+across `withContext`. A webhook update handled with `handle`/`handleBlocking` continues the trace of
+the HTTP server span; long polling and `handleAsync` start a new trace for each update. Each HTTP
+attempt is a span of its own; retries carry `http.request.resend_count`. `updateContext` serves
+other context too, e.g. an SLF4J `MDCContext`. With the Spring Boot starter, adding
+`maxapi-opentelemetry` is enough when the application has an `OpenTelemetry` bean.
 
 ## Storage
 
@@ -1665,8 +1761,9 @@ max:
       state-ttl: 7d            # by default states are kept until cleared
 ```
 
-`jdbc` uses the application's `DataSource`. With `jdbc` and `redis` the bot also keeps the chat
-registry, and the `Broadcaster` bean keeps the progress of broadcasts there. Your own `StateStorage`,
+`jdbc` uses the application's `DataSource`. The deduplicators of both modules do not block the
+workers of the bot: Redis is asked with the asynchronous API of Lettuce, JDBC runs on
+`Dispatchers.IO`. With `jdbc` and `redis` the bot also keeps the chat registry, and the `Broadcaster` bean keeps the progress of broadcasts there. Your own `StateStorage`,
 `MarkerStore`, `UpdateDeduplicator`, `ChatStore` or `BroadcastStore` bean replaces the matching
 store, also without `max.bot.storage`: an `InMemoryChatStore` bean, for example, turns on the chat
 registry in memory.
@@ -1706,10 +1803,11 @@ maxapi-test/                   BotTester and TestUpdates
 maxapi-micrometer/             MaxMetrics
 maxapi-jdbc/                   JDBC stores (tests on H2 and PostgreSQL)
 maxapi-redis/                  Redis stores (tests on Redis)
+maxapi-opentelemetry/          MaxTracing
 maxapi-bom/                    bill of materials
 build-logic/                   convention plugins: Kotlin settings, coverage, Dokka, publishing
 examples/, examples-spring/, examples-ktor/
-integration-tests/             a whole Spring Boot application: fake Max, PostgreSQL and Redis
+integration-tests/             whole Spring Boot applications (MVC and WebFlux, Actuator): fake Max, PostgreSQL and Redis
 ```
 
 The `client` and `model` packages do not depend on `bot`, so the client can be used on its own.

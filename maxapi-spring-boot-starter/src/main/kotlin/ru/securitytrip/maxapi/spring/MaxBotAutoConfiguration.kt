@@ -21,10 +21,13 @@ import ru.securitytrip.maxapi.bot.MarkerStore
 import ru.securitytrip.maxapi.bot.MaxBot
 import ru.securitytrip.maxapi.bot.Router
 import ru.securitytrip.maxapi.bot.StateStorage
+import ru.securitytrip.maxapi.bot.SuspendUpdateDeduplicator
 import ru.securitytrip.maxapi.bot.UpdateDeduplicator
 import ru.securitytrip.maxapi.client.MaxClient
 import ru.securitytrip.maxapi.client.MaxClientConfig
 import ru.securitytrip.maxapi.events.MaxEventListener
+import org.springframework.web.reactive.function.server.RouterFunction as ReactiveRouterFunction
+import org.springframework.web.reactive.function.server.ServerResponse as ReactiveServerResponse
 
 /**
  * Configures a [MaxClient] and a [MaxBot] when `max.bot.token` is set, and starts receiving updates
@@ -34,7 +37,8 @@ import ru.securitytrip.maxapi.events.MaxEventListener
  * is included, both in `@Order` order. Define your own `MaxClient`, `MaxBot` or [BotConfig] bean to
  * replace the default one; [MaxClientConfigCustomizer] beans adjust the client settings.
  * [MaxEventListener] beans receive the events of the client and, unless you define a `BotConfig`
- * bean, of the bot. So do [StateStorage], [MarkerStore], [UpdateDeduplicator] and [ChatStore] beans,
+ * bean, of the bot. So do [StateStorage], [MarkerStore], [UpdateDeduplicator] (or [SuspendUpdateDeduplicator])
+ * and [ChatStore] beans,
  * e.g. those that `max.bot.storage` creates. The [Broadcaster] bean sends broadcasts with the client
  * and keeps their progress in the [BroadcastStore] bean.
  */
@@ -59,7 +63,11 @@ public class MaxBotAutoConfiguration {
         return MaxClient(builder.build())
     }
 
-    /** Settings of the bot with the storages and event listeners defined as beans. */
+    /**
+     * Settings of the bot with the storages and event listeners defined as beans. An [UpdateDeduplicator]
+     * bean is preferred to a [SuspendUpdateDeduplicator] bean; the bot calls the non-blocking method of a
+     * bean that implements both.
+     */
     @Bean
     @ConditionalOnMissingBean
     public fun maxBotConfig(
@@ -68,7 +76,18 @@ public class MaxBotAutoConfiguration {
         markerStore: ObjectProvider<MarkerStore>,
         deduplicator: ObjectProvider<UpdateDeduplicator>,
         chatStore: ObjectProvider<ChatStore>,
-    ): BotConfig = botConfig(listeners, stateStorage, markerStore, deduplicator, chatStore.ifAvailable)
+        suspendDeduplicator: ObjectProvider<SuspendUpdateDeduplicator>,
+    ): BotConfig = botConfig(listeners, stateStorage, markerStore, deduplicator, chatStore.ifAvailable, suspendDeduplicator)
+
+    /** The factory method of 1.6, kept for binary compatibility; Spring calls only the `@Bean` one. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    public fun maxBotConfig(
+        listeners: ObjectProvider<MaxEventListener>,
+        stateStorage: ObjectProvider<StateStorage>,
+        markerStore: ObjectProvider<MarkerStore>,
+        deduplicator: ObjectProvider<UpdateDeduplicator>,
+        chatStore: ObjectProvider<ChatStore>,
+    ): BotConfig = botConfig(listeners, stateStorage, markerStore, deduplicator, chatStore.ifAvailable, null)
 
     /** The factory method before 1.6, kept for binary compatibility; Spring calls only the `@Bean` one. */
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -77,7 +96,7 @@ public class MaxBotAutoConfiguration {
         stateStorage: ObjectProvider<StateStorage>,
         markerStore: ObjectProvider<MarkerStore>,
         deduplicator: ObjectProvider<UpdateDeduplicator>,
-    ): BotConfig = botConfig(listeners, stateStorage, markerStore, deduplicator, null)
+    ): BotConfig = botConfig(listeners, stateStorage, markerStore, deduplicator, null, null)
 
     private fun botConfig(
         listeners: ObjectProvider<MaxEventListener>,
@@ -85,13 +104,18 @@ public class MaxBotAutoConfiguration {
         markerStore: ObjectProvider<MarkerStore>,
         deduplicator: ObjectProvider<UpdateDeduplicator>,
         chatStore: ChatStore?,
-    ): BotConfig = BotConfig(
-        stateStorage = stateStorage.getIfAvailable(::InMemoryStateStorage),
-        markerStore = markerStore.ifAvailable,
-        deduplicator = deduplicator.ifAvailable,
-        eventListener = MaxEventListener.composite(listeners.orderedStream().toList()),
-        chatStore = chatStore,
-    )
+        suspendDeduplicator: ObjectProvider<SuspendUpdateDeduplicator>?,
+    ): BotConfig {
+        val blocking = deduplicator.ifAvailable
+        return BotConfig(
+            stateStorage = stateStorage.getIfAvailable(::InMemoryStateStorage),
+            markerStore = markerStore.ifAvailable,
+            deduplicator = blocking,
+            eventListener = MaxEventListener.composite(listeners.orderedStream().toList()),
+            chatStore = chatStore,
+            suspendDeduplicator = if (blocking == null) suspendDeduplicator?.ifAvailable else null,
+        )
+    }
 
     /** Sends broadcasts with the client, keeping their progress in the [BroadcastStore] bean, or in memory without one. */
     @Bean
@@ -128,6 +152,17 @@ public class MaxBotAutoConfiguration {
         @Bean
         public fun maxBotWebhookEndpoint(bot: MaxBot, properties: MaxBotProperties): RouterFunction<ServerResponse> =
             webhookEndpoint(bot, properties.webhook)
+    }
+
+    /** The webhook endpoint, in reactive web applications (Spring WebFlux) with `max.bot.mode=webhook`. */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
+    @ConditionalOnClass(ReactiveRouterFunction::class)
+    @ConditionalOnProperty(prefix = "max.bot", name = ["mode"], havingValue = "webhook")
+    public class ReactiveWebhookConfiguration {
+        @Bean
+        public fun maxBotWebhookEndpoint(bot: MaxBot, properties: MaxBotProperties): ReactiveRouterFunction<ReactiveServerResponse> =
+            reactiveWebhookEndpoint(bot, properties.webhook)
     }
 }
 

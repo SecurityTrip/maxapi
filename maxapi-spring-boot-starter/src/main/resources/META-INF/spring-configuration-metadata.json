@@ -4,7 +4,8 @@
     {"name": "max.bot.webhook", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Webhook", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
     {"name": "max.bot.jdbc", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Jdbc", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
     {"name": "max.bot.redis", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Redis", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
-    {"name": "max.bot.web-app", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$WebApp", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"}
+    {"name": "max.bot.web-app", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$WebApp", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
+    {"name": "max.bot.health", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Health", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"}
   ],
   "properties": [
     {"name": "max.bot.token", "type": "java.lang.String", "description": "Bot access token. The auto-configuration is active only when it is set."},
@@ -27,6 +28,8 @@
     {"name": "max.bot.web-app.source", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$WebApp$Source", "description": "Where a mini app sends window.WebApp.initData for @MaxWebAppUser parameters: header, parameter (query or form) or body.", "defaultValue": "header"},
     {"name": "max.bot.web-app.header", "type": "java.lang.String", "description": "Header with initData when max.bot.web-app.source is header.", "defaultValue": "X-Max-Init-Data"},
     {"name": "max.bot.web-app.parameter", "type": "java.lang.String", "description": "Query or form parameter with initData when max.bot.web-app.source is parameter.", "defaultValue": "initData"},
-    {"name": "max.bot.web-app.max-age", "type": "java.time.Duration", "description": "How old the auth_date of initData may be; older data is answered with 401.", "defaultValue": "1h"}
+    {"name": "max.bot.web-app.max-age", "type": "java.time.Duration", "description": "How old the auth_date of initData may be; older data is answered with 401.", "defaultValue": "1h"},
+    {"name": "max.bot.health.cache-ttl", "type": "java.time.Duration", "description": "How long the health indicator reuses the result of its request to the API, so that frequent health checks do not use up the request limit; 0 asks on every check.", "defaultValue": "30s"},
+    {"name": "max.bot.health.timeout", "type": "java.time.Duration", "description": "How long a health check waits for the API and the storage before reporting them down.", "defaultValue": "5s"}
   ]
 }

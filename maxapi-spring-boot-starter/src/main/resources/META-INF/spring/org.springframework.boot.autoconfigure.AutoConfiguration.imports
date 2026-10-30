@@ -2,3 +2,5 @@ ru.securitytrip.maxapi.spring.MaxBotAutoConfiguration
 ru.securitytrip.maxapi.spring.MaxMetricsAutoConfiguration
 ru.securitytrip.maxapi.spring.MaxStorageAutoConfiguration
 ru.securitytrip.maxapi.spring.MaxWebAppAutoConfiguration
+ru.securitytrip.maxapi.spring.MaxHealthAutoConfiguration
+ru.securitytrip.maxapi.spring.MaxTracingAutoConfiguration

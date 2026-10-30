@@ -1,5 +1,6 @@
-// Tests of whole applications built on the library: a Spring Boot application with the starter, a
-// fake Max server, and PostgreSQL and Redis in Docker. Nothing here is published.
+// Tests of whole applications built on the library: a Spring Boot application with the starter (on
+// Spring MVC or WebFlux, with Actuator), a fake Max server, and PostgreSQL and Redis in Docker.
+// Nothing here is published.
 plugins {
     alias(libs.plugins.kotlin.jvm)
 }
@@ -11,6 +12,8 @@ dependencies {
     testImplementation(project(":maxapi-redis"))
     testImplementation(libs.spring.boot.starter.web)
     testImplementation(libs.spring.boot.starter.jdbc)
+    testImplementation(libs.spring.boot.starter.webflux)
+    testImplementation(libs.spring.boot.starter.actuator)
     testImplementation(libs.postgresql)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.testcontainers)

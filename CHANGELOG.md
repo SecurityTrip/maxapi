@@ -18,7 +18,41 @@ backend side of mini apps.
 Tools for writing bots: scenes, paged and confirmation keyboards, translations, a registry of
 the bot's chats and broadcasts.
 
+Running bots in production: a health indicator, OpenTelemetry tracing, a WebFlux webhook endpoint,
+GraalVM native image metadata and non-blocking deduplication.
+
 ### Added
+
+- Spring Boot starter: the health contributor `max` when Spring Boot Actuator is present
+  (`MaxHealthAutoConfiguration`). Its part `bot` (`MaxBotHealthIndicator`) is `DOWN` when long polling
+  ended (with the error in `pollingError`), when webhook mode has no endpoint or the subscription to
+  `max.bot.webhook.url` is missing, and when the API does not answer or rejects the token; the request
+  to the API (`getSubscriptions` or `getMyInfo`) is made at most once per `max.bot.health.cache-ttl`
+  (30 seconds) and waits up to `max.bot.health.timeout` (5 seconds). Its part `storage` checks the
+  database or Redis of `max.bot.storage=jdbc|redis`. `management.health.max.enabled=false` turns it off.
+- New module `maxapi-opentelemetry`: `MaxTracing` records API requests as client spans
+  (`GET /chats/{id}` with `http.request.method`, `url.template`, `http.response.status_code`,
+  `server.address`, `server.port`, `http.request.resend_count`, `error.type`), dispatched updates as
+  consumer spans (`process message_created` with `messaging.system=max`, `max.update.type`,
+  `max.chat.id`, `max.update.handled`, `error.type`) and renewed webhook subscriptions as
+  `max.webhook.resubscribe`. The span of an update is current in the coroutines of its handler, so
+  the requests the handler makes are its children; a webhook update handled synchronously continues
+  the trace of the server span. The starter creates `MaxTracing` when the application has an
+  `OpenTelemetry` bean (`MaxTracingAutoConfiguration`).
+- `MaxEventListener.updateContext(update)`: coroutine context elements the bot adds while it
+  dispatches an update, e.g. an OpenTelemetry context or an SLF4J `MDCContext`; `composite` combines
+  the contexts of its listeners. The `onUpdate` event of the update is called within that context.
+- Spring Boot starter: the webhook endpoint in reactive web applications (Spring WebFlux), with the
+  same answers as the servlet one: 200, 401, 400 and 503. Handlers run on `Dispatchers.Default`, and
+  with `max.bot.webhook.async=false` the response waits for them without blocking a thread.
+- GraalVM native image: `maxapi` has reflection metadata for all model classes, the bundled root CA
+  and the Kotlin built-ins in `META-INF/native-image/io.github.securitytrip/maxapi`; the starter
+  registers the same hints with Spring AOT (`MaxRuntimeHints` in `META-INF/spring/aot.factories`).
+- `SuspendUpdateDeduplicator` with `suspend fun markSeen(update)`, a non-blocking variant of
+  `UpdateDeduplicator`, set with `BotConfig.suspendDeduplicator` (also in the builder). The bot calls
+  `markSeen` of a deduplicator that implements both interfaces. The starter passes a
+  `SuspendUpdateDeduplicator` bean to the bot when there is no `UpdateDeduplicator` bean.
+- `MaxBot.isPolling` and `MaxBot.pollingFailure`: whether long polling runs, and the error that ended it.
 
 - Mini app backends, in the new package `ru.securitytrip.maxapi.webapp` of `maxapi` with no new
   dependencies. `WebAppData.validate(initData, botToken, maxAge)` checks `window.WebApp.initData`
@@ -110,6 +144,11 @@ the bot's chats and broadcasts.
 
 ### Changed
 
+- `RedisUpdateDeduplicator` and `JdbcUpdateDeduplicator` also implement `SuspendUpdateDeduplicator`,
+  so the bot no longer blocks its workers on them: Redis is asked with the asynchronous API of
+  Lettuce, JDBC runs on `Dispatchers.IO`. `isNew` still works as before.
+- Spring Boot starter: the storage deduplicators of `max.bot.storage` are not created when the
+  application has its own `UpdateDeduplicator` or `SuspendUpdateDeduplicator` bean.
 - `Buttons.openApp` and `openApp` of the keyboard DSL check the payload when the button is created,
   not only when the message is sent.
 - Messages, comments, answers and commands that break the limits of Max now fail with

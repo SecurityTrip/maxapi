@@ -12,6 +12,7 @@ import ru.securitytrip.maxapi.bot.BroadcastStore
 import ru.securitytrip.maxapi.bot.ChatStore
 import ru.securitytrip.maxapi.bot.MarkerStore
 import ru.securitytrip.maxapi.bot.StateStorage
+import ru.securitytrip.maxapi.bot.SuspendUpdateDeduplicator
 import ru.securitytrip.maxapi.bot.UpdateDeduplicator
 import ru.securitytrip.maxapi.jdbc.JdbcBroadcastStore
 import ru.securitytrip.maxapi.jdbc.JdbcChatStore
@@ -30,8 +31,10 @@ import javax.sql.DataSource
  * `DataSource` (with `maxapi-jdbc`), `redis` in Redis at `max.bot.redis.url` (with `maxapi-redis`).
  * Besides dialog states, the polling marker and seen updates, both keep the chats of the bot
  * ([ChatStore], read with `MaxBot.chats`) and the progress of broadcasts ([BroadcastStore]).
- * Your own [StateStorage], [MarkerStore], [UpdateDeduplicator], [ChatStore] or [BroadcastStore] bean
- * replaces the matching one.
+ * Your own [StateStorage], [MarkerStore], [UpdateDeduplicator] (or [SuspendUpdateDeduplicator]), [ChatStore]
+ * or [BroadcastStore] bean replaces the matching one. The deduplicators of both storages implement both
+ * interfaces, and the bot calls their non-blocking method: Redis is asked with the asynchronous API of
+ * Lettuce, JDBC on `Dispatchers.IO`.
  */
 @AutoConfiguration(before = [MaxBotAutoConfiguration::class])
 public class MaxStorageAutoConfiguration {
@@ -53,7 +56,7 @@ public class MaxStorageAutoConfiguration {
                 .also { if (properties.jdbc.createTables) it.createTable() }
 
         @Bean
-        @ConditionalOnMissingBean(UpdateDeduplicator::class)
+        @ConditionalOnMissingBean(UpdateDeduplicator::class, SuspendUpdateDeduplicator::class)
         public fun maxJdbcUpdateDeduplicator(dataSource: DataSource, properties: MaxBotProperties): JdbcUpdateDeduplicator =
             JdbcUpdateDeduplicator(dataSource, properties.jdbc.tablePrefix + "seen_update")
                 .also { if (properties.jdbc.createTables) it.createTable() }
@@ -100,7 +103,7 @@ public class MaxStorageAutoConfiguration {
         ): RedisMarkerStore = RedisMarkerStore(connection, properties.redis.keyPrefix + "marker")
 
         @Bean
-        @ConditionalOnMissingBean(UpdateDeduplicator::class)
+        @ConditionalOnMissingBean(UpdateDeduplicator::class, SuspendUpdateDeduplicator::class)
         public fun maxRedisUpdateDeduplicator(
             connection: StatefulRedisConnection<String, String>,
             properties: MaxBotProperties,

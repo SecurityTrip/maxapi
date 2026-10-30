@@ -119,6 +119,15 @@ abstract class JdbcStoresContract {
     }
 
     @Test
+    fun `the non-blocking check shares rows with the blocking one`(): Unit = runBlocking {
+        val deduplicator = JdbcUpdateDeduplicator(dataSource, table("seen")).createTable()
+
+        assertTrue(deduplicator.markSeen(message("mid.1")))
+        assertFalse(deduplicator.markSeen(message("mid.1")))
+        assertFalse(deduplicator.isNew(message("mid.1")))
+    }
+
+    @Test
     fun `expired keys are deleted`() {
         val name = table("seen")
         JdbcUpdateDeduplicator(dataSource, name).createTable()

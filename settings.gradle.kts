@@ -23,6 +23,7 @@ include("maxapi-ktor")
 include("maxapi-micrometer")
 include("maxapi-jdbc")
 include("maxapi-redis")
+include("maxapi-opentelemetry")
 
 include("examples")
 include("examples-spring")

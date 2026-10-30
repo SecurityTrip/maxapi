@@ -27,6 +27,9 @@ class FakeMax : AutoCloseable {
     /** The `marker` parameter of every `getUpdates` request, in order. */
     val pollMarkers: MutableList<String?> = CopyOnWriteArrayList()
 
+    /** Every request as `METHOD /path`. */
+    val requests: MutableList<String> = CopyOnWriteArrayList()
+
     /** Bodies of `POST /subscriptions` requests. */
     val subscriptions: MutableList<String> = CopyOnWriteArrayList()
 
@@ -46,6 +49,7 @@ class FakeMax : AutoCloseable {
 
     private fun handle(request: RecordedRequest): MockResponse {
         val path = request.url.encodedPath
+        requests += "${request.method} $path"
         return when {
             request.method == "GET" && path == "/updates" -> {
                 pollMarkers += request.url.queryParameter("marker")
@@ -64,7 +68,11 @@ class FakeMax : AutoCloseable {
                        "body":{"mid":"out.${sentTexts.size}","seq":1,"text":${mapper.writeValueAsString(text)}}}}""",
                 )
             }
-            request.method == "GET" && path == "/subscriptions" -> json("""{"subscriptions":[]}""")
+            request.method == "GET" && path == "/subscriptions" -> {
+                val urls = subscriptions.map { mapper.readTree(it).path("url").asText() }.distinct()
+                json("""{"subscriptions":[${urls.joinToString(",") { """{"url":"$it","time":1}""" }}]}""")
+            }
+            request.method == "GET" && path == "/me" -> json("""{"user_id":100,"first_name":"Survey","username":"survey_bot","is_bot":true}""")
             request.method == "POST" && path == "/subscriptions" -> {
                 subscriptions += request.body?.utf8().orEmpty()
                 json(SUCCESS)

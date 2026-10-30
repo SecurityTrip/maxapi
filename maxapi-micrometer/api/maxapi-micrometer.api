@@ -7,6 +7,7 @@ public final class ru/securitytrip/maxapi/micrometer/MaxMetrics : ru/securitytri
 	public fun onRequest (Lru/securitytrip/maxapi/events/RequestEvent;)V
 	public fun onUpdate (Lru/securitytrip/maxapi/events/UpdateEvent;)V
 	public fun onWebhookResubscribe (Lru/securitytrip/maxapi/events/WebhookResubscribeEvent;)V
+	public fun updateContext (Lru/securitytrip/maxapi/model/update/Update;)Lkotlin/coroutines/CoroutineContext;
 }
 
 public final class ru/securitytrip/maxapi/micrometer/MaxMetrics$Companion {

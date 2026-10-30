@@ -29,10 +29,10 @@ open class SurveyApp {
         .onMessage { reply("echo: $text") }
 
     companion object {
-        /** Starts the application with [properties] (`key=value`) and without a web server unless [web]. */
-        fun start(vararg properties: String, web: Boolean = false): ConfigurableApplicationContext =
+        /** Starts the application with [properties] (`key=value`) and a web server of [web], none by default. */
+        fun start(vararg properties: String, web: WebApplicationType = WebApplicationType.NONE): ConfigurableApplicationContext =
             SpringApplicationBuilder(SurveyApp::class.java)
-                .web(if (web) WebApplicationType.SERVLET else WebApplicationType.NONE)
+                .web(web)
                 .properties("spring.main.banner-mode=off", *properties)
                 .run()
     }
