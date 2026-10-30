@@ -1,0 +1,2 @@
+# API dumps are written by apiDump with LF endings; keep them LF on every OS so they do not show up as changed.
+*.api text eol=lf
