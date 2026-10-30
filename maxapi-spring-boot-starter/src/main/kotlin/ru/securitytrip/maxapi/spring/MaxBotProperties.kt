@@ -3,6 +3,7 @@ package ru.securitytrip.maxapi.spring
 import org.springframework.boot.context.properties.ConfigurationProperties
 import ru.securitytrip.maxapi.client.MaxClientConfig
 import ru.securitytrip.maxapi.client.RateLimit
+import ru.securitytrip.maxapi.webapp.WebAppData
 import java.time.Duration
 
 /**
@@ -20,6 +21,10 @@ import java.time.Duration
  *       url: https://bot.example.com/max/webhook
  *       secret: ${MAX_WEBHOOK_SECRET}
  *       check-interval: 10m    # subscribe again if Max dropped the subscription
+ *     web-app:
+ *       source: header         # header (default), parameter or body
+ *       header: X-Max-Init-Data
+ *       max-age: 1h
  * ```
  */
 @ConfigurationProperties("max.bot")
@@ -59,6 +64,9 @@ public class MaxBotProperties {
      */
     public var storage: Storage = Storage.MEMORY
 
+    /** How controllers of a mini app backend get `initData`, see [MaxWebAppUser]. */
+    public val webApp: WebApp = WebApp()
+
     /** Settings of [Storage.JDBC]. */
     public val jdbc: Jdbc = Jdbc()
 
@@ -87,6 +95,33 @@ public class MaxBotProperties {
 
         /** In Redis at [Redis.url]; needs `maxapi-redis`. */
         REDIS,
+    }
+
+    /** Where a mini app sends `window.WebApp.initData` and how old it may be. */
+    public class WebApp {
+        /** Where `initData` is in the request. */
+        public var source: Source = Source.HEADER
+
+        /** Header with `initData` when [source] is [Source.HEADER]. */
+        public var header: String = "X-Max-Init-Data"
+
+        /** Query or form parameter with `initData` when [source] is [Source.PARAMETER]. */
+        public var parameter: String = "initData"
+
+        /** How old `auth_date` may be; one hour, as the Max documentation recommends. */
+        public var maxAge: Duration = WebAppData.DEFAULT_MAX_AGE
+
+        /** Where `initData` is in the request. */
+        public enum class Source {
+            /** The [header]; works for any method and leaves the body to the controller. */
+            HEADER,
+
+            /** The query or form [parameter]. */
+            PARAMETER,
+
+            /** The whole request body, as plain text; the controller cannot read the body then. */
+            BODY,
+        }
     }
 
     public class Jdbc {

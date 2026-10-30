@@ -3,7 +3,8 @@
     {"name": "max.bot", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
     {"name": "max.bot.webhook", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Webhook", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
     {"name": "max.bot.jdbc", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Jdbc", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
-    {"name": "max.bot.redis", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Redis", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"}
+    {"name": "max.bot.redis", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$Redis", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"},
+    {"name": "max.bot.web-app", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$WebApp", "sourceType": "ru.securitytrip.maxapi.spring.MaxBotProperties"}
   ],
   "properties": [
     {"name": "max.bot.token", "type": "java.lang.String", "description": "Bot access token. The auto-configuration is active only when it is set."},
@@ -22,6 +23,10 @@
     {"name": "max.bot.jdbc.create-tables", "type": "java.lang.Boolean", "description": "Whether to create missing tables on startup; turn it off when migrations create them.", "defaultValue": true},
     {"name": "max.bot.redis.url", "type": "java.lang.String", "description": "Redis URI, e.g. redis://:password@host:6379/0.", "defaultValue": "redis://localhost:6379"},
     {"name": "max.bot.redis.key-prefix", "type": "java.lang.String", "description": "Prefix of the keys: <prefix>state:..., <prefix>marker and <prefix>seen:....", "defaultValue": "max:"},
-    {"name": "max.bot.redis.state-ttl", "type": "java.time.Duration", "description": "How long a dialog state is kept after its last change; by default until it is cleared."}
+    {"name": "max.bot.redis.state-ttl", "type": "java.time.Duration", "description": "How long a dialog state is kept after its last change; by default until it is cleared."},
+    {"name": "max.bot.web-app.source", "type": "ru.securitytrip.maxapi.spring.MaxBotProperties$WebApp$Source", "description": "Where a mini app sends window.WebApp.initData for @MaxWebAppUser parameters: header, parameter (query or form) or body.", "defaultValue": "header"},
+    {"name": "max.bot.web-app.header", "type": "java.lang.String", "description": "Header with initData when max.bot.web-app.source is header.", "defaultValue": "X-Max-Init-Data"},
+    {"name": "max.bot.web-app.parameter", "type": "java.lang.String", "description": "Query or form parameter with initData when max.bot.web-app.source is parameter.", "defaultValue": "initData"},
+    {"name": "max.bot.web-app.max-age", "type": "java.time.Duration", "description": "How old the auth_date of initData may be; older data is answered with 401.", "defaultValue": "1h"}
   ]
 }

@@ -33,6 +33,7 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public final fun getSyncCommands ()Z
 	public final fun getToken ()Ljava/lang/String;
 	public final fun getTrustRussianRootCa ()Z
+	public final fun getWebApp ()Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp;
 	public final fun getWebhook ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Webhook;
 	public final fun setBaseUrl (Ljava/lang/String;)V
 	public final fun setMode (Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;)V
@@ -88,6 +89,27 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Storage : java
 	public static fun values ()[Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
 }
 
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties$WebApp {
+	public fun <init> ()V
+	public final fun getHeader ()Ljava/lang/String;
+	public final fun getMaxAge ()Ljava/time/Duration;
+	public final fun getParameter ()Ljava/lang/String;
+	public final fun getSource ()Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp$Source;
+	public final fun setHeader (Ljava/lang/String;)V
+	public final fun setMaxAge (Ljava/time/Duration;)V
+	public final fun setParameter (Ljava/lang/String;)V
+	public final fun setSource (Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp$Source;)V
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxBotProperties$WebApp$Source : java/lang/Enum {
+	public static final field BODY Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp$Source;
+	public static final field HEADER Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp$Source;
+	public static final field PARAMETER Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp$Source;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp$Source;
+	public static fun values ()[Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp$Source;
+}
+
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Webhook {
 	public fun <init> ()V
 	public final fun getAsync ()Z
@@ -129,5 +151,29 @@ public final class ru/securitytrip/maxapi/spring/MaxStorageAutoConfiguration$Red
 	public final fun maxRedisMarkerStore (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisMarkerStore;
 	public final fun maxRedisStateStorage (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisStateStorage;
 	public final fun maxRedisUpdateDeduplicator (Lio/lettuce/core/api/StatefulRedisConnection;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/redis/RedisUpdateDeduplicator;
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxWebAppArgumentResolver : org/springframework/web/method/support/HandlerMethodArgumentResolver {
+	public static final field ATTRIBUTE Ljava/lang/String;
+	public static final field Companion Lru/securitytrip/maxapi/spring/MaxWebAppArgumentResolver$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp;)V
+	public fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp;Ljava/time/Clock;)V
+	public synthetic fun <init> (Ljava/lang/String;Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp;Ljava/time/Clock;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun resolveArgument (Lorg/springframework/core/MethodParameter;Lorg/springframework/web/method/support/ModelAndViewContainer;Lorg/springframework/web/context/request/NativeWebRequest;Lorg/springframework/web/bind/support/WebDataBinderFactory;)Ljava/lang/Object;
+	public fun supportsParameter (Lorg/springframework/core/MethodParameter;)Z
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxWebAppArgumentResolver$Companion {
+}
+
+public final class ru/securitytrip/maxapi/spring/MaxWebAppAutoConfiguration {
+	public fun <init> ()V
+	public final fun maxWebAppArgumentResolver (Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/spring/MaxWebAppArgumentResolver;
+	public final fun maxWebAppMvcConfigurer (Lru/securitytrip/maxapi/spring/MaxWebAppArgumentResolver;)Lorg/springframework/web/servlet/config/annotation/WebMvcConfigurer;
+}
+
+public abstract interface annotation class ru/securitytrip/maxapi/spring/MaxWebAppUser : java/lang/annotation/Annotation {
+	public abstract fun required ()Z
 }
 
