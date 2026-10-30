@@ -84,16 +84,34 @@ public final class ru/securitytrip/maxapi/test/TestUpdates {
 	public static final field CHAT_ID J
 	public static final field INSTANCE Lru/securitytrip/maxapi/test/TestUpdates;
 	public static final field USER_ID J
+	public static final fun botAdded ()Lru/securitytrip/maxapi/model/update/BotAddedToChatUpdate;
+	public static final fun botAdded (J)Lru/securitytrip/maxapi/model/update/BotAddedToChatUpdate;
+	public static final fun botAdded (JJ)Lru/securitytrip/maxapi/model/update/BotAddedToChatUpdate;
+	public static final fun botAdded (JJZ)Lru/securitytrip/maxapi/model/update/BotAddedToChatUpdate;
+	public static synthetic fun botAdded$default (JJZILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotAddedToChatUpdate;
+	public static final fun botRemoved ()Lru/securitytrip/maxapi/model/update/BotRemovedFromChatUpdate;
+	public static final fun botRemoved (J)Lru/securitytrip/maxapi/model/update/BotRemovedFromChatUpdate;
+	public static final fun botRemoved (JJ)Lru/securitytrip/maxapi/model/update/BotRemovedFromChatUpdate;
+	public static final fun botRemoved (JJZ)Lru/securitytrip/maxapi/model/update/BotRemovedFromChatUpdate;
+	public static synthetic fun botRemoved$default (JJZILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotRemovedFromChatUpdate;
 	public static final fun botStarted ()Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
 	public static final fun botStarted (Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
 	public static final fun botStarted (Ljava/lang/String;J)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
 	public static final fun botStarted (Ljava/lang/String;JJ)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
 	public static synthetic fun botStarted$default (Ljava/lang/String;JJILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotStartedUpdate;
+	public static final fun botStopped ()Lru/securitytrip/maxapi/model/update/BotStoppedUpdate;
+	public static final fun botStopped (J)Lru/securitytrip/maxapi/model/update/BotStoppedUpdate;
+	public static final fun botStopped (JJ)Lru/securitytrip/maxapi/model/update/BotStoppedUpdate;
+	public static synthetic fun botStopped$default (JJILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/BotStoppedUpdate;
 	public static final fun callback (Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
 	public static final fun callback (Ljava/lang/String;J)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
 	public static final fun callback (Ljava/lang/String;JJ)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
 	public static final fun callback (Ljava/lang/String;JJLjava/lang/String;)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
 	public static synthetic fun callback$default (Ljava/lang/String;JJLjava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/MessageCallbackUpdate;
+	public static final fun chatTitleChanged (Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/ChatTitleChangedUpdate;
+	public static final fun chatTitleChanged (Ljava/lang/String;J)Lru/securitytrip/maxapi/model/update/ChatTitleChangedUpdate;
+	public static final fun chatTitleChanged (Ljava/lang/String;JJ)Lru/securitytrip/maxapi/model/update/ChatTitleChangedUpdate;
+	public static synthetic fun chatTitleChanged$default (Ljava/lang/String;JJILjava/lang/Object;)Lru/securitytrip/maxapi/model/update/ChatTitleChangedUpdate;
 	public static final fun message (Ljava/lang/String;)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
 	public static final fun message (Ljava/lang/String;J)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;
 	public static final fun message (Ljava/lang/String;JJ)Lru/securitytrip/maxapi/model/update/MessageCreatedUpdate;

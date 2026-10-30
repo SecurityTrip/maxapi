@@ -1,3 +1,29 @@
+public final class ru/securitytrip/maxapi/jdbc/JdbcBroadcastStore : ru/securitytrip/maxapi/bot/BlockingBroadcastStore {
+	public static final field Companion Lru/securitytrip/maxapi/jdbc/JdbcBroadcastStore$Companion;
+	public static final field DEFAULT_TABLE Ljava/lang/String;
+	public fun <init> (Ljavax/sql/DataSource;)V
+	public fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun createTable ()Lru/securitytrip/maxapi/jdbc/JdbcBroadcastStore;
+	public final fun getTable ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/jdbc/JdbcBroadcastStore$Companion {
+}
+
+public final class ru/securitytrip/maxapi/jdbc/JdbcChatStore : ru/securitytrip/maxapi/bot/BlockingChatStore {
+	public static final field Companion Lru/securitytrip/maxapi/jdbc/JdbcChatStore$Companion;
+	public static final field DEFAULT_TABLE Ljava/lang/String;
+	public fun <init> (Ljavax/sql/DataSource;)V
+	public fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljavax/sql/DataSource;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun createTable ()Lru/securitytrip/maxapi/jdbc/JdbcChatStore;
+	public final fun getTable ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/jdbc/JdbcChatStore$Companion {
+}
+
 public final class ru/securitytrip/maxapi/jdbc/JdbcMarkerStore : ru/securitytrip/maxapi/bot/BlockingMarkerStore {
 	public static final field Companion Lru/securitytrip/maxapi/jdbc/JdbcMarkerStore$Companion;
 	public static final field DEFAULT_TABLE Ljava/lang/String;

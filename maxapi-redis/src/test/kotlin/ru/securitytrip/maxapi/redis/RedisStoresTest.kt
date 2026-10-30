@@ -4,10 +4,16 @@ import io.lettuce.core.RedisClient
 import io.lettuce.core.api.StatefulRedisConnection
 import kotlinx.coroutines.runBlocking
 import org.testcontainers.containers.GenericContainer
+import ru.securitytrip.maxapi.bot.BroadcastOutcome
+import ru.securitytrip.maxapi.bot.BroadcastStore
+import ru.securitytrip.maxapi.bot.BroadcastTarget
+import ru.securitytrip.maxapi.bot.ChatStore
 import ru.securitytrip.maxapi.bot.DialogState
+import ru.securitytrip.maxapi.bot.KnownChat
 import ru.securitytrip.maxapi.bot.StateKey
 import ru.securitytrip.maxapi.bot.StateStorage
 import ru.securitytrip.maxapi.client.MaxJson
+import ru.securitytrip.maxapi.model.chat.ChatType
 import ru.securitytrip.maxapi.model.update.Update
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
@@ -91,6 +97,50 @@ class RedisStoresTest {
         assertEquals(Duration.ofHours(9), first.ttl)
         assertEquals(RedisUpdateDeduplicator.DEFAULT_PREFIX, RedisUpdateDeduplicator(connection).prefix)
         assertFailsWith<IllegalArgumentException> { RedisUpdateDeduplicator(connection, ttl = Duration.ofMillis(-1)) }
+    }
+
+    @Test
+    fun `chats are saved only when newer`(): Unit = runBlocking {
+        val store: ChatStore = RedisChatStore(connection, prefix + "chats")
+        assertNull(store.get(1))
+        assertTrue(store.save(KnownChat(1, ChatType.CHAT, "Команда", null, true, 10)))
+        assertTrue(store.save(KnownChat(2, ChatType.DIALOG, "Ann", 7, true, 10)))
+        assertEquals(KnownChat(2, ChatType.DIALOG, "Ann", 7, true, 10), store.get(2))
+
+        assertFalse(store.save(KnownChat(1, ChatType.CHAT, "Older", null, false, 5)))
+        assertTrue(store.save(KnownChat(1, ChatType.CHAT, "Same time", null, true, 10)))
+        assertEquals("Same time", store.get(1)?.title)
+        assertTrue(store.save(KnownChat(1, ChatType.CHANNEL, null, null, false, 20)))
+        assertEquals(KnownChat(1, ChatType.CHANNEL, null, null, false, 20), store.get(1))
+        assertEquals(listOf(2L), store.list().map { it.chatId })
+
+        connection.sync().hset(prefix + "chats", "3", """{"type":"forum","active":true,"updatedAt":1}""")
+        assertEquals(KnownChat(3, ChatType.UNKNOWN, null, null, true, 1), store.get(3))
+        assertEquals(RedisChatStore.DEFAULT_KEY, RedisChatStore(connection).key)
+    }
+
+    @Test
+    fun `broadcast outcomes are recorded, replaced, deleted and expire`(): Unit = runBlocking {
+        val store: BroadcastStore = RedisBroadcastStore(connection, prefix + "broadcast:")
+        assertEquals(emptyMap(), store.outcomes("news"))
+        store.record("news", BroadcastTarget.user(1), BroadcastOutcome.FAILED)
+        store.record("news", BroadcastTarget.chat(-2), BroadcastOutcome.UNAVAILABLE)
+        store.record("news", BroadcastTarget.user(1), BroadcastOutcome.SENT)
+        assertEquals(
+            mapOf(BroadcastTarget.user(1) to BroadcastOutcome.SENT, BroadcastTarget.chat(-2) to BroadcastOutcome.UNAVAILABLE),
+            store.outcomes("news"),
+        )
+        assertEquals(-1, connection.sync().ttl(prefix + "broadcast:news"))
+        store.delete("news")
+        assertEquals(emptyMap(), store.outcomes("news"))
+
+        val expiring = RedisBroadcastStore(connection, prefix + "b:", Duration.ofHours(1))
+        expiring.record("x", BroadcastTarget.user(1), BroadcastOutcome.SENT)
+        val ttl = connection.sync().pttl(prefix + "b:x")
+        assertTrue(ttl in 1..3_600_000, "ttl was $ttl")
+        assertEquals(Duration.ofHours(1), expiring.ttl)
+        assertEquals(RedisBroadcastStore.DEFAULT_PREFIX, RedisBroadcastStore(connection).prefix)
+        assertFailsWith<IllegalArgumentException> { RedisBroadcastStore(connection, ttl = Duration.ZERO) }
     }
 
     private fun message(mid: String): Update = MaxJson.parseUpdate(

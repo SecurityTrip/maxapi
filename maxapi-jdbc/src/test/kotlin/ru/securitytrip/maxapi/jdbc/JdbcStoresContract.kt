@@ -1,10 +1,16 @@
 package ru.securitytrip.maxapi.jdbc
 
 import kotlinx.coroutines.runBlocking
+import ru.securitytrip.maxapi.bot.BroadcastOutcome
+import ru.securitytrip.maxapi.bot.BroadcastStore
+import ru.securitytrip.maxapi.bot.BroadcastTarget
+import ru.securitytrip.maxapi.bot.ChatStore
 import ru.securitytrip.maxapi.bot.DialogState
+import ru.securitytrip.maxapi.bot.KnownChat
 import ru.securitytrip.maxapi.bot.StateKey
 import ru.securitytrip.maxapi.bot.StateStorage
 import ru.securitytrip.maxapi.client.MaxJson
+import ru.securitytrip.maxapi.model.chat.ChatType
 import ru.securitytrip.maxapi.model.update.Update
 import java.sql.SQLException
 import java.time.Duration
@@ -167,6 +173,66 @@ abstract class JdbcStoresContract {
         execute("CREATE TABLE $name (update_key INTEGER NOT NULL PRIMARY KEY, seen_at BIGINT NOT NULL)")
         assertFailsWith<SQLException> { JdbcUpdateDeduplicator(dataSource, name).isNew(message("mid.1")) }
         assertFailsWith<SQLException> { JdbcUpdateDeduplicator(dataSource, table("missing")).isNew(message("mid.1")) }
+    }
+
+    @Test
+    fun `chats are saved only when newer`(): Unit = runBlocking {
+        val store: ChatStore = JdbcChatStore(dataSource, table("chat")).createTable()
+        assertNull(store.get(1))
+        assertTrue(store.save(KnownChat(1, ChatType.CHAT, "Team", null, true, 10)))
+        assertTrue(store.save(KnownChat(2, ChatType.DIALOG, "Ann", 7, true, 10)))
+        assertEquals(KnownChat(2, ChatType.DIALOG, "Ann", 7, true, 10), store.get(2))
+
+        assertFalse(store.save(KnownChat(1, ChatType.CHAT, "Older", null, false, 5)))
+        assertTrue(store.save(KnownChat(1, ChatType.CHAT, "Same time", null, true, 10)))
+        assertEquals("Same time", store.get(1)?.title)
+        assertTrue(store.save(KnownChat(1, ChatType.CHANNEL, null, null, false, 20)))
+        assertEquals(KnownChat(1, ChatType.CHANNEL, null, null, false, 20), store.get(1))
+        assertEquals(listOf(2L), store.list().map { it.chatId })
+        assertEquals(JdbcChatStore.DEFAULT_TABLE, JdbcChatStore(dataSource).table)
+    }
+
+    @Test
+    fun `chats of an unknown type are read as unknown`(): Unit = runBlocking {
+        val store = JdbcChatStore(dataSource, table("chat")).createTable()
+        execute("INSERT INTO ${store.table} (chat_id, chat_type, active, updated_at) VALUES (3, 'forum', 1, 1)")
+        assertEquals(KnownChat(3, ChatType.UNKNOWN, null, null, true, 1), store.get(3))
+    }
+
+    @Test
+    fun `a chat insert that loses a race to a newer row is not saved`(): Unit = runBlocking {
+        val name = table("chat")
+        val store = JdbcChatStore(dataSource, name).createTable()
+        store.save(KnownChat(1, ChatType.CHAT, "New", null, true, 20))
+        dataSource.connection.use { connection ->
+            // The update matches nothing, as if the row did not exist yet; the insert collides and the update still matches nothing.
+            val saved = Sql.upsert(
+                connection,
+                "UPDATE $name SET title = 'Old' WHERE chat_id = 1 AND updated_at <= 5",
+                "INSERT INTO $name (chat_id, chat_type, active, updated_at) VALUES (1, 'chat', 1, 5)",
+                bindUpdate = {}, bindInsert = {},
+            )
+            assertFalse(saved)
+        }
+        assertEquals("New", store.get(1)?.title)
+    }
+
+    @Test
+    fun `broadcast outcomes are recorded, replaced and deleted`(): Unit = runBlocking {
+        val store: BroadcastStore = JdbcBroadcastStore(dataSource, table("broadcast")).createTable()
+        assertEquals(emptyMap(), store.outcomes("news"))
+        store.record("news", BroadcastTarget.user(1), BroadcastOutcome.FAILED)
+        store.record("news", BroadcastTarget.chat(-2), BroadcastOutcome.UNAVAILABLE)
+        store.record("news", BroadcastTarget.user(1), BroadcastOutcome.SENT)
+        store.record("other", BroadcastTarget.user(1), BroadcastOutcome.FAILED)
+        assertEquals(
+            mapOf(BroadcastTarget.user(1) to BroadcastOutcome.SENT, BroadcastTarget.chat(-2) to BroadcastOutcome.UNAVAILABLE),
+            store.outcomes("news"),
+        )
+        store.delete("news")
+        assertEquals(emptyMap(), store.outcomes("news"))
+        assertEquals(1, store.outcomes("other").size)
+        assertEquals(JdbcBroadcastStore.DEFAULT_TABLE, JdbcBroadcastStore(dataSource).table)
     }
 
     private fun message(mid: String): Update = MaxJson.parseUpdate(
