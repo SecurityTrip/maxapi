@@ -136,24 +136,29 @@ class PlatformRulesTest {
 
     @Test
     fun `keyboards keep to the size limits`() {
-        assertContains(rejected(NewMessageBody(attachments = listOf(InlineKeyboardAttachmentRequest(emptyList())))), "at least one row")
+        assertContains(rejected(NewMessageBody(attachments = listOf(InlineKeyboardAttachmentRequest(emptyList())))), "at least one button")
+        assertContains(rejected(body(null, emptyList(), emptyList())), "at least one button")
         assertContains(rejected(body(null, *Array(31) { listOf(cb()) })), "31 rows")
         assertContains(rejected(body(null, *Array(30) { List(7) { cb() } }, listOf(cb()))), "31 rows")
         assertContains(rejected(body(null, List(8) { cb() })), "Row 1 of the keyboard has 8 buttons")
         assertContains(rejected(body(null, *Array(30) { List(8) { cb() } })), "Keyboard has 240 buttons; Max allows at most 210")
         assertContains(rejected(body(null, listOf(cb()), List(8) { cb() })), "Row 2 of the keyboard has 8 buttons")
         for (wide in listOf<Button>(LinkButton("l", "https://max.ru"), OpenAppButton("o", "bot"), RequestGeoLocationButton("g"), RequestContactButton("c"))) {
-            assertContains(rejected(body(null, List(4) { wide })), "4 buttons of types link, open_app, request_geo_location, request_contact")
+            assertContains(rejected(body(null, List(4) { wide })), "Row 1 of the keyboard has 4 buttons; Max allows at most 3 in a row with a ${wide.type} button")
+            // One such button is enough to limit the row, as the server does.
+            assertContains(rejected(body(null, listOf(cb()), listOf(wide) + List(3) { cb() })), "Row 2 of the keyboard has 4 buttons")
         }
     }
 
     @Test
     fun `keyboards at the size limits are sent`(): Unit = runBlocking {
-        repeat(3) { server.enqueue(json("""{"message":${messageJson()}}""")) }
+        repeat(4) { server.enqueue(json("""{"message":${messageJson()}}""")) }
         client.sendMessageToChat(1, body(null, *Array(30) { List(7) { cb() } }))
-        client.sendMessageToChat(1, body(null, List(3) { LinkButton("l", "u") } + List(4) { cb() }))
-        client.sendMessageToChat(1, body(null, listOf(RequestContactButton("c"), RequestGeoLocationButton("g"), OpenAppButton("o", "bot"), MessageButton("m"))))
-        assertEquals(3, server.requestCount)
+        client.sendMessageToChat(1, body(null, List(3) { LinkButton("l", "u") }, List(7) { MessageButton("m") }))
+        client.sendMessageToChat(1, body(null, listOf(RequestContactButton("c"), RequestGeoLocationButton("g"), OpenAppButton("o", "bot"))))
+        // An empty row next to others is accepted by the server.
+        client.sendMessageToChat(1, body(null, listOf(cb()), emptyList()))
+        assertEquals(4, server.requestCount)
     }
 
     @Test

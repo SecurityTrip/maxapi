@@ -17,8 +17,9 @@ The current rules of the Max platform: its limits, its rate limits and its webho
 ### Added
 
 - `MaxLimits` holds the limits of Max, and `MaxClient` checks them before sending: text of a message
-  or a comment up to 4000 characters; keyboards of 1–30 rows, up to 210 buttons and 7 buttons in a
-  row (3 of the `link`, `open_app`, `request_geo_location` and `request_contact` types); button text
+  or a comment up to 4000 characters; keyboards of up to 30 rows, 1 to 210 buttons and 7 buttons in
+  a row (3 in a row with a `link`, `open_app`, `request_geo_location` or `request_contact` button,
+  as the live API enforces it); button text
   of 1–128 characters, `callback` and `clipboard` payloads up to 1024, `link` URLs up to 2048,
   `open_app` payloads up to 512 of `[A-Za-z0-9_-]`; up to 32 bot commands with names of 1–64 and
   descriptions of 1–128 characters. `sendMessage`, `editMessage`, `answerOnCallback`, `sendComment`,

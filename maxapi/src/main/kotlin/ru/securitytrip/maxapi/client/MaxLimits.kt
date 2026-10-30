@@ -34,10 +34,10 @@ public object MaxLimits {
     /** Buttons in a row of a keyboard. */
     public const val BUTTONS_PER_ROW: Int = 7
 
-    /** Buttons of the types in [WIDE_BUTTON_TYPES] in a row of a keyboard. */
+    /** Buttons in a row of a keyboard that has a button of one of the [WIDE_BUTTON_TYPES]. */
     public const val WIDE_BUTTONS_PER_ROW: Int = 3
 
-    /** Types of buttons that a row holds at most [WIDE_BUTTONS_PER_ROW] of. */
+    /** Types of buttons that limit their row to [WIDE_BUTTONS_PER_ROW] buttons. */
     @JvmField
     public val WIDE_BUTTON_TYPES: Set<String> = setOf("link", "open_app", "request_geo_location", "request_contact")
 
@@ -105,18 +105,18 @@ public object MaxLimits {
     }
 
     private fun checkKeyboard(rows: List<List<Button>>) {
-        require(rows.isNotEmpty()) { "A keyboard needs at least one row of buttons" }
         require(rows.size <= KEYBOARD_ROWS) { "Keyboard has ${rows.size} rows; Max allows at most $KEYBOARD_ROWS" }
         val buttons = rows.sumOf { it.size }
+        require(buttons >= 1) { "A keyboard needs at least one button" }
         require(buttons <= KEYBOARD_BUTTONS) { "Keyboard has $buttons buttons; Max allows at most $KEYBOARD_BUTTONS" }
         rows.forEachIndexed { index, row ->
             require(row.size <= BUTTONS_PER_ROW) {
                 "Row ${index + 1} of the keyboard has ${row.size} buttons; Max allows at most $BUTTONS_PER_ROW"
             }
-            val wide = row.count { it.type in WIDE_BUTTON_TYPES }
-            require(wide <= WIDE_BUTTONS_PER_ROW) {
-                "Row ${index + 1} of the keyboard has $wide buttons of types ${WIDE_BUTTON_TYPES.joinToString()}; " +
-                    "Max allows at most $WIDE_BUTTONS_PER_ROW"
+            val wide = row.firstOrNull { it.type in WIDE_BUTTON_TYPES }
+            require(wide == null || row.size <= WIDE_BUTTONS_PER_ROW) {
+                "Row ${index + 1} of the keyboard has ${row.size} buttons; Max allows at most $WIDE_BUTTONS_PER_ROW " +
+                    "in a row with a ${wide?.type} button"
             }
             row.forEach(::checkButton)
         }

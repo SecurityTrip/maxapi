@@ -787,8 +787,8 @@ without a request. `sendMessage`, `editMessage`, `answerOnCallback` (the new mes
 | What                                  | Limit                                                          |
 |---------------------------------------|----------------------------------------------------------------|
 | text of a message or a comment        | up to 4000 characters                                          |
-| keyboard                              | 1–30 rows, up to 210 buttons, up to 7 buttons in a row         |
-| `link`, `open_app`, `request_geo_location`, `request_contact` buttons | up to 3 in a row               |
+| keyboard                              | up to 30 rows, 1 to 210 buttons, up to 7 buttons in a row      |
+| a row with a `link`, `open_app`, `request_geo_location` or `request_contact` button | up to 3 buttons  |
 | button text                           | 1–128 characters                                               |
 | payload of `callback` and `clipboard` buttons | up to 1024 characters                                  |
 | `url` of a `link` button              | up to 2048 characters                                          |
