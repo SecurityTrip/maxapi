@@ -1,3 +1,28 @@
+public final class ru/securitytrip/maxapi/ktor/MaxWebAppConfig {
+	public static final field Companion Lru/securitytrip/maxapi/ktor/MaxWebAppConfig$Companion;
+	public static final field DEFAULT_HEADER Ljava/lang/String;
+	public fun <init> ()V
+	public final fun getBotToken ()Ljava/lang/String;
+	public final fun getClock ()Ljava/time/Clock;
+	public final fun getMaxAge ()Ljava/time/Duration;
+	public final fun getRequireUser ()Z
+	public final fun header (Ljava/lang/String;)V
+	public final fun initData (Lkotlin/jvm/functions/Function2;)V
+	public final fun setBotToken (Ljava/lang/String;)V
+	public final fun setClock (Ljava/time/Clock;)V
+	public final fun setMaxAge (Ljava/time/Duration;)V
+	public final fun setRequireUser (Z)V
+}
+
+public final class ru/securitytrip/maxapi/ktor/MaxWebAppConfig$Companion {
+}
+
+public final class ru/securitytrip/maxapi/ktor/MaxWebAppKt {
+	public static final fun getMaxWebApp ()Lio/ktor/server/application/RouteScopedPlugin;
+	public static final fun maxInitData (Lio/ktor/server/application/ApplicationCall;)Lru/securitytrip/maxapi/webapp/WebAppData;
+	public static final fun maxWebAppUser (Lio/ktor/server/application/ApplicationCall;)Lru/securitytrip/maxapi/webapp/WebAppUser;
+}
+
 public final class ru/securitytrip/maxapi/ktor/MaxWebhookKt {
 	public static final fun maxWebhook (Lio/ktor/server/routing/Route;Ljava/lang/String;Lru/securitytrip/maxapi/bot/MaxBot;Ljava/lang/String;Z)Lio/ktor/server/routing/Route;
 	public static final fun maxWebhook (Lio/ktor/server/routing/Route;Ljava/lang/String;Lru/securitytrip/maxapi/bot/WebhookHandler;Z)Lio/ktor/server/routing/Route;
