@@ -1,22 +1,22 @@
 [versions]
 kotlin = "2.4.21"
-okhttp = "5.5.0"
+okhttp = "5.5.1"
 jackson = "2.22.4"
 coroutines = "1.11.0"
 dokka = "2.2.0"
 kover = "0.9.11"
 maven-publish = "0.37.0"
 binary-compatibility = "0.18.2"
-spring-boot = "4.1.1"
+spring-boot = "4.1.2"
 ktor = "3.6.0"
-slf4j = "2.0.19"
-micrometer = "1.17.1"
-lettuce = "7.5.2.RELEASE"
-h2 = "2.4.240"
-postgresql = "42.7.13"
+slf4j = "2.0.20"
+micrometer = "1.17.2"
+lettuce = "7.9.0.RELEASE"
+h2 = "2.5.252"
+postgresql = "42.7.14"
 testcontainers = "2.0.5"
 # The version Spring Boot 4.1 manages, so applications on its BOM get no older API than the module needs.
-opentelemetry = "1.62.0"
+opentelemetry = "1.67.0"
 
 [libraries]
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
