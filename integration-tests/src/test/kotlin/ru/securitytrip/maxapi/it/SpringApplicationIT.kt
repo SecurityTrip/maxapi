@@ -164,9 +164,10 @@ class SpringApplicationIT {
             assertEquals("survey_bot", bot.path("username").asText())
             assertEquals("PostgreSQL", health.path("components").path("storage").path("details").path("database").asText())
 
-            // Health checks within max.bot.health.cache-ttl reuse the answer of the API.
+            // Health checks within max.bot.health.cache-ttl reuse the answer of the API: one request
+            // for them, besides the check of the token on startup.
             repeat(3) { health(context) }
-            assertEquals(1, max.requests.count { it == "GET /me" })
+            assertEquals(2, max.requests.count { it == "GET /me" })
         }
     }
 

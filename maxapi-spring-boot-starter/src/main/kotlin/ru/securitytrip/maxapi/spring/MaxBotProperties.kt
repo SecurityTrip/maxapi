@@ -1,6 +1,9 @@
 package ru.securitytrip.maxapi.spring
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.util.unit.DataSize
+import ru.securitytrip.maxapi.bot.BotConfig
+import ru.securitytrip.maxapi.bot.WebhookHandler
 import ru.securitytrip.maxapi.client.MaxClientConfig
 import ru.securitytrip.maxapi.client.RateLimit
 import ru.securitytrip.maxapi.webapp.WebAppData
@@ -15,12 +18,16 @@ import java.time.Duration
  *     token: ${MAX_BOT_TOKEN}
  *     mode: webhook            # polling (default), webhook or none
  *     sync-commands: true
- *     rate-limit: max          # none (default) or max
+ *     rate-limit: max          # max (default) or none
+ *     handler-timeout: 1m      # 0 for no limit
+ *     parallelism: 64          # handlers running at once
+ *     proxy: http://user:password@proxy.example.com:3128
  *     webhook:
  *       path: /max/webhook
  *       url: https://bot.example.com/max/webhook
- *       secret: ${MAX_WEBHOOK_SECRET}
+ *       secret: ${MAX_WEBHOOK_SECRET}  # by default derived from the token
  *       check-interval: 10m    # subscribe again if Max dropped the subscription
+ *       max-body-size: 1MB
  *     web-app:
  *       source: header         # header (default), parameter or body
  *       header: X-Max-Init-Data
@@ -31,7 +38,10 @@ import java.time.Duration
  */
 @ConfigurationProperties("max.bot")
 public class MaxBotProperties {
-    /** Bot access token. The auto-configuration is active only when it is set. */
+    /**
+     * Bot access token. The auto-configuration is active only when it is set; a blank token (e.g.
+     * `${MAX_BOT_TOKEN:}` without the variable) turns the bot off with a warning.
+     */
     public var token: String = ""
 
     /** Base URL of the API; override it only for tests or proxies. */
@@ -44,17 +54,61 @@ public class MaxBotProperties {
     public var trustRussianRootCa: Boolean = true
 
     /**
-     * Client-side rate limit: [RateLimitPreset.MAX] keeps to the limits of Max (30 requests per second,
-     * 2 answers to button presses per second in a chat); [RateLimitPreset.NONE] (default) does not limit.
+     * Client-side rate limit: [RateLimitPreset.MAX] (default since 1.5.0) keeps to the limits of Max (30
+     * requests per second, 2 answers to button presses per second in a chat), so that a broadcast or a
+     * burst of updates does not run into 429 answers; [RateLimitPreset.NONE] does not limit.
      * A [MaxClientConfigCustomizer] can set any other `RateLimit`.
      */
-    public var rateLimit: RateLimitPreset = RateLimitPreset.NONE
+    public var rateLimit: RateLimitPreset = RateLimitPreset.MAX
+
+    /**
+     * Proxy for the requests to the API (since 1.5.0): `http://host:port`, `http://user:password@host:port`
+     * or `socks://host:port`. The client still trusts the Russian Trusted Root CA.
+     */
+    public var proxy: String? = null
+
+    /** How long the client waits to connect to the API (since 1.5.0). */
+    public var connectTimeout: Duration = Duration.ofSeconds(15)
+
+    /** How long the client waits for data from the API, besides long polling, which waits longer (since 1.5.0). */
+    public var readTimeout: Duration = Duration.ofSeconds(60)
+
+    /** Most handlers running at once, see [BotConfig.parallelism] (since 1.5.0). */
+    public var parallelism: Int = BotConfig.DEFAULT_PARALLELISM
+
+    /** Most updates waiting in the queue of one chat, see [BotConfig.queueCapacity] (since 1.5.0). */
+    public var queueCapacity: Int = 64
+
+    /** Longest time a handler may run before it is cancelled; `0` for no limit. See [BotConfig.handlerTimeout] (since 1.5.0). */
+    public var handlerTimeout: Duration = BotConfig.DEFAULT_HANDLER_TIMEOUT
+
+    /** How long one long polling request waits for updates, up to 90 seconds (since 1.5.0). */
+    public var pollTimeout: Duration = Duration.ofSeconds(30)
+
+    /**
+     * Whether the bot answers button presses that its handlers left unanswered, so that the client of
+     * the user stops showing them as loading. See [BotConfig.autoAnswerCallbacks] (since 1.5.0).
+     */
+    public var autoAnswerCallbacks: Boolean = true
+
+    /**
+     * How long [MaxBotLifecycle.stop] waits for the updates already received by long polling to be handled
+     * when it is called directly; a context shutdown waits up to `spring.lifecycle.timeout-per-shutdown-phase`
+     * instead (since 1.5.0).
+     */
+    public var shutdownTimeout: Duration = Duration.ofSeconds(30)
 
     /** How the bot receives updates. */
     public var mode: Mode = Mode.POLLING
 
     /** Whether to show the commands registered with descriptions in the bot menu on startup. */
     public var syncCommands: Boolean = false
+
+    /**
+     * How long startup waits for the API (the check of the token, the menu, the webhook subscription)
+     * before it goes on and retries in the background (since 1.5.0).
+     */
+    public var startupTimeout: Duration = Duration.ofSeconds(10)
 
     /** Webhook settings, used when [mode] is [Mode.WEBHOOK]. */
     public val webhook: Webhook = Webhook()
@@ -86,19 +140,25 @@ public class MaxBotProperties {
         /** Requests go as fast as they come; the server's 429 answers are retried. */
         NONE(null),
 
-        /** [RateLimit.MAX]: the limits of Max. */
+        /** [RateLimit.MAX]: the limits of Max; the default. */
         MAX(RateLimit.MAX),
     }
 
+    /** The secret of the webhook: [Webhook.secret], or one derived from [token] with [WebhookHandler.secretFor]. */
+    public fun webhookSecret(): String = webhook.secret ?: WebhookHandler.secretFor(token)
+
     /** Where the bot keeps its state. */
     public enum class Storage {
-        /** In memory: lost on restart, not shared between instances, no deduplication. */
+        /**
+         * In memory: lost on restart and not shared between instances. Repeated deliveries are dropped
+         * within this instance, among the last 10 000 updates.
+         */
         MEMORY,
 
-        /** In tables of the application's `DataSource`; needs `maxapi-jdbc`. */
+        /** In tables of the application's `DataSource`; needs `maxapi-jdbc`, or the application fails to start. */
         JDBC,
 
-        /** In Redis at [Redis.url]; needs `maxapi-redis`. */
+        /** In Redis at [Redis.url]; needs `maxapi-redis`, or the application fails to start. */
         REDIS,
     }
 
@@ -110,7 +170,11 @@ public class MaxBotProperties {
         /** Header with `initData` when [source] is [Source.HEADER]. */
         public var header: String = "X-Max-Init-Data"
 
-        /** Query or form parameter with `initData` when [source] is [Source.PARAMETER]. */
+        /**
+         * Query or form parameter with `initData` when [source] is [Source.PARAMETER]. A query parameter
+         * ends up in the access logs of the server and of proxies, where the signed data can be taken and
+         * reused until it is [maxAge] old; prefer [Source.HEADER].
+         */
         public var parameter: String = "initData"
 
         /** How old `auth_date` may be; one hour, as the Max documentation recommends. */
@@ -121,10 +185,13 @@ public class MaxBotProperties {
             /** The [header]; works for any method and leaves the body to the controller. */
             HEADER,
 
-            /** The query or form [parameter]. */
+            /** The query or form [parameter]; see the warning about logs there. */
             PARAMETER,
 
-            /** The whole request body, as plain text; the controller cannot read the body then. */
+            /**
+             * The whole request body, as plain text. The resolver reads the body, so the controller method
+             * cannot have a `@RequestBody` parameter as well: it would get an empty body.
+             */
             BODY,
         }
     }
@@ -183,7 +250,12 @@ public class MaxBotProperties {
          */
         public var url: String? = null
 
-        /** Secret Max sends in the `X-Max-Bot-Api-Secret` header; requests with another value get 401. */
+        /**
+         * Secret Max sends in the `X-Max-Bot-Api-Secret` header; requests with another value get 401. If it
+         * is not set, a secret derived from the token is used ([WebhookHandler.secretFor]), the same on every
+         * instance: a webhook never accepts requests without a secret. Subscribe with it yourself when [url]
+         * is not set.
+         */
         public var secret: String? = null
 
         /**
@@ -198,5 +270,11 @@ public class MaxBotProperties {
          * when [url] is set; `0` turns the check off.
          */
         public var checkInterval: Duration = Duration.ofMinutes(10)
+
+        /**
+         * Largest request body the endpoint reads; larger requests get 413 (since 1.5.0). The secret
+         * is checked before the body is read.
+         */
+        public var maxBodySize: DataSize = DataSize.ofMegabytes(1)
     }
 }

@@ -94,7 +94,7 @@ public class BotTester @JvmOverloads constructor(config: BotConfig = BotConfig()
             SentMessage(it.query["chat_id"]?.toLong(), it.query["user_id"]?.toLong(), it.parseBody(NewMessageBody::class.java))
         }
 
-    /** Answers to button presses (`answer`, `editMessage`), in order. */
+    /** Answers to button presses (`answer`, `editMessage`, and the empty answers of `BotConfig.autoAnswerCallbacks`), in order. */
     public val callbackAnswers: List<CallbackAnswerCall>
         get() = recorded.filter { it.method == "POST" && it.path == "/answers" }.map {
             CallbackAnswerCall(it.query.getValue("callback_id"), it.parseBody(CallbackAnswer::class.java))

@@ -93,6 +93,13 @@ public object Filters {
     /** Messages with at least one attachment of type [A]: `Filters.hasAttachment<PhotoAttachment>()`. */
     public inline fun <reified A : Attachment> hasAttachment(): Filter<MessageContext> = hasAttachment(A::class.java)
 
+    /**
+     * Messages with the sender's own contact, shared with a request-contact button of the bot and
+     * signed by Max; read it with [MessageContext.sharedContact].
+     */
+    @JvmStatic
+    public fun hasVerifiedContact(): Filter<MessageContext> = of { it.sharedContact() != null }
+
     // ----------------------------------------------------------- callbacks
 
     /** Button presses whose payload starts with [prefix]. */

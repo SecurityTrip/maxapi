@@ -2,6 +2,7 @@ package ru.securitytrip.maxapi
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.QueueDispatcher
 import mockwebserver3.RecordedRequest
 import ru.securitytrip.maxapi.client.MaxClient
 import ru.securitytrip.maxapi.client.MaxClientConfig
@@ -13,6 +14,12 @@ const val TOKEN = "test-token"
 
 fun json(body: String, code: Int = 200): MockResponse =
     MockResponse.Builder().code(code).addHeader("Content-Type", "application/json").body(body).build()
+
+/**
+ * A server that answers 404 at once when no response is queued, instead of waiting for one: e.g. for
+ * the automatic answer to a button press that a test of something else does not queue a response for.
+ */
+fun failFastServer(): MockWebServer = MockWebServer().apply { (dispatcher as QueueDispatcher).setFailFast(true) }
 
 fun MockWebServer.client(
     retryPolicy: RetryPolicy = RetryPolicy(maxRetries = 2, initialDelay = Duration.ofMillis(1)),

@@ -57,7 +57,7 @@ class JavaInteropTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        server = new MockWebServer();
+        server = TestSupportKt.failFastServer();
         server.start();
         client = MaxClient.create(MaxClientConfig.builder("java-token")
                 .baseUrl(server.url("/").toString())

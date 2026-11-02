@@ -10,6 +10,8 @@ plugins {
 // public API changes without `./gradlew apiDump`, so every API change is visible in review.
 apiValidation {
     ignoredProjects += listOf("maxapi-bom", "examples", "examples-spring", "examples-ktor", "integration-tests")
+    // The health support of the Spring Boot starter for Spring Boot 4, in the same jar.
+    additionalSourceSets += "boot4"
 }
 
 // `./gradlew :dokkaGenerate` builds the reference of all modules in build/dokka/html.

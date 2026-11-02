@@ -187,15 +187,20 @@ checked on every build. Coming from 0.x? See [MIGRATION.md](MIGRATION.md).
 | Component         | Supported                                              |
 |-------------------|--------------------------------------------------------|
 | Java              | 17 or newer                                            |
-| Kotlin            | 2.x (the library is built with 2.4)                    |
+| Kotlin            | 1.9.25 or newer (built with the 2.4 compiler for the 2.0 API) |
 | Max Bot API       | specification 0.0.33; newer server features arrive as `Unknown*` objects |
-| Spring Boot       | 4.x (built and tested with 4.1)                        |
+| Spring Boot       | 3.4 and newer, 4.x included (tested on 3.4, 3.5, 4.0 and 4.1) |
 | Ktor              | 3.x (built and tested with 3.6)                        |
-| Micrometer        | 1.x (built and tested with 1.17)                       |
-| OpenTelemetry     | API 1.x (built and tested with 1.62)                   |
+| Micrometer        | 1.14 or newer                                          |
+| OpenTelemetry     | API 1.43 or newer                                      |
 | GraalVM native    | metadata in the `maxapi` jar, Spring AOT hints in the starter; see [Native image](#native-image) |
-| Lettuce (Redis)   | 7.x (built and tested with 7.5 and Redis 7.4)          |
+| Lettuce (Redis)   | 6.4 or newer (built with 6.4, tested with Redis 7.4)   |
 | JDBC              | any database with standard SQL (tested on H2 2.4 and PostgreSQL 17) |
+
+The dependencies (Kotlin, kotlinx.coroutines, Jackson, Micrometer, OpenTelemetry, Lettuce) are the
+versions the BOM of the oldest supported Spring Boot (3.4) manages: a Spring Boot application gets
+these or newer ones, never older. The starter checks on startup that the application does not have
+older Kotlin, kotlinx.coroutines or Jackson than needed.
 
 Not part of the compatible API: anything `internal`, the content of exception messages and log
 lines, and the exact defaults of `BotTester` responses.
@@ -791,9 +796,12 @@ before `close()`, otherwise those updates are lost.
 
 How it works:
 
-- Updates are distributed among `BotConfig.parallelism` workers (4 by default) **by chat**: updates of
-  one chat are always handled one at a time and in order, different chats are handled in parallel.
-- Each worker has a bounded queue (`queueCapacity`); when it is full, polling waits.
+- Every chat has its own queue: updates of one chat are handled one at a time and in order,
+  different chats in parallel, with at most `BotConfig.parallelism` handlers at once (64 by default).
+  A slow or stuck handler holds up only its own chat.
+- A chat keeps at most `queueCapacity` updates waiting (64 by default); further updates of that chat
+  are dropped and a `QueueOverflowException` goes to `onError`. Polling waits only when all queues
+  together hold `parallelism * queueCapacity` updates.
 - Network and server errors are reported to `onError` and retried with a pause that doubles from
   1 second up to `maxErrorBackoff`.
 - An invalid token (`UnauthorizedException`) and an active webhook subscription (`MaxException`)
@@ -865,13 +873,19 @@ production. Polling and webhooks cannot be used at the same time.
 |--------------------------|-----------------------------------------------------------------------------|
 | `handle` (`suspend`)     | verifies the secret, parses the update and runs the handler before returning |
 | `handleBlocking`         | the same, blocking; for Java and servlet containers                         |
-| `handleAsync`            | verifies and parses immediately, runs the handler in the background         |
+| `handleAsync`            | verifies and parses immediately, queues the update in the queue of its chat |
 
 All of them return `false` when the secret does not match (respond with 401), and `true` otherwise
 (respond with 200). Max retries a delivery until it gets `200 OK`, for up to 8 hours, so respond with
-200 even if your handler failed; the failure goes to `onError`. With `handleAsync` updates of one chat
-may be handled out of order, and after `bot.close()` it throws `IllegalStateException`: respond with
-an error then, so that Max delivers the update again later.
+200 even if your handler failed; the failure goes to `onError`. `handleAsync` queues the update in
+the same chat queues as long polling: updates of a chat are handled in order, and at most
+`parallelism` handlers run at once. When the queue of the chat is full or the bot is closed
+(`bot.close()`), it throws `IllegalStateException`: respond with an error then (e.g. 503), so that Max
+delivers the update again later.
+
+Without a secret (`webhookHandler(null)`) the handler accepts updates from anyone who knows the URL,
+and logs a warning. Without a secret of your own, use the one derived from the token:
+`WebhookHandler.secretFor(token)` is the same on every instance and cannot be guessed without the token.
 
 When no delivery succeeds for 8 hours (the server was down or unreachable), Max drops the
 subscription, and updates wait until the bot subscribes again. `bot.ensureWebhook(url, secret)`
@@ -1065,6 +1079,18 @@ Set the format to `MARKDOWN` (`markdown(...)` in the builder) or `HTML` (`html(.
 
 In received messages formatting comes as `MessageBody.markup`, a list of `MarkupElement` ranges.
 
+Never put text that users wrote (names, messages) into formatted text as is: users could add their own
+links and mentions to a message of the bot. `HtmlBuilder` escapes everything passed to it, and
+`Html.escape` and `Markdown.escape` escape a string:
+
+```kotlin
+reply { html { text("Hi, "); bold(user.firstName); text("! "); link("Shop", shopUrl) } }
+reply { html("Hi, <b>${Html.escape(user.firstName)}</b>!") }
+```
+
+The documentation of Max does not describe escaping in Markdown (`Markdown.escape` puts a backslash
+before markup characters, as CommonMark, which it is based on, does), so prefer HTML for user text.
+
 ### Uploading files
 
 `upload*` methods perform the whole three-step upload (get an upload URL, upload the file, build the
@@ -1117,7 +1143,8 @@ do {
 ## Spring Boot
 
 `maxapi-spring-boot-starter` creates a `MaxClient` and a `MaxBot` from `max.bot.*` properties and
-starts and stops the bot with the application. It is built and tested with Spring Boot 4.1 (Java 17+).
+starts and stops the bot with the application. The same starter works with Spring Boot 3.4 and newer,
+4.x included (Java 17+): the health indicator is registered for the Actuator the application has.
 
 ```kotlin
 dependencies {
@@ -1133,12 +1160,24 @@ max:
     mode: polling            # polling (default), webhook or none
     sync-commands: true      # show commands with descriptions in the bot menu on startup
     trust-russian-root-ca: true  # default; see "TLS certificate" below
+    rate-limit: max          # max (default): the rate limits of Max; none for no limit
     storage: memory          # memory (default), jdbc or redis; see "Storage"
+    parallelism: 64          # handlers running at once
+    queue-capacity: 64       # updates of one chat that may wait
+    handler-timeout: 1m      # 0 for no limit
+    poll-timeout: 30s
+    auto-answer-callbacks: true  # answer button presses the handlers left unanswered
+    startup-timeout: 10s     # how long startup waits for the API, then retries in the background
+    proxy: http://user:password@proxy.example.com:3128   # or socks://host:port (no credentials)
+    connect-timeout: 15s
+    read-timeout: 60s
     webhook:
       path: /max/webhook     # the endpoint in your Spring MVC or WebFlux server
       url: https://bot.example.com/max/webhook   # subscribe on startup (optional)
-      secret: ${MAX_WEBHOOK_SECRET}
+      secret: ${MAX_WEBHOOK_SECRET}  # derived from the token by default
       async: false           # true: respond before the handler finishes
+      check-interval: 10m    # how often to check the subscription to url; 0 turns it off
+      max-body-size: 1MB     # larger bodies get 413
 ```
 
 Handlers come from beans: every `MaxBotConfigurer` is called with the bot, and every `Router` bean
@@ -1175,12 +1214,38 @@ receive the events of the client and the bot. `StateStorage`, `MarkerStore`,
 `UpdateDeduplicator` (or `SuspendUpdateDeduplicator`) and `ChatStore` beans are used by the bot, and the `Broadcaster` bean sends
 broadcasts with their progress in the `BroadcastStore` bean, see [Storage](#storage).
 
-The webhook endpoint answers 200 for accepted updates, 401 for a wrong secret, 400 for a body that
-is not an update and 503 when the bot is closed. In a Spring WebFlux application the endpoint is a
+The webhook endpoint always checks a secret: without `max.bot.webhook.secret` it uses
+`WebhookHandler.secretFor(token)`, and with `webhook.url` the bot subscribes with it. If you subscribe
+yourself, pass that secret or set your own. The endpoint answers 200 for accepted updates, 401 for a
+wrong secret (checked before the body is read), 413 for a body over `webhook.max-body-size`, 400 for a
+body that is not an update and 503 when the bot is closed or the queue of the chat is full. In a Spring WebFlux application the endpoint is a
 reactive `RouterFunction` with the same answers: the handler runs on `Dispatchers.Default`, never on
 the event loop, and the response waits for it without blocking a thread (unless `webhook.async`). Define your own `MaxClient`, `MaxBot` or
-`BotConfig` bean to replace the default one, and `MaxClientConfigCustomizer` beans to adjust the
-client settings (retry policy, `OkHttpClient`).
+`BotConfig` bean to replace the default one, `MaxClientConfigCustomizer` beans to adjust the
+client settings (retry policy, `OkHttpClient`), and `BotConfigCustomizer` beans to adjust the bot
+settings without replacing the whole `BotConfig`. The client keeps to the rate limits of Max by default
+(`max.bot.rate-limit=max`); without a deduplicator bean, an `InMemoryUpdateDeduplicator` drops repeated
+deliveries.
+
+On startup (except `mode: none` without `sync-commands`) the starter checks the token with `getMyInfo`
+and fills `MaxBot.username`. A rejected token fails the start with an explanation; when the API cannot
+be reached, the application still starts and the menu sync and the webhook subscription are retried in
+the background. A blank `max.bot.token` (e.g. `${MAX_BOT_TOKEN:}` without the variable) turns the bot
+off with a warning. `max.bot.storage=jdbc|redis` without `maxapi-jdbc`/`maxapi-redis` fails the start
+instead of keeping the state in memory. On shutdown the context waits for the updates already received
+up to `spring.lifecycle.timeout-per-shutdown-phase`; then closing the bot cancels the handlers.
+
+In the tests of an application, `@MaxBotTest` (from `ru.securitytrip.maxapi.spring.test`) sets a fake
+token and `mode=none`, so the context starts without the network:
+
+```kotlin
+@SpringBootTest
+@MaxBotTest
+class ApplicationTest {
+    @Test
+    fun contextLoads() {}
+}
+```
 
 The `@MaxWebAppUser` argument for controllers of a mini app backend is configured with the
 `max.bot.web-app.*` properties, see [Spring MVC backend](#spring-mvc-backend).
@@ -1323,7 +1388,9 @@ if (!phone.verify(user.userId, botToken)) throw Unauthorized()
 ```
 
 A leading `+` in the number does no harm: it is dropped before the check, as the formula requires.
-The method does not check how old `authDate` is.
+`authDate` may be at most one hour old, as for `initData` (`verify(userId, botToken, maxAge)`;
+`maxAge = null` checks only the signature): otherwise a number and signature intercepted once could be
+presented forever.
 
 ### Contact from a request_contact button
 
@@ -1339,6 +1406,16 @@ bot.onMessage({ it.message.body?.attachments.orEmpty().any { a -> a is ContactAt
 
 Only a contact shared with the button is signed; a forwarded or hand-made contact card fails the
 check, so nobody can pass off someone else's number as their own.
+
+`sharedContact()` does it all at once: finds the contact in the message, checks the signature with the
+token of the client, checks that the contact is the sender's own, and parses the number:
+
+```kotlin
+bot.onMessage(Filters.hasVerifiedContact()) {
+    val contact = sharedContact()!!
+    users.savePhone(contact.userId, contact.phone)   // "+79991234567"
+}
+```
 
 ### Link builders
 
@@ -1584,11 +1661,21 @@ never closed by the library.
 The certificate of `platform-api2.max.ru` is issued under the Russian Trusted Root CA of the Ministry
 of Digital Development. JDKs do not include that CA, so a plain `OkHttpClient` fails with
 `PKIX path building failed`. The library bundles the root certificate, and the HTTP client it creates
-trusts it in addition to the certificates the JVM trusts. Only that client is affected: the trust of
+trusts it in addition to the certificates the JVM trusts, and only for the hosts of Max (`max.ru`
+and its subdomains): other hosts, such as the upload hosts, are checked against the certificates of the
+JVM alone. Only that client is affected: the trust of
 the rest of the JVM stays as it is, and there is no need for `-Djavax.net.ssl.trustStore` or for
 importing the certificate into `cacerts`.
 
-A client you pass in `httpClient` is used as is. Add the certificate to it with `MaxTls`:
+A client you pass in `httpClient` is used as is. The simplest is to pass an `OkHttpClient.Builder`:
+the certificate is added for you, and the client is closed with the `MaxClient` (in Spring Boot, set
+the proxy and timeouts with `max.bot.proxy`, `connect-timeout` and `read-timeout`):
+
+```kotlin
+val config = MaxClientConfig.builder(token).httpClient(OkHttpClient.Builder().proxy(proxy)).build()
+```
+
+Add the certificate to a ready client with `MaxTls`:
 
 ```kotlin
 val http = MaxTls.trustRussianRootCa(OkHttpClient.Builder())
@@ -1605,24 +1692,26 @@ bundled one off with `trustRussianRootCa = false` (`max.bot.trust-russian-root-c
 
 | Setting               | Default   | Description                                                      |
 |-----------------------|-----------|------------------------------------------------------------------|
-| `parallelism`         | `4`       | workers handling updates; one chat is always handled in order    |
-| `queueCapacity`       | `64`      | queue size per worker; polling waits when it is full             |
+| `parallelism`         | `64`      | handlers running at once; one chat is always handled in order    |
+| `queueCapacity`       | `64`      | updates of one chat that may wait                                |
 | `pollTimeoutSeconds`  | `30`      | how long one `getUpdates` request waits, 0–90                    |
 | `pollLimit`           | `100`     | maximum updates per request, 1–1000                              |
 | `minPollInterval`     | 300 ms    | minimum interval between requests (the API requires ≥ 300 ms)    |
 | `maxErrorBackoff`     | 30 s      | maximum pause after polling errors                               |
 | `stateStorage`        | in memory | where [dialog states](#dialog-state) are kept                    |
-| `handlerTimeout`      | none      | longest time a handler may run                                   |
+| `handlerTimeout`      | 1 min     | longest time a handler may run; `null` for no limit              |
 | `deduplicator`        | none      | drops repeated deliveries of an update                           |
 | `markerStore`         | none      | keeps the polling marker across restarts                         |
 | `eventListener`       | none      | receives an event per dispatched update                          |
+| `autoAnswerCallbacks` | `true`    | answer button presses left unanswered with an empty answer       |
 
 Logging uses `System.Logger` with the names `ru.securitytrip.maxapi.client` (retries, at `DEBUG`) and
 `ru.securitytrip.maxapi.bot` (handler errors, at `ERROR`).
 
 ## Reliability and monitoring
 
-All of the following is off by default.
+All of the following, except the handler timeout, is off by default in `MaxBot`; the Spring Boot
+starter turns on the rate limit and deduplication in memory.
 
 **Rate limit.** `RateLimit` makes the client wait instead of getting 429 responses: a token bucket
 for all requests and, optionally, one per chat.
@@ -1639,14 +1728,19 @@ your own implements `MarkerStore` (or extends `BlockingMarkerStore` in Java).
 
 **Duplicates.** Max redelivers a webhook update until it gets 200, for up to 8 hours.
 `InMemoryUpdateDeduplicator` drops updates seen recently, by message id, callback id or, for other
-updates, type, time, chat and user (`UpdateDeduplicator.keyOf`). With several instances, use the
+updates, type, time and a hash of all fields (`UpdateDeduplicator.keyOf`). With several instances, use the
 shared stores of [Storage](#storage). `UpdateDeduplicator.isNew` blocks the thread that dispatches
 the update; a store with an asynchronous client implements `SuspendUpdateDeduplicator.markSeen`
 instead and is set with `BotConfig(suspendDeduplicator = ...)`. A class may implement both, like the
 Redis and JDBC deduplicators: the bot then calls the non-blocking method.
 
-**Handler timeout.** `handlerTimeout` cancels a handler that runs too long (Java handlers are
-interrupted) and passes `HandlerTimeoutException` to `onError`, so a stuck handler does not block its chat.
+**Handler timeout.** `handlerTimeout` (one minute by default) cancels a handler that runs too long
+(Java handlers are interrupted) and passes `HandlerTimeoutException` to `onError`, so a stuck handler
+does not block its chat.
+
+**Answers to button presses.** Until a press is answered, the client of the user shows it as loading.
+When the handler did not call `answer` or `editMessage`, failed, or no handler matched, the bot sends
+an empty answer after the handler (`BotConfig.autoAnswerCallbacks`, on by default).
 
 ```kotlin
 val bot = MaxBot(

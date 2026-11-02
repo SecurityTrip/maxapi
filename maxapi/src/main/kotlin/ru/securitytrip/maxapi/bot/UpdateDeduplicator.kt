@@ -3,6 +3,8 @@ package ru.securitytrip.maxapi.bot
 import ru.securitytrip.maxapi.model.update.MessageCallbackUpdate
 import ru.securitytrip.maxapi.model.update.MessageCreatedUpdate
 import ru.securitytrip.maxapi.model.update.Update
+import java.security.MessageDigest
+import java.util.HexFormat
 
 /**
  * Drops updates the bot has already seen, set with [BotConfig.deduplicator]. Max redelivers a webhook
@@ -20,13 +22,20 @@ public fun interface UpdateDeduplicator {
     public companion object {
         /**
          * A key that is the same for deliveries of the same event: the message id for new messages,
-         * the callback id for button presses, and type, time, chat and user for other updates.
+         * the callback id for button presses, and the type and a hash of all fields for other updates,
+         * so that two different events of the same type in the same millisecond keep different keys.
          */
         @JvmStatic
         public fun keyOf(update: Update): String = when (update) {
             is MessageCreatedUpdate -> "message_created:${update.message.body?.mid ?: update.timestamp}"
             is MessageCallbackUpdate -> "message_callback:${update.callback.callbackId}"
-            else -> "${update.updateType}:${update.timestamp}:${update.chatId}:${update.user?.userId}"
+            else -> "${update.updateType}:${update.timestamp}:${contentHash(update)}"
+        }
+
+        /** 128 bits of SHA-256 of the fields of [update]; models are data classes, so equal updates hash equally. */
+        private fun contentHash(update: Update): String {
+            val digest = MessageDigest.getInstance("SHA-256").digest(update.toString().toByteArray(Charsets.UTF_8))
+            return HexFormat.of().formatHex(digest, 0, 16)
         }
     }
 }

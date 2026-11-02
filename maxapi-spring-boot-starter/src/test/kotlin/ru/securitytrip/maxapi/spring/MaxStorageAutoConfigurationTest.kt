@@ -21,9 +21,6 @@ import ru.securitytrip.maxapi.bot.StateStorage
 import ru.securitytrip.maxapi.bot.SuspendUpdateDeduplicator
 import ru.securitytrip.maxapi.bot.UpdateDeduplicator
 import ru.securitytrip.maxapi.bot.InMemoryUpdateDeduplicator
-import org.springframework.boot.health.contributor.CompositeHealthContributor
-import org.springframework.boot.health.contributor.HealthIndicator
-import org.springframework.boot.health.contributor.Status
 import ru.securitytrip.maxapi.jdbc.JdbcBroadcastStore
 import ru.securitytrip.maxapi.jdbc.JdbcChatStore
 import ru.securitytrip.maxapi.jdbc.JdbcMarkerStore
@@ -67,7 +64,7 @@ class MaxStorageAutoConfigurationTest {
             val config = context.getBean(MaxBot::class.java).config
             assertIs<InMemoryStateStorage>(config.stateStorage)
             assertNull(config.markerStore)
-            assertNull(config.deduplicator)
+            assertIs<InMemoryUpdateDeduplicator>(config.deduplicator)
             assertNull(config.chatStore)
             assertSame(config, context.getBean(BotConfig::class.java))
             assertIs<InMemoryBroadcastStore>(context.getBean(Broadcaster::class.java).store)
@@ -157,9 +154,8 @@ class MaxStorageAutoConfigurationTest {
         runner.withConfiguration(AutoConfigurations.of(MaxHealthAutoConfiguration::class.java))
             .withPropertyValues("max.bot.storage=redis", "max.bot.redis.url=$redisUrl")
             .run { context ->
-                val contributor = context.getBean("maxHealthContributor", CompositeHealthContributor::class.java)
-                val health = (contributor.getContributor("storage") as HealthIndicator).health(true)!!
-                assertEquals(Status.UP, health.status)
+                val health = context.healthPart("storage")!!
+                assertEquals("UP", health.status)
                 assertEquals("redis", health.details["storage"])
                 assertEquals("PONG", health.details["ping"])
             }
@@ -179,7 +175,7 @@ class MaxStorageAutoConfigurationTest {
     fun `jdbc storage needs maxapi-jdbc`() {
         runner.withPropertyValues("max.bot.storage=jdbc")
             .withClassLoader(FilteredClassLoader(JdbcStateStorage::class.java))
-            .run { context -> assertIs<InMemoryStateStorage>(context.getBean(MaxBot::class.java).config.stateStorage) }
+            .run { context -> assertIs<MaxStartupException>(context.startupFailure!!.rootCause()) }
     }
 
     @Test
@@ -220,8 +216,10 @@ class MaxStorageAutoConfigurationTest {
     fun `redis storage needs maxapi-redis`() {
         runner.withPropertyValues("max.bot.storage=redis")
             .withClassLoader(FilteredClassLoader(RedisStateStorage::class.java))
-            .run { context -> assertIs<InMemoryStateStorage>(context.getBean(MaxBot::class.java).config.stateStorage) }
+            .run { context -> assertIs<MaxStartupException>(context.startupFailure!!.rootCause()) }
     }
+
+    private fun Throwable.rootCause(): Throwable = generateSequence(this) { it.cause }.last()
 
     @Test
     fun `storage properties have defaults`() {

@@ -61,7 +61,7 @@ class PlatformRulesTest {
 
     @BeforeTest
     fun setUp() {
-        server = MockWebServer()
+        server = failFastServer()
         server.start()
         client = server.client()
     }

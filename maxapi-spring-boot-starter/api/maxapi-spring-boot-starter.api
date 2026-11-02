@@ -1,9 +1,14 @@
+public abstract interface class ru/securitytrip/maxapi/spring/BotConfigCustomizer {
+	public abstract fun customize (Lru/securitytrip/maxapi/bot/BotConfig$Builder;)V
+}
+
 public final class ru/securitytrip/maxapi/spring/MaxBotAutoConfiguration {
 	public fun <init> ()V
 	public final fun maxBot (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/MaxBot;
 	public final synthetic fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
 	public final synthetic fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
-	public final fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
+	public final synthetic fun maxBotConfig (Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
+	public final fun maxBotConfig (Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/BotConfig;
 	public final fun maxBotLifecycle (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)Lru/securitytrip/maxapi/spring/MaxBotLifecycle;
 	public final fun maxBroadcaster (Lru/securitytrip/maxapi/client/MaxClient;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/bot/Broadcaster;
 	public final fun maxClient (Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)Lru/securitytrip/maxapi/client/MaxClient;
@@ -27,33 +32,56 @@ public final class ru/securitytrip/maxapi/spring/MaxBotHealthIndicator : org/spr
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotLifecycle : org/springframework/context/SmartLifecycle {
+	public static final field MAX_RETRY_DELAY J
 	public fun <init> (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;)V
 	public fun isRunning ()Z
 	public fun start ()V
 	public fun stop ()V
+	public fun stop (Ljava/lang/Runnable;)V
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public fun <init> ()V
+	public final fun getAutoAnswerCallbacks ()Z
 	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getConnectTimeout ()Ljava/time/Duration;
+	public final fun getHandlerTimeout ()Ljava/time/Duration;
 	public final fun getHealth ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Health;
 	public final fun getJdbc ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Jdbc;
 	public final fun getMode ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;
+	public final fun getParallelism ()I
+	public final fun getPollTimeout ()Ljava/time/Duration;
+	public final fun getProxy ()Ljava/lang/String;
+	public final fun getQueueCapacity ()I
 	public final fun getRateLimit ()Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;
+	public final fun getReadTimeout ()Ljava/time/Duration;
 	public final fun getRedis ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Redis;
+	public final fun getShutdownTimeout ()Ljava/time/Duration;
+	public final fun getStartupTimeout ()Ljava/time/Duration;
 	public final fun getStorage ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
 	public final fun getSyncCommands ()Z
 	public final fun getToken ()Ljava/lang/String;
 	public final fun getTrustRussianRootCa ()Z
 	public final fun getWebApp ()Lru/securitytrip/maxapi/spring/MaxBotProperties$WebApp;
 	public final fun getWebhook ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Webhook;
+	public final fun setAutoAnswerCallbacks (Z)V
 	public final fun setBaseUrl (Ljava/lang/String;)V
+	public final fun setConnectTimeout (Ljava/time/Duration;)V
+	public final fun setHandlerTimeout (Ljava/time/Duration;)V
 	public final fun setMode (Lru/securitytrip/maxapi/spring/MaxBotProperties$Mode;)V
+	public final fun setParallelism (I)V
+	public final fun setPollTimeout (Ljava/time/Duration;)V
+	public final fun setProxy (Ljava/lang/String;)V
+	public final fun setQueueCapacity (I)V
 	public final fun setRateLimit (Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;)V
+	public final fun setReadTimeout (Ljava/time/Duration;)V
+	public final fun setShutdownTimeout (Ljava/time/Duration;)V
+	public final fun setStartupTimeout (Ljava/time/Duration;)V
 	public final fun setStorage (Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;)V
 	public final fun setSyncCommands (Z)V
 	public final fun setToken (Ljava/lang/String;)V
 	public final fun setTrustRussianRootCa (Z)V
+	public final fun webhookSecret ()Ljava/lang/String;
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Health {
@@ -134,11 +162,13 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties$Webhook {
 	public fun <init> ()V
 	public final fun getAsync ()Z
 	public final fun getCheckInterval ()Ljava/time/Duration;
+	public final fun getMaxBodySize ()Lorg/springframework/util/unit/DataSize;
 	public final fun getPath ()Ljava/lang/String;
 	public final fun getSecret ()Ljava/lang/String;
 	public final fun getUrl ()Ljava/lang/String;
 	public final fun setAsync (Z)V
 	public final fun setCheckInterval (Ljava/time/Duration;)V
+	public final fun setMaxBodySize (Lorg/springframework/util/unit/DataSize;)V
 	public final fun setPath (Ljava/lang/String;)V
 	public final fun setSecret (Ljava/lang/String;)V
 	public final fun setUrl (Ljava/lang/String;)V
@@ -150,7 +180,6 @@ public abstract interface class ru/securitytrip/maxapi/spring/MaxClientConfigCus
 
 public final class ru/securitytrip/maxapi/spring/MaxHealthAutoConfiguration {
 	public fun <init> ()V
-	public final fun maxHealthContributor (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/context/ApplicationContext;)Lorg/springframework/boot/health/contributor/CompositeHealthContributor;
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxMetricsAutoConfiguration {
@@ -214,5 +243,8 @@ public final class ru/securitytrip/maxapi/spring/MaxWebAppAutoConfiguration {
 
 public abstract interface annotation class ru/securitytrip/maxapi/spring/MaxWebAppUser : java/lang/annotation/Annotation {
 	public abstract fun required ()Z
+}
+
+public abstract interface annotation class ru/securitytrip/maxapi/spring/test/MaxBotTest : java/lang/annotation/Annotation {
 }
 
