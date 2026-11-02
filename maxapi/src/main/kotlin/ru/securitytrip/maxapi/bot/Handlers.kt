@@ -16,7 +16,8 @@ public class HandlerTimeoutException(public val update: Update, public val timeo
 /**
  * An update received by long polling was dropped: its chat already had [capacity] updates waiting
  * ([BotConfig.queueCapacity]), e.g. because a handler of the chat is stuck or a user floods the bot.
- * Passed to `onError`; other chats are not affected.
+ * Passed to `onError`; other chats are not affected. With a [BotConfig.markerStore], the saved marker
+ * stays before the dropped update from then on, so that the update is received again after a restart.
  *
  * @property update the dropped update.
  * @property capacity the limit.

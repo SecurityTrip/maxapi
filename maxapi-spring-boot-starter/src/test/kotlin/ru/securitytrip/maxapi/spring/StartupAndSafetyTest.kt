@@ -162,6 +162,32 @@ class StartupAndSafetyTest {
     }
 
     @Test
+    fun `a slow API does not hold up the start`() {
+        val first = AtomicInteger()
+        answer = {
+            if (it.url.encodedPath == "/me" && first.getAndIncrement() == 0) json(ME).newBuilder().headersDelay(3, TimeUnit.SECONDS).build() else null
+        }
+        val (lifecycle, bot) = lifecycle { startupTimeout = Duration.ofMillis(200) }
+        val started = System.nanoTime()
+        lifecycle.start()
+        assertTrue(Duration.ofNanos(System.nanoTime() - started) < Duration.ofSeconds(2))
+        assertFalse(lifecycle.isPrepared)
+        await { lifecycle.isPrepared }
+        lifecycle.stop()
+        bot.close()
+    }
+
+    @Test
+    fun `no retries once the lifecycle stopped`() {
+        val (lifecycle, bot) = lifecycle()
+        val executor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor()
+        executor.shutdownNow()
+        lifecycle.retry(executor, 1)
+        assertEquals(emptyList(), requests)
+        bot.close()
+    }
+
+    @Test
     fun `a token rejected later stops the retries`() {
         val calls = AtomicInteger()
         answer = {
@@ -398,6 +424,13 @@ class StartupAndSafetyTest {
         assertEquals(Proxy.Type.SOCKS, socks.proxy!!.type())
         assertFailsWith<IllegalArgumentException> { httpClientBuilder(MaxBotProperties().apply { proxy = "http://proxy.local" }) }
         assertFailsWith<IllegalArgumentException> { httpClientBuilder(MaxBotProperties().apply { proxy = "http:///no-host" }) }
+        assertFailsWith<IllegalArgumentException> { httpClientBuilder(MaxBotProperties().apply { proxy = "//proxy.local:3128" }) }
+        assertFailsWith<IllegalArgumentException> { httpClientBuilder(MaxBotProperties().apply { proxy = "ftp://proxy.local:21" }) }
+        val credentials = assertFailsWith<IllegalArgumentException> {
+            httpClientBuilder(MaxBotProperties().apply { proxy = "socks5://user:pass@proxy.local:1080" })
+        }
+        assertTrue(credentials.message!!.contains("only for http"))
+        assertEquals(Duration.ofSeconds(10), MaxBotProperties().startupTimeout)
     }
 
     @Test

@@ -2,7 +2,8 @@ package ru.securitytrip.maxapi.bot
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withTimeoutOrNull
 import ru.securitytrip.maxapi.events.MaxEventListener
 import ru.securitytrip.maxapi.events.UpdateEvent
@@ -104,6 +105,9 @@ public class MaxBot private constructor(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("max-bot"))
 
+    /** [BotConfig.parallelism] for all handlers of the bot, from long polling and webhooks alike. */
+    private val handlerSlots = Semaphore(config.parallelism)
+
     @Volatile
     private var pollingJob: Job? = null
 
@@ -199,7 +203,10 @@ public class MaxBot private constructor(
                 run(matched, update)
             }
         } catch (e: CancellationException) {
-            throw e
+            // A cancellation of the handler's own, e.g. a timeout of its withTimeout, is its error like
+            // any other; only the cancellation of this coroutine ends the dispatch.
+            currentCoroutineContext().ensureActive()
+            error = e
         } catch (e: Throwable) {
             // Errors such as TODO() or AssertionError must not take down the polling workers either.
             error = e
@@ -291,8 +298,10 @@ public class MaxBot private constructor(
      * Every chat has its own queue: updates of a chat are handled one at a time and in order, while
      * different chats are handled in parallel, up to [BotConfig.parallelism] handlers at once. A slow
      * or stuck handler holds up only its own chat. When a chat has [BotConfig.queueCapacity] updates
-     * waiting, further updates of that chat are dropped and reported to [onError]; polling waits only
-     * when all chats together have `parallelism * queueCapacity` updates waiting.
+     * waiting, further updates of that chat are dropped and reported to [onError]; with a
+     * [BotConfig.markerStore] the saved marker then stays before the dropped update, so that it is
+     * received again after a restart. Polling waits only when all chats together have
+     * `parallelism * queueCapacity` updates waiting.
      *
      * Handlers run in the caller's coroutine context, so with a single-threaded dispatcher they
      * interleave at suspension points instead of running in parallel; use [start] to run on
@@ -306,14 +315,16 @@ public class MaxBot private constructor(
      */
     public suspend fun startPolling(): Unit = coroutineScope {
         checkNoWebhook()
-        val queues = ChatQueues(this, config.parallelism, config.queueCapacity, ::processUpdate)
+        val queues = ChatQueues(this, handlerSlots, config.parallelism, config.queueCapacity, ::processUpdate)
         val store = config.markerStore
         val pages = Channel<Page>(Channel.UNLIMITED)
         if (store != null) {
             // Saves the marker of a page once all its updates, and those of earlier pages, are handled.
             launch(CoroutineName("max-bot-marker")) {
                 for (page in pages) {
-                    page.done.awaitAll()
+                    page.done.joinAll()
+                    // A dropped update: the marker stays before it, so that it is received again after a restart.
+                    if (page.done.any { it.isCancelled }) break
                     try {
                         store.save(page.marker)
                     } catch (e: CancellationException) {
@@ -525,7 +536,7 @@ public class MaxBot private constructor(
     }
 
     /** Queues of updates that webhook requests leave to the background, see [WebhookHandler.handleAsync]. */
-    private val webhookQueues by lazy { ChatQueues(scope, config.parallelism, config.queueCapacity, ::processUpdate) }
+    private val webhookQueues by lazy { ChatQueues(scope, handlerSlots, config.parallelism, config.queueCapacity, ::processUpdate) }
 
     /** Queues [update] to be handled in the background, in order with the other updates of its chat. */
     internal fun launchProcessing(update: Update) {

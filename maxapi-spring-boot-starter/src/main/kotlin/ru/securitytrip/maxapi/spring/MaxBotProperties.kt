@@ -104,6 +104,12 @@ public class MaxBotProperties {
     /** Whether to show the commands registered with descriptions in the bot menu on startup. */
     public var syncCommands: Boolean = false
 
+    /**
+     * How long startup waits for the API (the check of the token, the menu, the webhook subscription)
+     * before it goes on and retries in the background (since 1.5.0).
+     */
+    public var startupTimeout: Duration = Duration.ofSeconds(10)
+
     /** Webhook settings, used when [mode] is [Mode.WEBHOOK]. */
     public val webhook: Webhook = Webhook()
 

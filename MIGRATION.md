@@ -90,7 +90,8 @@ application does not have older Kotlin, coroutines or Jackson than `maxapi` need
 **Handlers of a chat no longer hold up other chats.** Every chat has its own queue, and up to
 `BotConfig.parallelism` handlers run at once, now 64 instead of 4 workers. When a chat has
 `queueCapacity` updates waiting, long polling drops its further updates and reports a
-`QueueOverflowException` to `onError`, instead of stopping for every chat. Webhook updates handled in
+`QueueOverflowException` to `onError`, instead of stopping for every chat; with a `MarkerStore` the
+saved marker stays before the dropped update, so that it comes again after a restart. Webhook updates handled in
 the background (`handleAsync`, `max.bot.webhook.async=true`) go through the same queues, so they keep
 the order of a chat; a full queue answers 503 and Max redelivers.
 
@@ -126,14 +127,15 @@ Spring Boot starter:
   body is read.
 - **`max.bot.rate-limit` is `max` by default.** Set `none` for the old behaviour.
 - **Startup checks the token** with `getMyInfo`, unless `max.bot.mode=none` without `sync-commands`: a
-  rejected token fails the start with an explanation. When the API cannot be reached, the application
-  still starts and the menu sync and the webhook subscription are retried in the background.
+  rejected token fails the start with an explanation. When the API cannot be reached within
+  `max.bot.startup-timeout` (10 seconds), the application still starts and the menu sync and the
+  webhook subscription are retried in the background.
 - **Stopping waits up to `spring.lifecycle.timeout-per-shutdown-phase`** for the updates already
   received; then closing the bot cancels the handlers.
 - **Without a deduplicator bean, an `InMemoryUpdateDeduplicator` is used.**
 - **`max.bot.storage=jdbc|redis` without its module fails the start** instead of keeping the state in memory.
 - **A blank `max.bot.token` turns the bot off** with a warning instead of failing the context.
 - New settings: `max.bot.parallelism`, `queue-capacity`, `handler-timeout`, `poll-timeout`,
-  `auto-answer-callbacks`, `shutdown-timeout`, `proxy`, `connect-timeout`, `read-timeout`,
+  `auto-answer-callbacks`, `shutdown-timeout`, `startup-timeout`, `proxy`, `connect-timeout`, `read-timeout`,
   `webhook.max-body-size`, and `BotConfigCustomizer` beans. `@MaxBotTest` starts a test context without
   a real token and without calling the API.

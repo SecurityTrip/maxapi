@@ -67,14 +67,21 @@ public object MaxTls {
         val store = KeyStore.getInstance(KeyStore.getDefaultType()).apply { load(null, null) }
         val certificates = jvm.acceptedIssuers + russianTrustedRootCa
         certificates.forEachIndexed { index, certificate -> store.setCertificateEntry("ca-$index", certificate) }
-        return HostTrustManager(jvm, trustManagerOf(store))
+        return hostAware(jvm, trustManagerOf(store))
     }
 
+    /**
+     * [HostTrustManager] of [jvm] and [max]. A security provider whose trust managers are not
+     * `X509ExtendedTrustManager` does not tell the host, so then [max] trusts the Russian CA for any host.
+     */
+    internal fun hostAware(jvm: X509TrustManager, max: X509TrustManager): X509TrustManager =
+        if (jvm is X509ExtendedTrustManager && max is X509ExtendedTrustManager) HostTrustManager(jvm, max) else max
+
     /** The PKIX trust manager for [store]; `null` means the JVM's default trust store. */
-    private fun trustManagerOf(store: KeyStore?): X509ExtendedTrustManager {
+    private fun trustManagerOf(store: KeyStore?): X509TrustManager {
         val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
         factory.init(store)
-        return factory.trustManagers[0] as X509ExtendedTrustManager
+        return factory.trustManagers.filterIsInstance<X509TrustManager>().first()
     }
 
     /** Checks servers of Max against [max], which adds the Russian CA, and other servers against [jvm]. */

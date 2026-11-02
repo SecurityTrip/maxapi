@@ -1166,7 +1166,8 @@ max:
     handler-timeout: 1m      # 0 for no limit
     poll-timeout: 30s
     auto-answer-callbacks: true  # answer button presses the handlers left unanswered
-    proxy: http://user:password@proxy.example.com:3128   # or socks://host:port
+    startup-timeout: 10s     # how long startup waits for the API, then retries in the background
+    proxy: http://user:password@proxy.example.com:3128   # or socks://host:port (no credentials)
     connect-timeout: 15s
     read-timeout: 60s
     webhook:

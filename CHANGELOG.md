@@ -26,8 +26,12 @@ See [MIGRATION.md](MIGRATION.md#from-14-to-15) for the changed defaults.
   and the integration tests run on the newest Spring Boot with its BOM enforced.
 - A slow or stuck handler no longer stops the bot: every chat has its own queue, at most
   `BotConfig.parallelism` handlers run at once, and long polling drops the updates of a chat whose queue
-  is full (`QueueOverflowException` goes to `onError`) instead of waiting for it. Before, a stuck handler
-  held up every chat with the same `chatId mod parallelism` and then polling altogether.
+  is full (`QueueOverflowException` goes to `onError`) instead of waiting for it; with a `MarkerStore`
+  the saved marker then stays before the dropped update, so that it is received again after a restart.
+  Before, a stuck handler held up every chat with the same `chatId mod parallelism` and then polling
+  altogether. Polling and webhook updates share the limit of `parallelism` handlers, and a handler
+  that throws a `CancellationException` of its own (e.g. from its `withTimeout`) is reported as an
+  error instead of ending the dispatch.
 - `WebhookHandler.handleAsync` (and `max.bot.webhook.async`) keeps the order of updates within a chat
   and limits the handlers running at once, through the same queues; a full queue throws
   `IllegalStateException` (the starter answers 503, so that Max redelivers).
@@ -59,7 +63,8 @@ See [MIGRATION.md](MIGRATION.md#from-14-to-15) for the changed defaults.
 - `InMemoryStateStorage(maxSize, ttl)`.
 - `WebAppPhone.verify(userId, botToken, maxAge, now)`.
 - Spring Boot starter: `max.bot.parallelism`, `queue-capacity`, `handler-timeout`, `poll-timeout`,
-  `auto-answer-callbacks`, `shutdown-timeout`, `proxy`, `connect-timeout`, `read-timeout`,
+  `auto-answer-callbacks`, `shutdown-timeout`, `startup-timeout`, `proxy` (credentials for HTTP
+  proxies only), `connect-timeout`, `read-timeout`,
   `webhook.max-body-size`; `BotConfigCustomizer` beans adjust the bot settings without replacing the
   `BotConfig` bean; `@MaxBotTest` starts a test context without a real token and without calling the API.
 - Spring Boot starter: failure analyzers explain a rejected token, a missing storage module and
@@ -81,7 +86,8 @@ See [MIGRATION.md](MIGRATION.md#from-14-to-15) for the changed defaults.
 - Spring Boot starter: `max.bot.rate-limit` is `max` by default (was `none`).
 - Spring Boot starter: on startup the lifecycle checks the token with `getMyInfo` (filling
   `MaxBot.username`), unless `max.bot.mode=none` without `sync-commands`; a rejected token fails the
-  start, an unreachable API is retried in the background instead of failing it.
+  start, an API that is unreachable or slower than `max.bot.startup-timeout` (10 seconds) is retried in
+  the background until the lifecycle stops, instead of failing the start.
 - Spring Boot starter: without an `UpdateDeduplicator` or `SuspendUpdateDeduplicator` bean, the bot uses
   an `InMemoryUpdateDeduplicator`.
 - Spring Boot starter: a blank `max.bot.token` turns the bot off with a warning instead of failing the context.

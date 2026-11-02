@@ -57,6 +57,7 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public final fun getReadTimeout ()Ljava/time/Duration;
 	public final fun getRedis ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Redis;
 	public final fun getShutdownTimeout ()Ljava/time/Duration;
+	public final fun getStartupTimeout ()Ljava/time/Duration;
 	public final fun getStorage ()Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;
 	public final fun getSyncCommands ()Z
 	public final fun getToken ()Ljava/lang/String;
@@ -75,6 +76,7 @@ public final class ru/securitytrip/maxapi/spring/MaxBotProperties {
 	public final fun setRateLimit (Lru/securitytrip/maxapi/spring/MaxBotProperties$RateLimitPreset;)V
 	public final fun setReadTimeout (Ljava/time/Duration;)V
 	public final fun setShutdownTimeout (Ljava/time/Duration;)V
+	public final fun setStartupTimeout (Ljava/time/Duration;)V
 	public final fun setStorage (Lru/securitytrip/maxapi/spring/MaxBotProperties$Storage;)V
 	public final fun setSyncCommands (Z)V
 	public final fun setToken (Ljava/lang/String;)V

@@ -58,6 +58,11 @@ import org.springframework.web.reactive.function.server.ServerResponse as Reacti
 @ConditionalOnMaxBotToken
 @EnableConfigurationProperties(MaxBotProperties::class)
 public class MaxBotAutoConfiguration {
+    init {
+        // Here rather than in a bean, so that the check runs with a MaxClient bean of the application too.
+        DependencyVersions.check()
+    }
+
     @Bean
     @ConditionalOnMissingBean
     public fun maxClient(
@@ -65,7 +70,6 @@ public class MaxBotAutoConfiguration {
         customizers: ObjectProvider<MaxClientConfigCustomizer>,
         listeners: ObjectProvider<MaxEventListener>,
     ): MaxClient {
-        DependencyVersions.check()
         val builder = MaxClientConfig.builder(properties.token)
             .baseUrl(properties.baseUrl)
             .httpClient(httpClientBuilder(properties))
@@ -211,8 +215,13 @@ internal fun httpClientBuilder(properties: MaxBotProperties): OkHttpClient.Build
         .writeTimeout(properties.readTimeout)
     val proxy = properties.proxy?.takeIf { it.isNotBlank() } ?: return builder
     val uri = URI(proxy)
-    val type = if (uri.scheme.startsWith("socks", ignoreCase = true)) Proxy.Type.SOCKS else Proxy.Type.HTTP
-    require(uri.host != null && uri.port > 0) { "max.bot.proxy must be like http://host:port or socks://host:port: $proxy" }
+    val scheme = uri.scheme?.lowercase()
+    require(scheme in PROXY_SCHEMES && uri.host != null && uri.port > 0) {
+        "max.bot.proxy must be like http://host:port or socks://host:port: $proxy"
+    }
+    val type = if (scheme!!.startsWith("socks")) Proxy.Type.SOCKS else Proxy.Type.HTTP
+    // OkHttp sends credentials only to HTTP proxies; a SOCKS proxy would reject the requests without a word.
+    require(type == Proxy.Type.HTTP || uri.rawUserInfo == null) { "max.bot.proxy supports credentials only for http proxies: $proxy" }
     builder.proxy(Proxy(type, InetSocketAddress.createUnresolved(uri.host, uri.port)))
     val userInfo = uri.rawUserInfo ?: return builder
     val credentials = Credentials.basic(
@@ -225,6 +234,8 @@ internal fun httpClientBuilder(properties: MaxBotProperties): OkHttpClient.Build
         else response.request.newBuilder().header("Proxy-Authorization", credentials).build()
     }
 }
+
+private val PROXY_SCHEMES = setOf("http", "https", "socks", "socks4", "socks5")
 
 /** Called with the auto-configured bot to register handlers: `@Bean MaxBotConfigurer handlers() { return bot -> ...; }`. */
 public fun interface MaxBotConfigurer {

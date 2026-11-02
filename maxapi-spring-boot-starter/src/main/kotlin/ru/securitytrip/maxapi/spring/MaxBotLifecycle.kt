@@ -1,6 +1,8 @@
 package ru.securitytrip.maxapi.spring
 
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.SmartLifecycle
 import ru.securitytrip.maxapi.bot.MaxBot
@@ -8,6 +10,7 @@ import ru.securitytrip.maxapi.client.UnauthorizedException
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -18,9 +21,10 @@ import java.util.concurrent.TimeUnit
  * - On start, unless `max.bot.mode=none` without `max.bot.sync-commands`: checks the token with
  *   `getMyInfo`, which also fills [MaxBot.username]; shows the bot menu if `max.bot.sync-commands` is set;
  *   in webhook mode subscribes to `max.bot.webhook.url` if it is set. A rejected token fails the start
- *   with an explanation. When the API cannot be reached or answers with an error, the application still
- *   starts: the failure is logged and these steps are retried in the background, with pauses from one
- *   second up to five minutes.
+ *   with an explanation. When the API cannot be reached, answers with an error or does not finish these
+ *   steps within `max.bot.startup-timeout`, the application still starts: the failure is logged and the
+ *   steps are retried in the background, with pauses from one second up to five minutes, until the
+ *   lifecycle stops.
  * - Then in polling mode it starts long polling, and with a webhook URL it checks every
  *   `max.bot.webhook.check-interval` that the subscription still exists and subscribes again if Max
  *   dropped it (see [MaxBot.ensureWebhook]).
@@ -51,12 +55,12 @@ public class MaxBotLifecycle(private val bot: MaxBot, private val properties: Ma
     override fun start() {
         if (properties.mode != MaxBotProperties.Mode.NONE || properties.syncCommands) {
             try {
-                prepare()
+                runBlocking { withTimeout(properties.startupTimeout.toMillis()) { prepare() } }
             } catch (e: UnauthorizedException) {
                 throw e
             } catch (e: Exception) {
                 log.warn("Cannot reach the Max API on startup (${e.message}); retrying in the background", e)
-                retry(retryDelay.toMillis())
+                retry(scheduler(), retryDelay.toMillis())
             }
         }
         if (properties.mode == MaxBotProperties.Mode.POLLING) polling = bot.start()
@@ -70,28 +74,38 @@ public class MaxBotLifecycle(private val bot: MaxBot, private val properties: Ma
     }
 
     /** The steps that need the API; each one that succeeded is not repeated. */
-    private fun prepare() {
-        if (bot.username == null) bot.username = bot.client.blocking().getMyInfo().username
-        if (properties.syncCommands) bot.syncCommandsBlocking()
+    private suspend fun prepare() {
+        if (bot.username == null) bot.username = bot.client.getMyInfo().username
+        if (properties.syncCommands) bot.syncCommands()
         if (properties.mode == MaxBotProperties.Mode.WEBHOOK) {
-            properties.webhook.url?.let { bot.setWebhookBlocking(it, properties.webhookSecret()) }
+            properties.webhook.url?.let { bot.setWebhook(it, properties.webhookSecret()) }
         }
         prepared = true
     }
 
-    private fun retry(delayMillis: Long) {
-        scheduler().schedule({
-            try {
-                prepare()
-                log.info("Reached the Max API: the bot is ready")
-            } catch (e: UnauthorizedException) {
-                log.error("The Max API rejected max.bot.token; the bot cannot work until the token is fixed", e)
-            } catch (e: Exception) {
-                val next = minOf(delayMillis * 2, MAX_RETRY_DELAY)
-                log.warn("Cannot reach the Max API (${e.message}); retrying in ${next / 1000} s")
-                retry(next)
-            }
-        }, delayMillis, TimeUnit.MILLISECONDS)
+    /**
+     * Retries the startup steps on [executor] after [delayMillis]. Once [stop] shut the executor down,
+     * nothing is scheduled any more, also by a retry that was running then.
+     */
+    internal fun retry(executor: ScheduledExecutorService, delayMillis: Long) {
+        try {
+            executor.schedule({ retryNow(executor, delayMillis) }, delayMillis, TimeUnit.MILLISECONDS)
+        } catch (_: RejectedExecutionException) {
+            log.debug("The bot stopped; no more retries")
+        }
+    }
+
+    private fun retryNow(executor: ScheduledExecutorService, delayMillis: Long) {
+        try {
+            runBlocking { prepare() }
+            log.info("Reached the Max API: the bot is ready")
+        } catch (e: UnauthorizedException) {
+            log.error("The Max API rejected max.bot.token; the bot cannot work until the token is fixed", e)
+        } catch (e: Exception) {
+            val next = minOf(delayMillis * 2, MAX_RETRY_DELAY)
+            log.warn("Cannot reach the Max API (${e.message}); retrying in ${next / 1000} s")
+            retry(executor, next)
+        }
     }
 
     private fun scheduler(): ScheduledExecutorService = synchronized(this) {

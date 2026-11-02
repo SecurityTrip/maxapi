@@ -1,6 +1,9 @@
 package ru.securitytrip.maxapi
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -72,7 +75,7 @@ class ReviewFixesTest {
     fun `chat queues keep the order of a chat and limit the waiting updates`(): Unit = runBlocking {
         val gate = CompletableDeferred<Unit>()
         val handled = CopyOnWriteArrayList<String?>()
-        val queues = ChatQueues(this, parallelism = 1, capacity = 2) { update ->
+        val queues = ChatQueues(this, Semaphore(1), parallelism = 1, capacity = 2) { update ->
             if (text(update) == "slow") gate.await()
             handled += text(update)
         }
@@ -93,13 +96,60 @@ class ReviewFixesTest {
         queues.close()
         val dropped = CompletableDeferred<Unit>()
         assertFalse(queues.send(FakeApi.message("late", chatId = 3), dropped))
-        assertTrue(dropped.isCompleted)
+        assertTrue(dropped.isCancelled, "a dropped update cancels its marker")
+    }
+
+    @Test
+    fun `a worker that runs at once finds its update`() {
+        val handled = CopyOnWriteArrayList<String?>()
+        val queues = ChatQueues(CoroutineScope(Dispatchers.Unconfined), Semaphore(1), parallelism = 1, capacity = 1) { handled += text(it) }
+        assertTrue(queues.trySend(FakeApi.message("a", chatId = 1)))
+        assertTrue(queues.trySend(FakeApi.message("b", chatId = 1)))
+        assertEquals(listOf<String?>("a", "b"), handled)
+    }
+
+    @Test
+    fun `queues of a bot share its handler slots`(): Unit = runBlocking {
+        val slots = Semaphore(1)
+        val gate = CompletableDeferred<Unit>()
+        val handled = CopyOnWriteArrayList<String?>()
+        val polling = ChatQueues(this, slots, parallelism = 1, capacity = 1) { gate.await(); handled += text(it) }
+        val webhook = ChatQueues(this, slots, parallelism = 1, capacity = 1) { handled += text(it) }
+        assertTrue(polling.trySend(FakeApi.message("slow", chatId = 1)))
+        assertTrue(webhook.trySend(FakeApi.message("fast", chatId = 2)))
+        delay(50)
+        assertEquals(emptyList(), handled, "the second queue waits for the slot")
+        gate.complete(Unit)
+        withTimeout(5_000) { while (handled.size < 2) delay(10) }
+        assertEquals(listOf<String?>("slow", "fast"), handled)
+    }
+
+    @Test
+    fun `a cancellation of the handler's own is an error of the handler`(): Unit = runBlocking {
+        FakeApi().use { api ->
+            val bot = MaxBot(api.client)
+            val errors = CopyOnWriteArrayList<Throwable>()
+            val handled = CopyOnWriteArrayList<String?>()
+            bot.onError { e, _ -> errors += e }
+            bot.onMessage {
+                if (text == "slow") withTimeout(10) { delay(10_000) }
+                handled += text
+            }
+            val handler = bot.webhookHandler(WebhookHandler.secretFor(TOKEN))
+            fun body(text: String) = """{"update_type":"message_created","timestamp":1,"message":${messageJson(1, text, "mid.$text")}}"""
+            handler.handleAsync(body("slow"), WebhookHandler.secretFor(TOKEN))
+            handler.handleAsync(body("next"), WebhookHandler.secretFor(TOKEN))
+            withTimeout(5_000) { while (handled.isEmpty()) delay(10) }
+            assertEquals(listOf<String?>("next"), handled, "the worker of the chat goes on")
+            assertIs<kotlinx.coroutines.TimeoutCancellationException>(errors.single())
+            bot.close()
+        }
     }
 
     @Test
     fun `a full queue of a chat refuses its updates only`(): Unit = runBlocking {
         val gate = CompletableDeferred<Unit>()
-        val queues = ChatQueues(this, parallelism = 4, capacity = 1) { gate.await() }
+        val queues = ChatQueues(this, Semaphore(4), parallelism = 4, capacity = 1) { gate.await() }
         assertTrue(queues.trySend(FakeApi.message("a", chatId = 1)))
         assertFalse(queues.trySend(FakeApi.message("b", chatId = 1)))
         assertTrue(queues.trySend(FakeApi.message("c", chatId = 2)))
@@ -123,7 +173,17 @@ class ReviewFixesTest {
                     else -> null
                 }
             }
-            val bot = MaxBot(api.client, BotConfig(queueCapacity = 2, pollTimeoutSeconds = 0, minPollInterval = Duration.ofMillis(5)))
+            val saved = CopyOnWriteArrayList<Long>()
+            val store = object : ru.securitytrip.maxapi.bot.MarkerStore {
+                override suspend fun load(): Long? = null
+                override suspend fun save(marker: Long) {
+                    saved += marker
+                }
+            }
+            val bot = MaxBot(
+                api.client,
+                BotConfig(queueCapacity = 2, pollTimeoutSeconds = 0, minPollInterval = Duration.ofMillis(5), markerStore = store),
+            )
             val gate = CompletableDeferred<Unit>()
             val handled = CopyOnWriteArrayList<String?>()
             val errors = CopyOnWriteArrayList<Throwable>()
@@ -143,6 +203,8 @@ class ReviewFixesTest {
             withTimeout(5_000) { while (handled.size + errors.size < 6) delay(10) }
             val chat1 = handled.filter { it != "b" }
             assertEquals(chat1.sortedBy { listOf("stuck", "a1", "a2", "a3", "a4").indexOf(it) }, chat1, "in order")
+            delay(100)
+            assertEquals(emptyList(), saved, "the marker stays before the dropped update")
             bot.stop()
             bot.close()
         }
@@ -400,6 +462,7 @@ class ReviewFixesTest {
         assertEquals("&lt;a href=&quot;x&quot;&gt;Tom &amp; Jerry&#39;s&lt;/a&gt;", Html.escape("<a href=\"x\">Tom & Jerry's</a>"))
         assertEquals("plain", Html.escape("plain"))
         assertEquals("\\*\\*bold\\*\\* \\[link\\]\\(url\\) a\\_b", Markdown.escape("**bold** [link](url) a_b"))
+        assertEquals("1.5-2 = x|y", Markdown.escape("1.5-2 = x|y"))
         val html = Html.builder()
             .text("<1> ").bold("b").italic("i").underline("u").strikethrough("s").code("c").highlighted("h")
             .newline().quote("q").link("<x>", "https://e.com/?a=1&b=\"2\"").mention("Ann", 42).raw("<br>")
@@ -483,6 +546,15 @@ class ReviewFixesTest {
             calls,
         )
         assertEquals(1, manager.acceptedIssuers.size)
+        val plain = object : javax.net.ssl.X509TrustManager {
+            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = Unit
+            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) = Unit
+            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+        }
+        assertSame(plain, MaxTls.hostAware(recorder("jvm"), plain), "without hosts, the manager with the Russian CA")
+        val extended = recorder("max")
+        assertSame(extended, MaxTls.hostAware(plain, extended))
+        assertIs<MaxTls.HostTrustManager>(MaxTls.hostAware(recorder("jvm"), recorder("max")))
         assertTrue(MaxTls.isMaxHost("max.ru"))
         assertTrue(MaxTls.isMaxHost("PLATFORM-API2.MAX.RU"))
         assertFalse(MaxTls.isMaxHost("evilmax.ru"))

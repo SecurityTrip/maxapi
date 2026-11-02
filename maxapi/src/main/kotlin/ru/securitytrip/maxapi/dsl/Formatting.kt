@@ -37,7 +37,8 @@ public object Html {
  * its documentation does not describe escaping.
  */
 public object Markdown {
-    private const val SPECIAL = "\\`*_~+^[]()#>!<|-.="
+    // The characters of the markup of Max: emphasis, code, links, headings and quotes.
+    private const val SPECIAL = "\\`*_~+^[]()#>!<"
 
     /** [text] with a backslash before every character that Max markdown could read as markup. */
     @JvmStatic
