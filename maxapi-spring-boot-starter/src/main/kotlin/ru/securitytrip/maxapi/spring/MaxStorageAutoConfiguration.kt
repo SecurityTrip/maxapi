@@ -4,6 +4,7 @@ import io.lettuce.core.RedisClient
 import io.lettuce.core.api.StatefulRedisConnection
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
@@ -35,6 +36,9 @@ import javax.sql.DataSource
  * or [BroadcastStore] bean replaces the matching one. The deduplicators of both storages implement both
  * interfaces, and the bot calls their non-blocking method: Redis is asked with the asynchronous API of
  * Lettuce, JDBC on `Dispatchers.IO`.
+ *
+ * When the module that `max.bot.storage` needs is missing, the application fails to start with a hint,
+ * rather than keeping the state in memory without a word.
  */
 @AutoConfiguration(before = [MaxBotAutoConfiguration::class])
 public class MaxStorageAutoConfiguration {
@@ -123,4 +127,33 @@ public class MaxStorageAutoConfiguration {
             properties: MaxBotProperties,
         ): RedisBroadcastStore = RedisBroadcastStore(connection, properties.redis.keyPrefix + "broadcast:")
     }
+
+    /** `max.bot.storage=jdbc` without `maxapi-jdbc`. */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnMaxBotToken
+    @ConditionalOnMissingClass("ru.securitytrip.maxapi.jdbc.JdbcStateStorage")
+    @ConditionalOnProperty(prefix = "max.bot", name = ["storage"], havingValue = "jdbc")
+    internal class JdbcMissing {
+        init {
+            throw missingModule("jdbc", "maxapi-jdbc")
+        }
+    }
+
+    /** `max.bot.storage=redis` without `maxapi-redis`. */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnMaxBotToken
+    @ConditionalOnMissingClass("ru.securitytrip.maxapi.redis.RedisStateStorage")
+    @ConditionalOnProperty(prefix = "max.bot", name = ["storage"], havingValue = "redis")
+    internal class RedisMissing {
+        init {
+            throw missingModule("redis", "maxapi-redis")
+        }
+    }
 }
+
+private fun missingModule(storage: String, module: String) = MaxStartupException(
+    "max.bot.storage is $storage, but $module is not on the classpath: dialog states, the polling marker and " +
+        "seen updates would be kept in memory, lost on restart and not shared between instances",
+    "Add the dependency io.github.securitytrip:$module (the same version as maxapi-spring-boot-starter), " +
+        "or set max.bot.storage=memory.",
+)

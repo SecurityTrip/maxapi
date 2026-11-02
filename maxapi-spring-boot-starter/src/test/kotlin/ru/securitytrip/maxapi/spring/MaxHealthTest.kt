@@ -114,9 +114,11 @@ class MaxHealthTest {
 
     @Test
     fun `polling that ended with an error is down`() {
-        me = json("""{"code":"verify.token","message":"Invalid access_token"}""", code = 401)
+        // The token is accepted on startup and revoked afterwards.
+        val rejected = json("""{"code":"verify.token","message":"Invalid access_token"}""", code = 401)
+        var accepted = true
         server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest) = me
+            override fun dispatch(request: RecordedRequest) = if (accepted) me.also { accepted = false } else rejected
         }
         runner.withPropertyValues(*props())
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { it.onMessage { }.onError { _, _ -> } } })
@@ -223,8 +225,9 @@ class MaxHealthTest {
         webRunner.withPropertyValues(*props("max.bot.mode=webhook", "max.bot.webhook.url=https://bot.example/hook"))
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { it.onMessage { } } })
             .run { context ->
-                // Subscribing at startup failed, so the context did not start.
-                assertTrue(context.startupFailure != null)
+                // The API is down at startup: the context starts, the subscription is retried in the background.
+                assertNull(context.startupFailure)
+                assertEquals(Status.DOWN, context.bot().status)
             }
     }
 
@@ -263,21 +266,14 @@ class MaxHealthTest {
 
     @Test
     fun `no storage part without its beans or Lettuce`() {
-        runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.storage=redis"))
-            .withClassLoader(FilteredClassLoader("ru.securitytrip.maxapi.redis"))
+        runner.withPropertyValues(*props("max.bot.mode=none"))
             .run { context ->
                 assertNull(context.getBean("maxHealthContributor", CompositeHealthContributor::class.java).getContributor("storage"))
             }
+        // A storage without its module fails the start instead of falling back to memory.
         runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.storage=redis"))
             .withClassLoader(FilteredClassLoader("io.lettuce", "ru.securitytrip.maxapi.redis"))
-            .run { context ->
-                assertNull(context.getBean("maxHealthContributor", CompositeHealthContributor::class.java).getContributor("storage"))
-            }
-        runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.storage=jdbc"))
-            .withClassLoader(FilteredClassLoader("ru.securitytrip.maxapi.jdbc"))
-            .run { context ->
-                assertNull(context.getBean("maxHealthContributor", CompositeHealthContributor::class.java).getContributor("storage"))
-            }
+            .run { context -> assertTrue(context.startupFailure != null) }
     }
 
     @Test

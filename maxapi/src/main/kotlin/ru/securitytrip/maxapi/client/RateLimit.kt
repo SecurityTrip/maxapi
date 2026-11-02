@@ -168,3 +168,25 @@ internal class CallbackChats {
         const val MAX_CALLBACKS = 10_000
     }
 }
+
+/**
+ * Ids of the button presses answered with `POST /answers`, kept while a bot with
+ * `BotConfig.autoAnswerCallbacks` turns [enabled] on. Bounded like [CallbackChats].
+ */
+internal class AnsweredCallbacks {
+    @Volatile
+    var enabled = false
+
+    private val ids = object : LinkedHashMap<String, Unit>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Unit>): Boolean = size > CallbackChats.MAX_CALLBACKS
+    }
+
+    fun add(callbackId: String?) {
+        if (enabled && callbackId != null) synchronized(ids) { ids[callbackId] = Unit }
+    }
+
+    /** Forgets [callbackId]; `true` if it was answered. */
+    fun remove(callbackId: String): Boolean = synchronized(ids) { ids.remove(callbackId) != null }
+
+    internal val size: Int get() = synchronized(ids) { ids.size }
+}

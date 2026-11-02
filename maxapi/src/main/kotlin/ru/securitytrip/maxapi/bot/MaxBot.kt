@@ -31,6 +31,7 @@ import ru.securitytrip.maxapi.client.MaxException
 import ru.securitytrip.maxapi.client.UnauthorizedException
 import ru.securitytrip.maxapi.model.SimpleQueryResult
 import ru.securitytrip.maxapi.model.chat.ChatType
+import ru.securitytrip.maxapi.model.message.CallbackAnswer
 import ru.securitytrip.maxapi.model.update.UpdateType
 import ru.securitytrip.maxapi.model.user.BotCommandsInfo
 import ru.securitytrip.maxapi.model.update.MessageCallbackUpdate
@@ -124,10 +125,15 @@ public class MaxBot private constructor(
 
     private val chatTracker = config.chatStore?.let { ChatTracker(it, client) }
 
+    init {
+        if (config.autoAnswerCallbacks) client.transport.answeredCallbacks.enabled = true
+    }
+
     /**
      * Username of the bot, without `@`. Commands with a suffix (`/start@name`) are handled only when
      * the suffix matches it. If not set, it is fetched with `getMyInfo` the first time such a command
-     * arrives.
+     * arrives; set it at startup (the Spring Boot starter does) so that a failure of that request
+     * cannot affect the command.
      */
     @Volatile
     public var username: String? = null
@@ -181,9 +187,10 @@ public class MaxBot private constructor(
         }
         trackChat(update)
         var handled = false
+        var error: Throwable? = null
         try {
             rememberCallbackChat(update)
-            if (username == null && isAddressedCommand(update)) username = client.getMyInfo().username
+            if (username == null && isAddressedCommand(update)) fetchUsername(update)
             val key = StateKey.of(update)
             val dispatch = Dispatch(this, update, key, key?.let { config.stateStorage.get(it) })
             val matched = match(dispatch)
@@ -195,11 +202,41 @@ public class MaxBot private constructor(
             throw e
         } catch (e: Throwable) {
             // Errors such as TODO() or AssertionError must not take down the polling workers either.
-            updateEvent(update, handled, started, e)
-            reportError(e, update)
-            return
+            error = e
         }
-        updateEvent(update, handled, started, null)
+        updateEvent(update, handled, started, error)
+        if (error != null) reportError(error, update)
+        if (update is MessageCallbackUpdate) autoAnswer(update)
+    }
+
+    /**
+     * Fills [username] for a command addressed to a bot. If `getMyInfo` fails, the error is reported and
+     * the update is still dispatched; its command, of an unknown bot, matches no command handler.
+     */
+    private suspend fun fetchUsername(update: Update) {
+        try {
+            username = client.getMyInfo().username
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            reportError(e, update)
+        }
+    }
+
+    /** Answers a button press nobody answered, so that the client of the user stops waiting; see [BotConfig.autoAnswerCallbacks]. */
+    private suspend fun autoAnswer(update: MessageCallbackUpdate) {
+        if (!config.autoAnswerCallbacks) return
+        val callbackId = update.callback.callbackId
+        val answered = client.transport.answeredCallbacks
+        if (answered.remove(callbackId)) return
+        try {
+            client.answerOnCallback(callbackId, CallbackAnswer())
+            answered.remove(callbackId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log.log(System.Logger.Level.DEBUG, "Cannot answer the button press $callbackId: ${e.message}")
+        }
     }
 
     private suspend fun run(matched: Matched, update: Update) {
@@ -251,11 +288,15 @@ public class MaxBot private constructor(
     /**
      * Receives updates by long polling until the calling coroutine is cancelled.
      *
-     * Updates are handled by [BotConfig.parallelism] workers; updates of one chat always go to the
-     * same worker, so they are handled in order. Workers run in the caller's coroutine context, so
-     * with a single-threaded dispatcher they interleave at suspension points instead of running in
-     * parallel; use [start] to run on `Dispatchers.Default`. Transient errors are reported to
-     * [onError] and retried with exponential backoff.
+     * Every chat has its own queue: updates of a chat are handled one at a time and in order, while
+     * different chats are handled in parallel, up to [BotConfig.parallelism] handlers at once. A slow
+     * or stuck handler holds up only its own chat. When a chat has [BotConfig.queueCapacity] updates
+     * waiting, further updates of that chat are dropped and reported to [onError]; polling waits only
+     * when all chats together have `parallelism * queueCapacity` updates waiting.
+     *
+     * Handlers run in the caller's coroutine context, so with a single-threaded dispatcher they
+     * interleave at suspension points instead of running in parallel; use [start] to run on
+     * `Dispatchers.Default`. Transient errors are reported to [onError] and retried with exponential backoff.
      *
      * Long polling is limited in speed and retention time; the API recommends webhooks in production.
      *
@@ -265,15 +306,7 @@ public class MaxBot private constructor(
      */
     public suspend fun startPolling(): Unit = coroutineScope {
         checkNoWebhook()
-        val queues = List(config.parallelism) { Channel<Delivery>(config.queueCapacity) }
-        for (queue in queues) {
-            launch(CoroutineName("max-bot-worker")) {
-                for (delivery in queue) {
-                    processUpdate(delivery.update)
-                    delivery.done?.complete(Unit)
-                }
-            }
-        }
+        val queues = ChatQueues(this, config.parallelism, config.queueCapacity, ::processUpdate)
         val store = config.markerStore
         val pages = Channel<Page>(Channel.UNLIMITED)
         if (store != null) {
@@ -302,13 +335,10 @@ public class MaxBot private constructor(
             stopRequested = false
             // Workers finish the updates already received (the server considers them delivered),
             // then this scope completes.
-            queues.forEach { it.close() }
+            queues.close()
             pages.close()
         }
     }
-
-    /** An update on its way to a worker; [done] completes when it is handled, if the marker is kept. */
-    private class Delivery(val update: Update, val done: CompletableDeferred<Unit>?)
 
     /** A received page: [marker] may be saved once all of [done] complete. */
     private class Page(val marker: Long, val done: List<CompletableDeferred<Unit>>)
@@ -364,7 +394,9 @@ public class MaxBot private constructor(
      * Returns a handler that turns webhook request bodies into dispatched updates.
      *
      * @param secret the secret passed to [setWebhook]; requests with a different
-     *   `X-Max-Bot-Api-Secret` header are rejected. `null` disables the check.
+     *   `X-Max-Bot-Api-Secret` header are rejected. `null` disables the check, so that anyone who knows
+     *   the URL can send the bot forged updates, e.g. from another user; a warning is logged then. Without
+     *   a secret of your own, use [WebhookHandler.secretFor] here and in [setWebhook].
      */
     @JvmOverloads
     public fun webhookHandler(secret: String? = null): WebhookHandler = WebhookHandler(this, secret)
@@ -492,9 +524,15 @@ public class MaxBot private constructor(
         }
     }
 
-    internal fun launchProcessing(update: Update): Job {
+    /** Queues of updates that webhook requests leave to the background, see [WebhookHandler.handleAsync]. */
+    private val webhookQueues by lazy { ChatQueues(scope, config.parallelism, config.queueCapacity, ::processUpdate) }
+
+    /** Queues [update] to be handled in the background, in order with the other updates of its chat. */
+    internal fun launchProcessing(update: Update) {
         check(scope.isActive) { "The bot is closed" }
-        return scope.launch { processUpdate(update) }
+        check(webhookQueues.trySend(update)) {
+            "Too many updates are waiting (${config.queueCapacity} in chat ${ChatQueues.keyOf(update)}); try again later"
+        }
     }
 
     /**
@@ -519,7 +557,7 @@ public class MaxBot private constructor(
         }
     }
 
-    private suspend fun pollLoop(queues: List<SendChannel<Delivery>>, pages: SendChannel<Page>?, initialMarker: Long?) {
+    private suspend fun pollLoop(queues: ChatQueues, pages: SendChannel<Page>?, initialMarker: Long?) {
         val types = requestedUpdateTypes()
         var marker: Long? = initialMarker
         var backoff = 0L
@@ -531,8 +569,9 @@ public class MaxBot private constructor(
                 backoff = 0
                 val done = ArrayList<CompletableDeferred<Unit>>(page.updates.size)
                 for (update in page.updates) {
-                    val delivery = Delivery(update, pages?.let { CompletableDeferred<Unit>().also(done::add) })
-                    queues[shardOf(update, queues.size)].send(delivery)
+                    if (!queues.send(update, pages?.let { CompletableDeferred<Unit>().also(done::add) })) {
+                        reportError(QueueOverflowException(update, config.queueCapacity), update)
+                    }
                 }
                 page.marker?.let {
                     marker = it
@@ -571,11 +610,6 @@ public class MaxBot private constructor(
 
     private fun nextBackoff(current: Long): Long =
         min(if (current == 0L) 1_000 else current * 2, config.maxErrorBackoff.toMillis())
-
-    private fun shardOf(update: Update, shards: Int): Int {
-        val key = update.chatId ?: update.user?.userId ?: 0L
-        return Math.floorMod(key, shards.toLong()).toInt()
-    }
 
     private companion object {
         val log: System.Logger = System.getLogger("ru.securitytrip.maxapi.bot")

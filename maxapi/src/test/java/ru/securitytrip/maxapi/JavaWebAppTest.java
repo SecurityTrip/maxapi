@@ -50,9 +50,22 @@ class JavaWebAppTest {
     @Test
     void phoneFromJava() throws Exception {
         String hash = HexFormat.of().formatHex(hmac(TOKEN.getBytes(StandardCharsets.UTF_8), "authDate=1000\nphone=79990001122\nuserId=7"));
-        assertTrue(WebAppPhone.verify("+79990001122", "1000", 7, hash, TOKEN));
-        assertTrue(new WebAppPhone("79990001122", "1000", hash).verify(7, TOKEN));
-        assertFalse(WebAppPhone.verify("+79990001122", "1000", 8, hash, TOKEN));
+        // An authDate of 1000 is decades old: by default it is too old.
+        assertFalse(WebAppPhone.verify("+79990001122", "1000", 7, hash, TOKEN));
+        assertFalse(new WebAppPhone("79990001122", "1000", hash).verify(7, TOKEN));
+        assertTrue(WebAppPhone.verify("+79990001122", "1000", 7, hash, TOKEN, null));
+        assertTrue(WebAppPhone.verify("+79990001122", "1000", 7, hash, TOKEN, Duration.ofMinutes(5), Instant.ofEpochSecond(1060)));
+        assertTrue(new WebAppPhone("79990001122", "1000", hash).verify(7, TOKEN, null));
+        assertTrue(new WebAppPhone("79990001122", "1000", hash).verify(7, TOKEN, Duration.ofMinutes(5), Instant.ofEpochSecond(1060)));
+        assertFalse(WebAppPhone.verify("+79990001122", "1000", 8, hash, TOKEN, null));
+    }
+
+    @Test
+    void secretsAndContactsFromJava() throws Exception {
+        assertEquals(64, ru.securitytrip.maxapi.bot.WebhookHandler.secretFor(TOKEN).length());
+        ru.securitytrip.maxapi.model.message.Message message = new ru.securitytrip.maxapi.model.message.Message(
+                null, new ru.securitytrip.maxapi.model.message.Recipient(), 1L, null, null, null, null);
+        assertEquals(null, ru.securitytrip.maxapi.bot.VerifiedContact.of(message, TOKEN));
     }
 
     @Test

@@ -51,7 +51,7 @@ class BotBehaviorTest {
         client = server.client()
         bot = MaxBot(
             client,
-            BotConfig(minPollInterval = Duration.ofMillis(5), pollTimeoutSeconds = 0, maxErrorBackoff = Duration.ofMillis(20)),
+            BotConfig(minPollInterval = Duration.ofMillis(5), pollTimeoutSeconds = 0, maxErrorBackoff = Duration.ofMillis(20), autoAnswerCallbacks = false),
         )
         bot.onError { error, update -> errors += error to update }
     }

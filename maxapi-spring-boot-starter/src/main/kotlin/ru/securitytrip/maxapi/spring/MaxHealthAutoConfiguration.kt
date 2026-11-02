@@ -4,7 +4,6 @@ import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.health.autoconfigure.contributor.ConditionalOnEnabledHealthIndicator
 import org.springframework.boot.health.contributor.CompositeHealthContributor
 import org.springframework.boot.health.contributor.HealthContributor
@@ -27,7 +26,7 @@ import javax.sql.DataSource
  */
 @AutoConfiguration(after = [MaxBotAutoConfiguration::class, MaxStorageAutoConfiguration::class])
 @ConditionalOnClass(name = ["org.springframework.boot.health.contributor.HealthIndicator"])
-@ConditionalOnProperty(prefix = "max.bot", name = ["token"])
+@ConditionalOnMaxBotToken
 @ConditionalOnEnabledHealthIndicator("max")
 public class MaxHealthAutoConfiguration {
     @Bean

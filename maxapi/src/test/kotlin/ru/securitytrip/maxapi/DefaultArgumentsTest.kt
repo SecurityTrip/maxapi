@@ -26,7 +26,7 @@ class DefaultArgumentsTest {
 
     @BeforeEach
     fun setUp() {
-        server = MockWebServer()
+        server = failFastServer()
         server.start()
         client = server.client()
     }

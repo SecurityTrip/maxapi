@@ -67,7 +67,7 @@ class ReliabilityTest {
 
     @BeforeTest
     fun setUp() {
-        server = MockWebServer()
+        server = failFastServer()
         server.start()
     }
 
@@ -259,8 +259,8 @@ class ReliabilityTest {
         assertEquals("message_created:mid.x", UpdateDeduplicator.keyOf(message("x")))
         assertEquals("message_created:7", UpdateDeduplicator.keyOf(noBody))
         assertEquals("message_callback:cb", UpdateDeduplicator.keyOf(callback))
-        assertEquals("bot_started:9:4:5", UpdateDeduplicator.keyOf(started))
-        assertEquals("brand_new:2:null:null", UpdateDeduplicator.keyOf(unknown))
+        assertTrue(UpdateDeduplicator.keyOf(started).matches(Regex("bot_started:9:[0-9a-f]{32}")))
+        assertTrue(UpdateDeduplicator.keyOf(unknown).matches(Regex("brand_new:2:[0-9a-f]{32}")))
 
         val dedup = InMemoryUpdateDeduplicator(capacity = 2)
         assertTrue(dedup.isNew(message("1")))

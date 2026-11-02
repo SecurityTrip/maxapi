@@ -14,6 +14,17 @@ public class HandlerTimeoutException(public val update: Update, public val timeo
     MaxException("Handler of ${update.updateType} did not finish in $timeout")
 
 /**
+ * An update received by long polling was dropped: its chat already had [capacity] updates waiting
+ * ([BotConfig.queueCapacity]), e.g. because a handler of the chat is stuck or a user floods the bot.
+ * Passed to `onError`; other chats are not affected.
+ *
+ * @property update the dropped update.
+ * @property capacity the limit.
+ */
+public class QueueOverflowException(public val update: Update, public val capacity: Int) :
+    MaxException("Dropped ${update.updateType}: its chat already has $capacity updates waiting")
+
+/**
  * Update handler for Java, registered with the `MaxBot.on*` methods.
  *
  * Handlers run on `Dispatchers.IO`, so they may block: call the `*Blocking` methods of the context,

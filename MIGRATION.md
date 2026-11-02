@@ -75,3 +75,65 @@ New and off by default: `RateLimit`, `MarkerStore`, `UpdateDeduplicator`, `handl
 ## From 0.5 to 1.0
 
 No API changes. 1.0 adds this guide, the compatibility policy and module documentation.
+
+## From 1.4 to 1.5
+
+1.5 keeps source and binary compatibility, but changes several defaults that made a bot easy to
+break or to attack. Check each one; the old behaviour is a setting away.
+
+**Dependencies.** The libraries are built for the versions the oldest supported Spring Boot (4.0)
+manages: Kotlin 2.2 API, kotlinx.coroutines 1.10.2, Jackson 2.20, Micrometer 1.16, OpenTelemetry 1.55,
+Lettuce 6.8. Applications get these or newer versions, never older ones, so the `NoSuchMethodError` of
+1.4.0 in Spring Boot applications (`runBlockingK`) is gone. The starter checks on startup that the
+application does not have older Kotlin, coroutines or Jackson than `maxapi` needs.
+
+**Handlers of a chat no longer hold up other chats.** Every chat has its own queue, and up to
+`BotConfig.parallelism` handlers run at once, now 64 instead of 4 workers. When a chat has
+`queueCapacity` updates waiting, long polling drops its further updates and reports a
+`QueueOverflowException` to `onError`, instead of stopping for every chat. Webhook updates handled in
+the background (`handleAsync`, `max.bot.webhook.async=true`) go through the same queues, so they keep
+the order of a chat; a full queue answers 503 and Max redelivers.
+
+**`handlerTimeout` is one minute by default.** Handlers that legitimately run longer need
+`BotConfig(handlerTimeout = ...)`, or `null` for no limit (`max.bot.handler-timeout=0` in Spring Boot).
+
+**Button presses are answered.** A press that the handlers left unanswered (no handler matched, the
+handler failed or did not call `answer`) gets an empty answer after the handler, so the user's client
+stops showing it as loading. Turn it off with `BotConfig(autoAnswerCallbacks = false)` or
+`max.bot.auto-answer-callbacks=false`. In `BotTester`, such presses now record an empty answer too.
+
+**`WebAppPhone.verify` checks the age.** `authDate` may be at most one hour old by default, as for
+`initData`. Pass `maxAge = null` to check only the signature.
+
+**`InMemoryStateStorage` forgets old states.** A state not changed for a day expires, and at most
+100 000 states are kept. `InMemoryStateStorage(maxSize, ttl = null)` keeps them as before.
+
+**`MaxClientConfig.baseUrl` must use https,** except for the local host (`localhost`, loopback
+addresses, `*.localhost`, `*.test`).
+
+**The Russian Trusted Root CA is trusted for `max.ru` hosts only.** Upload hosts and other servers are
+checked against the JVM's own trust store.
+
+**Deduplication keys of other updates changed** (not of messages and button presses): they now hash
+all fields. Right after the upgrade, a redelivery of such an update seen before it is not recognized.
+
+Spring Boot starter:
+
+- **The webhook always has a secret.** Without `max.bot.webhook.secret`, a secret derived from the
+  token is used (`WebhookHandler.secretFor(token)`); with `max.bot.webhook.url` the bot subscribes with
+  it. If you subscribe yourself without a secret, subscribe again with that one or set your own.
+  Bodies over `max.bot.webhook.max-body-size` (1 MB) get 413, and the secret is checked before the
+  body is read.
+- **`max.bot.rate-limit` is `max` by default.** Set `none` for the old behaviour.
+- **Startup checks the token** with `getMyInfo`, unless `max.bot.mode=none` without `sync-commands`: a
+  rejected token fails the start with an explanation. When the API cannot be reached, the application
+  still starts and the menu sync and the webhook subscription are retried in the background.
+- **Stopping waits up to `spring.lifecycle.timeout-per-shutdown-phase`** for the updates already
+  received; then closing the bot cancels the handlers.
+- **Without a deduplicator bean, an `InMemoryUpdateDeduplicator` is used.**
+- **`max.bot.storage=jdbc|redis` without its module fails the start** instead of keeping the state in memory.
+- **A blank `max.bot.token` turns the bot off** with a warning instead of failing the context.
+- New settings: `max.bot.parallelism`, `queue-capacity`, `handler-timeout`, `poll-timeout`,
+  `auto-answer-callbacks`, `shutdown-timeout`, `proxy`, `connect-timeout`, `read-timeout`,
+  `webhook.max-body-size`, and `BotConfigCustomizer` beans. `@MaxBotTest` starts a test context without
+  a real token and without calling the API.

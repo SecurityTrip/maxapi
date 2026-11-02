@@ -1,6 +1,7 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 // A published Kotlin library module: explicit API, Java 17, tests on JUnit 5, full coverage,
 // Dokka HTML in the javadoc jar, LICENSE in every jar.
@@ -15,6 +16,14 @@ plugins {
 kotlin {
     explicitApi()
     jvmToolchain(17)
+    // Built for the Kotlin library of the oldest supported Spring Boot (see gradle/libs.versions.toml):
+    // the dependency management of Spring Boot applications replaces a newer kotlin-stdlib with the
+    // version of its BOM, and code compiled for a newer API would fail there with NoSuchMethodError.
+    coreLibrariesVersion = versionCatalogs.named("libs").findVersion("kotlin-stdlib").get().requiredVersion
+    compilerOptions {
+        apiVersion.set(KotlinVersion.KOTLIN_2_2)
+        languageVersion.set(KotlinVersion.KOTLIN_2_2)
+    }
 }
 
 tasks.withType<JavaCompile>().configureEach {

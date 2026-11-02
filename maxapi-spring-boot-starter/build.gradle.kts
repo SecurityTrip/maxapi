@@ -11,6 +11,8 @@ dependencies {
     compileOnly(libs.jakarta.servlet)
     // Reactive web applications get the webhook endpoint with Spring WebFlux.
     compileOnly(libs.spring.webflux)
+    // @MaxBotTest is used in the tests of applications, which have spring-test.
+    compileOnly(libs.spring.test)
     // The health indicator is registered when the application has Spring Boot Actuator.
     compileOnly(libs.spring.boot.health)
     // Metrics are recorded when the application adds maxapi-micrometer.
@@ -22,7 +24,9 @@ dependencies {
     compileOnly(project(":maxapi-opentelemetry"))
 
     testImplementation(kotlin("test"))
-    testImplementation(platform(libs.spring.boot.dependencies))
+    // Tests run on exactly the versions the oldest supported Spring Boot manages, as its dependency
+    // management plugin would give an application: a dependency the library needs newer fails them.
+    testImplementation(enforcedPlatform(libs.spring.boot.dependencies))
     testImplementation(libs.spring.boot.test)
     testImplementation(libs.spring.test)
     testImplementation(libs.spring.webmvc)

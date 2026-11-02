@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import ru.securitytrip.maxapi.opentelemetry.MaxTracing
@@ -26,7 +25,7 @@ import ru.securitytrip.maxapi.opentelemetry.MaxTracing
     ],
 )
 @ConditionalOnClass(name = ["io.opentelemetry.api.OpenTelemetry", "ru.securitytrip.maxapi.opentelemetry.MaxTracing"])
-@ConditionalOnProperty(prefix = "max.bot", name = ["token"])
+@ConditionalOnMaxBotToken
 @EnableConfigurationProperties(MaxBotProperties::class)
 public class MaxTracingAutoConfiguration {
     @Bean

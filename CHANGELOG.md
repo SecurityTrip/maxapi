@@ -12,6 +12,80 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+Fixes from a review of 1.4.0 in a Spring Boot application: dependency versions that broke on startup,
+a stuck handler that stopped the whole bot, a webhook that accepted forged updates, and safer defaults.
+See [MIGRATION.md](MIGRATION.md#from-14-to-15) for the changed defaults.
+
+### Fixed
+
+- `NoSuchMethodError` (`runBlockingK`) on startup in Spring Boot applications: the dependency
+  management of Spring Boot replaced kotlinx.coroutines 1.11, Kotlin 2.4 and Jackson 2.22 with the older
+  versions of its BOM. The libraries are now built for the Kotlin 2.2 API and the versions Spring Boot
+  4.0 manages (kotlinx.coroutines 1.10.2, Jackson 2.20.1, Micrometer 1.16.0, OpenTelemetry 1.55.0,
+  Lettuce 6.8.1), the starter is compiled and tested against Spring Boot 4.0.0 with its BOM enforced,
+  and the integration tests run on the newest Spring Boot with its BOM enforced.
+- A slow or stuck handler no longer stops the bot: every chat has its own queue, at most
+  `BotConfig.parallelism` handlers run at once, and long polling drops the updates of a chat whose queue
+  is full (`QueueOverflowException` goes to `onError`) instead of waiting for it. Before, a stuck handler
+  held up every chat with the same `chatId mod parallelism` and then polling altogether.
+- `WebhookHandler.handleAsync` (and `max.bot.webhook.async`) keeps the order of updates within a chat
+  and limits the handlers running at once, through the same queues; a full queue throws
+  `IllegalStateException` (the starter answers 503, so that Max redelivers).
+- A failed `getMyInfo` for a command with `@botname` no longer loses the update: the error is reported
+  and the update is dispatched.
+- Deduplication keys of updates other than messages and button presses hash all their fields, so two
+  events of the same type, chat and user in the same millisecond are not taken for one.
+- Spring Boot starter: the webhook endpoint checks the secret before it reads the body, and reads at most
+  `max.bot.webhook.max-body-size` (1 MB; larger bodies get 413).
+- Spring Boot starter: stopping the context no longer hangs on a stuck handler: the lifecycle stops
+  asynchronously within `spring.lifecycle.timeout-per-shutdown-phase`, and `stop()` waits at most
+  `max.bot.shutdown-timeout`.
+- Spring Boot starter: `max.bot.storage=jdbc|redis` without `maxapi-jdbc` or `maxapi-redis` fails the
+  start with a hint instead of keeping the state in memory without a word.
+
+### Added
+
+- `BotConfig.autoAnswerCallbacks` (on by default; `max.bot.auto-answer-callbacks`): a button press that
+  the handlers left unanswered gets an empty answer, so the client of the user stops showing it as loading.
+- `MessageContext.sharedContact()` and `VerifiedContact.of(message, botToken)`: the contact the sender
+  shared about themselves with a request-contact button, with the signature checked with the token of
+  the client, the contact checked to be the sender's, and the phone number normalized (`+79991234567`).
+  `Filters.hasVerifiedContact()`, `ContactAttachmentPayload.phoneNumber()` and `fullName()`.
+- `Html.escape`, `Markdown.escape` and `HtmlBuilder` (`MessageBuilder.html { bold(userText) }`), which
+  escapes the text passed to it, so that users cannot add links or mentions to messages of the bot.
+- `MaxClientConfig.Builder.httpClient(OkHttpClient.Builder)`: an `OkHttpClient` built from your builder
+  (e.g. with a proxy) that still trusts the Russian Trusted Root CA and is closed with the client.
+- `WebhookHandler.secretFor(botToken)`: a webhook secret derived from the token.
+- `InMemoryStateStorage(maxSize, ttl)`.
+- `WebAppPhone.verify(userId, botToken, maxAge, now)`.
+- Spring Boot starter: `max.bot.parallelism`, `queue-capacity`, `handler-timeout`, `poll-timeout`,
+  `auto-answer-callbacks`, `shutdown-timeout`, `proxy`, `connect-timeout`, `read-timeout`,
+  `webhook.max-body-size`; `BotConfigCustomizer` beans adjust the bot settings without replacing the
+  `BotConfig` bean; `@MaxBotTest` starts a test context without a real token and without calling the API.
+- Spring Boot starter: failure analyzers explain a rejected token, a missing storage module and
+  dependencies older than `maxapi` needs, which the starter checks on startup.
+
+### Changed
+
+- `BotConfig.parallelism` is the number of handlers running at once, 64 by default (was 4 workers);
+  `queueCapacity` is the queue of one chat.
+- `BotConfig.handlerTimeout` is one minute by default (was no limit).
+- `WebAppPhone.verify` rejects an `authDate` older than one hour by default; `maxAge = null` checks only
+  the signature.
+- `InMemoryStateStorage` drops a state not changed for a day and keeps at most 100 000 states.
+- `MaxClientConfig.baseUrl` must use https, except for the local host.
+- `MaxTls.trustManager` trusts the Russian Trusted Root CA for `max.ru` and its subdomains only.
+- `MaxBot.webhookHandler(null)` logs a warning: such a handler accepts updates from anyone.
+- Spring Boot starter: without `max.bot.webhook.secret`, the webhook uses `WebhookHandler.secretFor(token)`
+  and subscribes with it; requests without the secret get 401.
+- Spring Boot starter: `max.bot.rate-limit` is `max` by default (was `none`).
+- Spring Boot starter: on startup the lifecycle checks the token with `getMyInfo` (filling
+  `MaxBot.username`), unless `max.bot.mode=none` without `sync-commands`; a rejected token fails the
+  start, an unreachable API is retried in the background instead of failing it.
+- Spring Boot starter: without an `UpdateDeduplicator` or `SuspendUpdateDeduplicator` bean, the bot uses
+  an `InMemoryUpdateDeduplicator`.
+- Spring Boot starter: a blank `max.bot.token` turns the bot off with a warning instead of failing the context.
+
 ## [1.4.0] - 2026-10-30
 
 The current rules of Max, mini app backends, tools for writing bots, and production operations:

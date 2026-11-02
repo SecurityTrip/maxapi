@@ -6,7 +6,9 @@ plugins {
 }
 
 dependencies {
-    testImplementation(platform(libs.spring.boot.dependencies))
+    // Enforced, as the dependency management plugin of Spring Boot applications does: libraries get
+    // exactly the versions of the BOM, older ones included, so a library that needs a newer version fails here.
+    testImplementation(enforcedPlatform(libs.spring.boot.dependencies.latest))
     testImplementation(project(":maxapi-spring-boot-starter"))
     testImplementation(project(":maxapi-jdbc"))
     testImplementation(project(":maxapi-redis"))
@@ -23,6 +25,11 @@ dependencies {
 
 kotlin {
     jvmToolchain(17)
+    // The Kotlin library of Spring Boot comes from the BOM.
+    compilerOptions {
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
+    }
 }
 
 tasks.test {
