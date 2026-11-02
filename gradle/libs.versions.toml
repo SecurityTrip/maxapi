@@ -1,28 +1,33 @@
 [versions]
-# The compiler. Library modules are built for the Kotlin API and the libraries that the oldest supported
-# Spring Boot (4.0) manages: applications on its BOM get these or newer versions, never older ones,
+# The compiler. Library modules are built for the Kotlin library and the libraries that the oldest supported
+# Spring Boot (3.4) manages: applications on its BOM get these or newer versions, never older ones,
 # so a method the library calls is always there.
 kotlin = "2.4.21"
-kotlin-stdlib = "2.2.21"
+kotlin-stdlib = "1.9.25"
 okhttp = "5.5.0"
-jackson = "2.20.1"
-coroutines = "1.10.2"
+jackson = "2.18.1"
+coroutines = "1.8.1"
 dokka = "2.2.0"
 kover = "0.9.11"
 maven-publish = "0.37.0"
 binary-compatibility = "0.18.2"
-# The oldest supported Spring Boot: the starter is compiled and tested against it.
+# The oldest supported Spring Boot of each major version. The starter is compiled against 3.4 (its health
+# support for Spring Boot 4 against 4.0) and tested against both, with their BOMs enforced.
+spring-boot3 = "3.4.0"
 spring-boot = "4.0.0"
-# The newest Spring Boot, for the integration tests and the examples.
+# The newest Spring Boot of each major version, for the integration tests and the examples.
+spring-boot3-latest = "3.5.16"
 spring-boot-latest = "4.1.2"
 ktor = "3.6.0"
 slf4j = "2.0.19"
-micrometer = "1.16.0"
-lettuce = "6.8.1.RELEASE"
+micrometer = "1.14.1"
+lettuce = "6.4.1.RELEASE"
 h2 = "2.4.240"
 postgresql = "42.7.13"
 testcontainers = "2.0.5"
-opentelemetry = "1.55.0"
+# For the tests: kotlin-test of the old Kotlin library the modules are built for would bring an old JUnit.
+junit = "5.13.4"
+opentelemetry = "1.43.0"
 
 [libraries]
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
@@ -34,7 +39,7 @@ coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", ve
 coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "coroutines" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 
-spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
+spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot3" }
 spring-boot-test = { module = "org.springframework.boot:spring-boot-test", version.ref = "spring-boot" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot-latest" }
 # Jackson 3 Kotlin support for Spring MVC applications; the version comes from the Spring Boot BOM.
@@ -46,6 +51,11 @@ spring-webmvc = { module = "org.springframework:spring-webmvc" }
 spring-test = { module = "org.springframework:spring-test" }
 spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
 spring-boot-dependencies-latest = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot-latest" }
+spring-boot3-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot3" }
+spring-boot3-dependencies-latest = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot3-latest" }
+# The health API of Spring Boot 3; versions from the Spring Boot BOM.
+spring-boot-actuator = { module = "org.springframework.boot:spring-boot-actuator" }
+spring-boot-actuator-autoconfigure = { module = "org.springframework.boot:spring-boot-actuator-autoconfigure" }
 jakarta-servlet = { module = "jakarta.servlet:jakarta.servlet-api" }
 spring-webflux = { module = "org.springframework:spring-webflux" }
 # Actuator health API of Spring Boot 4; the version comes from the Spring Boot BOM.

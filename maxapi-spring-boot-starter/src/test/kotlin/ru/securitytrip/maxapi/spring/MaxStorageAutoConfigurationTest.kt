@@ -21,9 +21,6 @@ import ru.securitytrip.maxapi.bot.StateStorage
 import ru.securitytrip.maxapi.bot.SuspendUpdateDeduplicator
 import ru.securitytrip.maxapi.bot.UpdateDeduplicator
 import ru.securitytrip.maxapi.bot.InMemoryUpdateDeduplicator
-import org.springframework.boot.health.contributor.CompositeHealthContributor
-import org.springframework.boot.health.contributor.HealthIndicator
-import org.springframework.boot.health.contributor.Status
 import ru.securitytrip.maxapi.jdbc.JdbcBroadcastStore
 import ru.securitytrip.maxapi.jdbc.JdbcChatStore
 import ru.securitytrip.maxapi.jdbc.JdbcMarkerStore
@@ -157,9 +154,8 @@ class MaxStorageAutoConfigurationTest {
         runner.withConfiguration(AutoConfigurations.of(MaxHealthAutoConfiguration::class.java))
             .withPropertyValues("max.bot.storage=redis", "max.bot.redis.url=$redisUrl")
             .run { context ->
-                val contributor = context.getBean("maxHealthContributor", CompositeHealthContributor::class.java)
-                val health = (contributor.getContributor("storage") as HealthIndicator).health(true)!!
-                assertEquals(Status.UP, health.status)
+                val health = context.healthPart("storage")!!
+                assertEquals("UP", health.status)
                 assertEquals("redis", health.details["storage"])
                 assertEquals("PONG", health.details["ping"])
             }

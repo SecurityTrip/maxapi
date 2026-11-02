@@ -27,11 +27,14 @@ private fun handle(handler: WebhookHandler, request: ServerRequest, async: Boole
     val secret = request.headers().firstHeader(WebhookHandler.SECRET_HEADER)
     if (!handler.verifySecret(secret)) return HttpStatus.UNAUTHORIZED
     val servlet = request.servletRequest()
-    if (servlet.contentLengthLong > limit) return HttpStatus.CONTENT_TOO_LARGE
+    if (servlet.contentLengthLong > limit) return CONTENT_TOO_LARGE
     val body = servlet.inputStream.readNBytes(limit + 1)
-    if (body.size > limit) return HttpStatus.CONTENT_TOO_LARGE
+    if (body.size > limit) return CONTENT_TOO_LARGE
     return statusOf { if (async) handler.handleAsync(body, secret) else handler.handleBlocking(body, secret) }
 }
+
+/** 413: `CONTENT_TOO_LARGE` in Spring Framework 7, `PAYLOAD_TOO_LARGE` in 6. */
+internal val CONTENT_TOO_LARGE: HttpStatus = HttpStatus.valueOf(413)
 
 /** [MaxBotProperties.Webhook.maxBodySize] in bytes. */
 internal fun bodyLimit(webhook: MaxBotProperties.Webhook): Int {

@@ -36,7 +36,7 @@ internal fun reactiveWebhookEndpoint(bot: MaxBot, webhook: MaxBotProperties.Webh
 private fun handle(handler: WebhookHandler, request: ServerRequest, async: Boolean, limit: Int): Mono<HttpStatus> {
     val secret = request.headers().firstHeader(WebhookHandler.SECRET_HEADER)
     if (!handler.verifySecret(secret)) return Mono.just(HttpStatus.UNAUTHORIZED)
-    if (request.headers().contentLength().orElse(0) > limit) return Mono.just(HttpStatus.CONTENT_TOO_LARGE)
+    if (request.headers().contentLength().orElse(0) > limit) return Mono.just(CONTENT_TOO_LARGE)
     return DataBufferUtils.join(request.body(BodyExtractors.toDataBuffers()), limit)
         .map { buffer -> ByteArray(buffer.readableByteCount()).also { buffer.read(it); DataBufferUtils.release(buffer) } }
         .defaultIfEmpty(ByteArray(0))
@@ -47,7 +47,7 @@ private fun handle(handler: WebhookHandler, request: ServerRequest, async: Boole
                 Mono.fromFuture(reactiveScope.future { statusOf { handler.handle(body, secret) } }, true)
             }
         }
-        .onErrorReturn(DataBufferLimitException::class.java, HttpStatus.CONTENT_TOO_LARGE)
+        .onErrorReturn(DataBufferLimitException::class.java, CONTENT_TOO_LARGE)
 }
 
 /** Where reactive endpoints run handlers; a failed update is reported by the bot and never cancels the others. */

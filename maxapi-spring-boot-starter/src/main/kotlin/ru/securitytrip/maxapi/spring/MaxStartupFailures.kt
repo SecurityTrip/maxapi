@@ -1,6 +1,7 @@
 package ru.securitytrip.maxapi.spring
 
 import org.apache.commons.logging.LogFactory
+import org.springframework.boot.SpringBootVersion
 import org.springframework.boot.autoconfigure.condition.ConditionOutcome
 import org.springframework.boot.autoconfigure.condition.SpringBootCondition
 import org.springframework.boot.diagnostics.AbstractFailureAnalyzer
@@ -66,11 +67,11 @@ internal object DependencyVersions {
         )
     }
 
-    /** The version properties of the Spring Boot BOM. */
+    /** The version properties of the Spring Boot BOM; the one of Jackson 2 is `jackson-bom.version` in Spring Boot 3. */
     private val PROPERTIES = mapOf(
         "kotlin-stdlib" to "kotlin.version",
         "kotlinx-coroutines" to "kotlin-coroutines.version",
-        "jackson" to "jackson-2-bom.version",
+        "jackson" to if (SpringBootVersion.getVersion().startsWith("3.")) "jackson-bom.version" else "jackson-2-bom.version",
     )
 
     /** Compares the numeric parts of two versions, like `2.20.1` and `2.21`. */

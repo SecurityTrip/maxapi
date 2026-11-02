@@ -355,6 +355,11 @@ class StartupAndSafetyTest {
         }
         assertTrue(error.message!!.contains("kotlinx-coroutines 1.10.2 (needs 1.11.0 or newer)"), error.message)
         assertTrue(error.action.contains("extra[\"kotlin-coroutines.version\"] = \"1.11.0\""), error.action)
+        val jackson = assertFailsWith<MaxStartupException> {
+            DependencyVersions.check(mapOf("jackson" to "9.0.0"), mapOf("jackson" to "2.18.1"))
+        }
+        val property = if (org.springframework.boot.SpringBootVersion.getVersion().startsWith("3.")) "jackson-bom.version" else "jackson-2-bom.version"
+        assertTrue(jackson.action.contains("extra[\"$property\"]"), jackson.action)
         assertEquals(0, DependencyVersions.compare("2.20", "2.20.0"))
         assertTrue(DependencyVersions.compare("2.20.1", "2.21") < 0)
         assertTrue(DependencyVersions.compare("1.10.2-RC", "1.10.1") > 0)

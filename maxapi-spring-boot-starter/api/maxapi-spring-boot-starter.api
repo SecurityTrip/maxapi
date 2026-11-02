@@ -180,7 +180,6 @@ public abstract interface class ru/securitytrip/maxapi/spring/MaxClientConfigCus
 
 public final class ru/securitytrip/maxapi/spring/MaxHealthAutoConfiguration {
 	public fun <init> ()V
-	public final fun maxHealthContributor (Lru/securitytrip/maxapi/bot/MaxBot;Lru/securitytrip/maxapi/spring/MaxBotProperties;Lorg/springframework/context/ApplicationContext;)Lorg/springframework/boot/health/contributor/CompositeHealthContributor;
 }
 
 public final class ru/securitytrip/maxapi/spring/MaxMetricsAutoConfiguration {

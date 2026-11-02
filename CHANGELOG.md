@@ -20,10 +20,11 @@ See [MIGRATION.md](MIGRATION.md#from-14-to-15) for the changed defaults.
 
 - `NoSuchMethodError` (`runBlockingK`) on startup in Spring Boot applications: the dependency
   management of Spring Boot replaced kotlinx.coroutines 1.11, Kotlin 2.4 and Jackson 2.22 with the older
-  versions of its BOM. The libraries are now built for the Kotlin 2.2 API and the versions Spring Boot
-  4.0 manages (kotlinx.coroutines 1.10.2, Jackson 2.20.1, Micrometer 1.16.0, OpenTelemetry 1.55.0,
-  Lettuce 6.8.1), the starter is compiled and tested against Spring Boot 4.0.0 with its BOM enforced,
-  and the integration tests run on the newest Spring Boot with its BOM enforced.
+  versions of its BOM. The libraries are now built for the versions Spring Boot 3.4 manages (the Kotlin
+  1.9.25 library, compiled for the 2.0 API, kotlinx.coroutines 1.8.1, Jackson 2.18.1, Micrometer 1.14.1,
+  OpenTelemetry 1.43.0, Lettuce 6.4.1) and compiled against exactly that kotlin-stdlib, even where a
+  dependency such as OkHttp asks for a newer one. The starter is tested on Spring Boot 3.4.0 and 4.0.0
+  and the integration tests on 3.5 and 4.1, each with its BOM enforced.
 - A slow or stuck handler no longer stops the bot: every chat has its own queue, at most
   `BotConfig.parallelism` handlers run at once, and long polling drops the updates of a chat whose queue
   is full (`QueueOverflowException` goes to `onError`) instead of waiting for it; with a `MarkerStore`
@@ -49,6 +50,9 @@ See [MIGRATION.md](MIGRATION.md#from-14-to-15) for the changed defaults.
 
 ### Added
 
+- The Spring Boot starter works with Spring Boot 3.4 and newer as well as with Spring Boot 4, from the
+  same jar: it is compiled against Spring Boot 3.4, and the health contributor `max` is registered with
+  the health API of Spring Boot 3 or 4, whichever the application has.
 - `BotConfig.autoAnswerCallbacks` (on by default; `max.bot.auto-answer-callbacks`): a button press that
   the handlers left unanswered gets an empty answer, so the client of the user stops showing it as loading.
 - `MessageContext.sharedContact()` and `VerifiedContact.of(message, botToken)`: the contact the sender
@@ -72,6 +76,9 @@ See [MIGRATION.md](MIGRATION.md#from-14-to-15) for the changed defaults.
 
 ### Changed
 
+- Spring Boot starter: `MaxHealthAutoConfiguration` imports the health configuration for the version of
+  Spring Boot; its method `maxHealthContributor`, which returned a type of Spring Boot 4, is gone. The
+  bean `maxHealthContributor` is the same.
 - `BotConfig.parallelism` is the number of handlers running at once, 64 by default (was 4 workers);
   `queueCapacity` is the queue of one chat.
 - `BotConfig.handlerTimeout` is one minute by default (was no limit).

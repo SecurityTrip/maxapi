@@ -6,10 +6,6 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import org.h2.jdbcx.JdbcDataSource
 import org.springframework.boot.autoconfigure.AutoConfigurations
-import org.springframework.boot.health.contributor.CompositeHealthContributor
-import org.springframework.boot.health.contributor.Health
-import org.springframework.boot.health.contributor.HealthIndicator
-import org.springframework.boot.health.contributor.Status
 import org.springframework.boot.test.context.FilteredClassLoader
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner
@@ -79,14 +75,9 @@ class MaxHealthTest {
 
     private fun props(vararg extra: String) = arrayOf("max.bot.token=t", "max.bot.base-url=${server.url("/")}", *extra)
 
-    private fun ApplicationContext.part(name: String): HealthIndicator {
-        val contributor = getBean("maxHealthContributor", CompositeHealthContributor::class.java)
-        return contributor.getContributor(name) as HealthIndicator
-    }
+    private fun ApplicationContext.part(name: String): HealthView = healthPart(name)!!
 
-    private fun ApplicationContext.bot(): Health = part("bot").check()
-
-    private fun HealthIndicator.check(): Health = health(true)!!
+    private fun ApplicationContext.bot(): HealthView = part("bot")
 
     private fun count(path: String) = paths.count { it == path }
 
@@ -97,17 +88,17 @@ class MaxHealthTest {
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { it.onMessage { } } })
             .run { context ->
                 val health = context.bot()
-                assertEquals(Status.UP, health.status)
+                assertEquals("UP", health.status)
                 assertEquals("polling", health.details["mode"])
                 assertEquals("running", health.details["polling"])
                 assertEquals("UP", health.details["api"])
                 assertEquals("test_bot", health.details["username"])
-                assertNull(context.getBean("maxHealthContributor", CompositeHealthContributor::class.java).getContributor("storage"))
+                assertNull(context.healthPart("storage"))
 
                 context.getBean(MaxBot::class.java).stop()
                 while (context.getBean(MaxBot::class.java).isPolling) Thread.sleep(10)
                 val stopped = context.bot()
-                assertEquals(Status.DOWN, stopped.status)
+                assertEquals("DOWN", stopped.status)
                 assertEquals("stopped", stopped.details["polling"])
             }
     }
@@ -126,7 +117,7 @@ class MaxHealthTest {
                 val bot = context.getBean(MaxBot::class.java)
                 while (bot.pollingFailure == null) Thread.sleep(10)
                 val health = context.bot()
-                assertEquals(Status.DOWN, health.status)
+                assertEquals("DOWN", health.status)
                 assertEquals("failed", health.details["polling"])
                 assertEquals("UnauthorizedException: HTTP 401 [verify.token]: Invalid access_token", health.details["pollingError"])
                 assertEquals("DOWN", health.details["api"])
@@ -137,7 +128,7 @@ class MaxHealthTest {
     @Test
     fun `the API is asked once per cache ttl`() {
         runner.withPropertyValues(*props("max.bot.mode=none")).run { context ->
-            repeat(3) { assertEquals(Status.UP, context.bot().status) }
+            repeat(3) { assertEquals("UP", context.bot().status) }
             assertEquals(1, count("/me"))
         }
         runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.health.cache-ttl=0")).run { context ->
@@ -154,14 +145,14 @@ class MaxHealthTest {
             ru.securitytrip.maxapi.client.MaxClientConfig.builder("t").baseUrl(server.url("/").toString())
                 .retryPolicy(ru.securitytrip.maxapi.client.RetryPolicy.NONE).build(),
         )).use { bot ->
-            val indicator = MaxBotHealthIndicator(bot, properties, false, now::get)
+            val check = BotHealthCheck(bot, properties, false, now::get)
             me = json("""{"code":"internal","message":"busy"}""", code = 500)
-            assertEquals(Status.DOWN, indicator.check().status)
+            assertFalse(check.check().up)
             me = json("""{"user_id":1,"first_name":"Bot"}""")
-            assertEquals(Status.DOWN, indicator.check().status, "the failure is reused within the ttl")
+            assertFalse(check.check().up, "the failure is reused within the ttl")
             now.set(Duration.ofSeconds(31).toNanos())
-            val health = indicator.check()
-            assertEquals(Status.UP, health.status)
+            val health = check.check()
+            assertTrue(health.up)
             assertEquals("", health.details["username"])
             assertEquals(2, count("/me"))
         }
@@ -172,7 +163,7 @@ class MaxHealthTest {
         me = json("""{"user_id":1,"first_name":"Bot"}""").newBuilder().headersDelay(2, java.util.concurrent.TimeUnit.SECONDS).build()
         runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.health.timeout=100ms")).run { context ->
             val health = context.bot()
-            assertEquals(Status.DOWN, health.status)
+            assertEquals("DOWN", health.status)
             assertTrue((health.details["apiError"] as String).startsWith("TimeoutCancellationException"), health.details.toString())
         }
     }
@@ -184,7 +175,7 @@ class MaxHealthTest {
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { it.onMessage { } } })
             .run { context ->
                 val health = context.bot()
-                assertEquals(Status.UP, health.status)
+                assertEquals("UP", health.status)
                 @Suppress("UNCHECKED_CAST")
                 val webhook = health.details["webhook"] as Map<String, Any>
                 assertEquals("/max/webhook", webhook["path"])
@@ -197,7 +188,7 @@ class MaxHealthTest {
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { it.onMessage { } } })
             .run { context ->
                 val health = context.bot()
-                assertEquals(Status.DOWN, health.status)
+                assertEquals("DOWN", health.status)
                 assertEquals(false, (health.details["webhook"] as Map<*, *>)["subscribed"])
             }
     }
@@ -207,7 +198,7 @@ class MaxHealthTest {
         subscriptions = """{"subscriptions":[{"url":"https://elsewhere.example/hook","time":1}]}"""
         webRunner.withPropertyValues(*props("max.bot.mode=webhook")).run { context ->
             val health = context.bot()
-            assertEquals(Status.UP, health.status)
+            assertEquals("UP", health.status)
             val webhook = health.details["webhook"] as Map<*, *>
             assertFalse(webhook.containsKey("subscribed"))
             assertEquals(listOf("https://elsewhere.example/hook"), webhook["subscriptions"])
@@ -215,7 +206,7 @@ class MaxHealthTest {
         // Not a web application: nothing receives the deliveries.
         runner.withPropertyValues(*props("max.bot.mode=webhook")).run { context ->
             val health = context.bot()
-            assertEquals(Status.DOWN, health.status)
+            assertEquals("DOWN", health.status)
             assertEquals(false, (health.details["webhook"] as Map<*, *>)["endpoint"])
         }
         me = json("""{"code":"internal","message":"busy"}""", code = 500)
@@ -227,7 +218,7 @@ class MaxHealthTest {
             .run { context ->
                 // The API is down at startup: the context starts, the subscription is retried in the background.
                 assertNull(context.startupFailure)
-                assertEquals(Status.DOWN, context.bot().status)
+                assertEquals("DOWN", context.bot().status)
             }
     }
 
@@ -237,15 +228,16 @@ class MaxHealthTest {
         runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.storage=jdbc"))
             .withBean(DataSource::class.java, { dataSource })
             .run { context ->
-                val health = context.part("storage").check()
-                assertEquals(Status.UP, health.status)
+                val health = context.part("storage")
+                assertEquals("UP", health.status)
                 assertEquals("jdbc", health.details["storage"])
                 assertEquals("H2", health.details["database"])
             }
-        val invalid = JdbcStorageHealthIndicator(proxyDataSource(valid = false), Duration.ZERO).check()
-        assertEquals(Status.DOWN, invalid.status)
-        val failing = JdbcStorageHealthIndicator(proxyDataSource(valid = null), Duration.ofSeconds(1)).check()
-        assertEquals(Status.DOWN, failing.status)
+        assertFalse(JdbcStorageHealthCheck(proxyDataSource(valid = false), Duration.ZERO).check().up)
+        // The health indicator reports the exception as down.
+        runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.storage=jdbc", "max.bot.jdbc.create-tables=false"))
+            .withBean(DataSource::class.java, { proxyDataSource(valid = null) })
+            .run { context -> assertEquals("DOWN", context.part("storage").status) }
     }
 
     /** A data source whose connections are valid or not, or that fails with `valid = null`. */
@@ -268,7 +260,7 @@ class MaxHealthTest {
     fun `no storage part without its beans or Lettuce`() {
         runner.withPropertyValues(*props("max.bot.mode=none"))
             .run { context ->
-                assertNull(context.getBean("maxHealthContributor", CompositeHealthContributor::class.java).getContributor("storage"))
+                assertNull(context.healthPart("storage"))
             }
         // A storage without its module fails the start instead of falling back to memory.
         runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.storage=redis"))
@@ -281,7 +273,7 @@ class MaxHealthTest {
         runner.withPropertyValues(*props("max.bot.mode=none", "management.health.max.enabled=false"))
             .run { context -> assertFalse(context.containsBean("maxHealthContributor")) }
         runner.withPropertyValues(*props("max.bot.mode=none"))
-            .withClassLoader(FilteredClassLoader(HealthIndicator::class.java))
+            .withClassLoader(FilteredClassLoader(HEALTH_INDICATOR))
             .run { context -> assertFalse(context.containsBean("maxHealthContributor")) }
         runner.run { context -> assertFalse(context.containsBean("maxHealthContributor")) }
         val properties = MaxBotProperties()

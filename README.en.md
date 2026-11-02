@@ -187,18 +187,18 @@ checked on every build. Coming from 0.x? See [MIGRATION.md](MIGRATION.md).
 | Component         | Supported                                              |
 |-------------------|--------------------------------------------------------|
 | Java              | 17 or newer                                            |
-| Kotlin            | 2.2 or newer (built with the 2.4 compiler for the 2.2 API) |
+| Kotlin            | 1.9.25 or newer (built with the 2.4 compiler for the 2.0 API) |
 | Max Bot API       | specification 0.0.33; newer server features arrive as `Unknown*` objects |
-| Spring Boot       | 4.x (built and tested with 4.0, integration tests on 4.1) |
+| Spring Boot       | 3.4 and newer, 4.x included (tested on 3.4, 3.5, 4.0 and 4.1) |
 | Ktor              | 3.x (built and tested with 3.6)                        |
-| Micrometer        | 1.16 or newer                                          |
-| OpenTelemetry     | API 1.55 or newer                                      |
+| Micrometer        | 1.14 or newer                                          |
+| OpenTelemetry     | API 1.43 or newer                                      |
 | GraalVM native    | metadata in the `maxapi` jar, Spring AOT hints in the starter; see [Native image](#native-image) |
-| Lettuce (Redis)   | 6.8 or newer (built with 6.8, tested with Redis 7.4)   |
+| Lettuce (Redis)   | 6.4 or newer (built with 6.4, tested with Redis 7.4)   |
 | JDBC              | any database with standard SQL (tested on H2 2.4 and PostgreSQL 17) |
 
 The dependencies (Kotlin, kotlinx.coroutines, Jackson, Micrometer, OpenTelemetry, Lettuce) are the
-versions the BOM of the oldest supported Spring Boot (4.0) manages: a Spring Boot application gets
+versions the BOM of the oldest supported Spring Boot (3.4) manages: a Spring Boot application gets
 these or newer ones, never older. The starter checks on startup that the application does not have
 older Kotlin, kotlinx.coroutines or Jackson than needed.
 
@@ -1143,7 +1143,8 @@ do {
 ## Spring Boot
 
 `maxapi-spring-boot-starter` creates a `MaxClient` and a `MaxBot` from `max.bot.*` properties and
-starts and stops the bot with the application. It works with Spring Boot 4.0 and newer (Java 17+).
+starts and stops the bot with the application. The same starter works with Spring Boot 3.4 and newer,
+4.x included (Java 17+): the health indicator is registered for the Actuator the application has.
 
 ```kotlin
 dependencies {

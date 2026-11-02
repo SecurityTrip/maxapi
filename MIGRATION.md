@@ -81,10 +81,10 @@ No API changes. 1.0 adds this guide, the compatibility policy and module documen
 1.5 keeps source and binary compatibility, but changes several defaults that made a bot easy to
 break or to attack. Check each one; the old behaviour is a setting away.
 
-**Dependencies.** The libraries are built for the versions the oldest supported Spring Boot (4.0)
-manages: Kotlin 2.2 API, kotlinx.coroutines 1.10.2, Jackson 2.20, Micrometer 1.16, OpenTelemetry 1.55,
-Lettuce 6.8. Applications get these or newer versions, never older ones, so the `NoSuchMethodError` of
-1.4.0 in Spring Boot applications (`runBlockingK`) is gone. The starter checks on startup that the
+**Dependencies.** The libraries are built for the versions the oldest supported Spring Boot (3.4)
+manages: Kotlin 1.9.25 (2.0 API), kotlinx.coroutines 1.8.1, Jackson 2.18, Micrometer 1.14, OpenTelemetry
+1.43, Lettuce 6.4. Applications get these or newer versions, never older ones, so the `NoSuchMethodError`
+of 1.4.0 in Spring Boot applications (`runBlockingK`) is gone. The starter works with Spring Boot 3.4+ and 4.x. The starter checks on startup that the
 application does not have older Kotlin, coroutines or Jackson than `maxapi` needs.
 
 **Handlers of a chat no longer hold up other chats.** Every chat has its own queue, and up to

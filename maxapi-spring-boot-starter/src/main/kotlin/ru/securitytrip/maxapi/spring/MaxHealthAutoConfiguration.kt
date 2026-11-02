@@ -1,55 +1,48 @@
 package ru.securitytrip.maxapi.spring
 
+import org.springframework.beans.factory.BeanClassLoaderAware
 import org.springframework.boot.autoconfigure.AutoConfiguration
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.health.autoconfigure.contributor.ConditionalOnEnabledHealthIndicator
-import org.springframework.boot.health.contributor.CompositeHealthContributor
-import org.springframework.boot.health.contributor.HealthContributor
-import org.springframework.context.ApplicationContext
-import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.ImportSelector
+import org.springframework.core.type.AnnotationMetadata
 import org.springframework.util.ClassUtils
-import ru.securitytrip.maxapi.bot.MaxBot
-import javax.sql.DataSource
 
 /**
  * Registers the health contributor `max` when the application has Spring Boot Actuator, so that
  * `/actuator/health/max` shows:
  *
- * - `bot` ([MaxBotHealthIndicator]): whether polling runs or the webhook endpoint is up and subscribed,
- *   and whether the API answers; the API is asked at most once per `max.bot.health.cache-ttl`;
+ * - `bot`: whether polling runs or the webhook endpoint is up and subscribed, and whether the API
+ *   answers; the API is asked at most once per `max.bot.health.cache-ttl`;
  * - `storage`, with `max.bot.storage=jdbc` or `redis`: whether the database or Redis answers.
+ *
+ * Spring Boot 4 and 3 keep their health API in different packages; the configuration for the version on
+ * the classpath is imported, and the other one is never loaded.
  *
  * Turn it off with `management.health.max.enabled=false`, or replace it with your own bean named
  * `maxHealthContributor`.
  */
 @AutoConfiguration(after = [MaxBotAutoConfiguration::class, MaxStorageAutoConfiguration::class])
-@ConditionalOnClass(name = ["org.springframework.boot.health.contributor.HealthIndicator"])
 @ConditionalOnMaxBotToken
-@ConditionalOnEnabledHealthIndicator("max")
+@Import(MaxHealthAutoConfiguration.Selector::class)
 public class MaxHealthAutoConfiguration {
-    @Bean
-    @ConditionalOnBean(MaxBot::class)
-    @ConditionalOnMissingBean(name = ["maxHealthContributor"])
-    public fun maxHealthContributor(bot: MaxBot, properties: MaxBotProperties, context: ApplicationContext): CompositeHealthContributor {
-        val contributors = linkedMapOf<String, HealthContributor>(
-            "bot" to MaxBotHealthIndicator(bot, properties, context.containsBean(WEBHOOK_ENDPOINT)),
-        )
-        val timeout = properties.health.timeout
-        val storage = when (properties.storage) {
-            MaxBotProperties.Storage.JDBC ->
-                context.getBeanProvider(DataSource::class.java).ifAvailable?.let { JdbcStorageHealthIndicator(it, timeout) }
-            MaxBotProperties.Storage.REDIS ->
-                if (ClassUtils.isPresent(LETTUCE, context.classLoader)) RedisStorageHealthIndicator.of(context, timeout) else null
-            MaxBotProperties.Storage.MEMORY -> null
+    /** Imports the health configuration for the Spring Boot on the classpath, by class name. */
+    internal class Selector : ImportSelector, BeanClassLoaderAware {
+        private var classLoader: ClassLoader? = null
+
+        override fun setBeanClassLoader(classLoader: ClassLoader) {
+            this.classLoader = classLoader
         }
-        if (storage != null) contributors["storage"] = storage
-        return CompositeHealthContributor.fromMap(contributors)
+
+        override fun selectImports(metadata: AnnotationMetadata): Array<String> = when {
+            ClassUtils.isPresent(BOOT4_HEALTH, classLoader) -> arrayOf("ru.securitytrip.maxapi.spring.MaxBoot4HealthConfiguration")
+            ClassUtils.isPresent(BOOT3_HEALTH, classLoader) -> arrayOf("ru.securitytrip.maxapi.spring.MaxBoot3HealthConfiguration")
+            else -> emptyArray()
+        }
     }
 }
 
-/** Name of the webhook endpoint bean, servlet or reactive. */
-private const val WEBHOOK_ENDPOINT = "maxBotWebhookEndpoint"
+/** The health indicator of Spring Boot 4 (`spring-boot-health`). */
+private const val BOOT4_HEALTH = "org.springframework.boot.health.contributor.HealthIndicator"
 
-private const val LETTUCE = "io.lettuce.core.api.StatefulRedisConnection"
+/** The health indicator of Spring Boot 3 (`spring-boot-actuator`). */
+private const val BOOT3_HEALTH = "org.springframework.boot.actuate.health.HealthIndicator"
