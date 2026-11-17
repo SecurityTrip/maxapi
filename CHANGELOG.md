@@ -12,6 +12,8 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-17
+
 Fixes from a review of 1.4.0 in a Spring Boot application: dependency versions that broke on startup,
 a stuck handler that stopped the whole bot, a webhook that accepted forged updates, and safer defaults.
 See [MIGRATION.md](MIGRATION.md#from-14-to-15) for the changed defaults.
@@ -398,7 +400,8 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/SecurityTrip/maxapi/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/SecurityTrip/maxapi/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/SecurityTrip/maxapi/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/SecurityTrip/maxapi/compare/v1.1.0...v1.2.0
