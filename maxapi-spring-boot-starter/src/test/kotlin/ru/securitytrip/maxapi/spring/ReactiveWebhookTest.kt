@@ -7,6 +7,7 @@ import org.springframework.web.reactive.function.server.RouterFunction
 import org.springframework.web.reactive.function.server.ServerResponse
 import ru.securitytrip.maxapi.bot.MaxBot
 import ru.securitytrip.maxapi.bot.WebhookHandler
+import ru.securitytrip.maxapi.client.RetryPolicy
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,6 +19,8 @@ class ReactiveWebhookTest {
     private val runner = ReactiveWebApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(MaxBotAutoConfiguration::class.java))
         .withPropertyValues("max.bot.token=t", "max.bot.base-url=http://localhost:1/")
+        // Nothing listens there: startup logs the failure at once and retries in the background.
+        .withBean(MaxClientConfigCustomizer::class.java, { MaxClientConfigCustomizer { it.retryPolicy(RetryPolicy.NONE) } })
 
     private val update = """{"update_type":"message_created","timestamp":1,"message":{"sender":{"user_id":1},
         "recipient":{"chat_id":5,"chat_type":"dialog"},"timestamp":1,"body":{"mid":"m","seq":1,"text":"hi"}}}"""
@@ -53,17 +56,20 @@ class ReactiveWebhookTest {
 
     @Test
     fun `async endpoint answers right away and 503 once the bot is closed`() {
+        // Without a secret of its own, the endpoint expects the one derived from the token.
+        val secret = WebhookHandler.secretFor("t")
         runner.withPropertyValues("max.bot.mode=webhook", "max.bot.webhook.async=true", "max.bot.webhook.path=/hook")
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { bot -> bot.onMessage { log += "async" } } })
             .run { context ->
                 val client = context.client()
-                client.deliver("/hook", update, null).expectStatus().isOk
+                client.deliver("/hook", update, null).expectStatus().isUnauthorized
+                client.deliver("/hook", update, secret).expectStatus().isOk
                 val deadline = System.currentTimeMillis() + 5_000
                 while (log.isEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(10)
                 assertEquals(listOf("async"), log)
-                client.deliver("/hook", "[]", null).expectStatus().isBadRequest
+                client.deliver("/hook", "[]", secret).expectStatus().isBadRequest
                 context.getBean(MaxBot::class.java).close()
-                client.deliver("/hook", update, null).expectStatus().isEqualTo(503)
+                client.deliver("/hook", update, secret).expectStatus().isEqualTo(503)
             }
     }
 
@@ -74,7 +80,8 @@ class ReactiveWebhookTest {
         }
         org.springframework.boot.test.context.runner.WebApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(MaxBotAutoConfiguration::class.java))
-            .withPropertyValues("max.bot.token=t", "max.bot.mode=webhook")
+            .withPropertyValues("max.bot.token=t", "max.bot.mode=webhook", "max.bot.base-url=http://localhost:1/")
+            .withBean(MaxClientConfigCustomizer::class.java, { MaxClientConfigCustomizer { it.retryPolicy(RetryPolicy.NONE) } })
             .run { context ->
                 // The servlet endpoint, not the reactive one.
                 assertEquals(

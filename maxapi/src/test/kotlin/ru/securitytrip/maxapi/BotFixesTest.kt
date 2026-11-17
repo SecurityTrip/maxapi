@@ -43,7 +43,7 @@ class BotFixesTest {
 
     @BeforeTest
     fun setUp() {
-        server = MockWebServer()
+        server = failFastServer()
         server.start()
         client = server.client()
         bot = MaxBot(client, BotConfig(minPollInterval = Duration.ofMillis(5), pollTimeoutSeconds = 0))

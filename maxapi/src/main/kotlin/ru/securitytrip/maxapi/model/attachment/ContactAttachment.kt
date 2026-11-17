@@ -36,4 +36,19 @@ public data class ContactAttachmentPayload(
         val vcf = vcfInfo ?: return false
         return Hmac.matches(Hmac.hex(botToken.toByteArray(), vcf), hash)
     }
+
+    /**
+     * The first phone number (`TEL`) of [vcfInfo] as `+` and its digits, e.g. `+79991234567`; `null`
+     * if there is none. The number is not verified: see [verify].
+     */
+    public fun phoneNumber(): String? =
+        vcfValue("TEL")?.filter(Char::isDigit)?.takeIf { it.isNotEmpty() }?.let { "+$it" }
+
+    /** The formatted name (`FN`) of [vcfInfo]; `null` if there is none. */
+    public fun fullName(): String? = vcfValue("FN")?.trim()?.takeIf { it.isNotEmpty() }
+
+    /** The value of the first line of [vcfInfo] named [name], like `TEL;TYPE=cell:79991234567` or `item1.TEL:...`. */
+    private fun vcfValue(name: String): String? = vcfInfo?.lineSequence()
+        ?.firstOrNull { line -> line.substringBefore(':').substringBefore(';').substringAfterLast('.').equals(name, ignoreCase = true) }
+        ?.substringAfter(':', "")
 }

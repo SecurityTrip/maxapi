@@ -233,6 +233,13 @@ public class MessageContext internal constructor(
     /** Text after the command, trimmed: `"abc def"` for `/start abc def`. Empty if there are no arguments. */
     public val commandArgs: String get() = parsedCommand?.args.orEmpty()
 
+    /**
+     * The contact the sender shared about themselves with a request-contact button of this bot, with
+     * the signature checked with the token of [client] and the contact checked to be the sender's;
+     * `null` if the message has no such contact. See [VerifiedContact.of].
+     */
+    public fun sharedContact(): VerifiedContact? = VerifiedContact.of(message, client.config.token)
+
     /** Replies to this message with a quote of it. */
     public suspend fun replyToMessage(text: String): Message = replyToMessage(NewMessageBody(text = text))
 

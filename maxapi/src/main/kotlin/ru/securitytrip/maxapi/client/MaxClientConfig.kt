@@ -1,7 +1,10 @@
 package ru.securitytrip.maxapi.client
 
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import ru.securitytrip.maxapi.events.MaxEventListener
+import java.net.InetAddress
+import java.net.UnknownHostException
 import java.time.Duration
 import kotlin.math.min
 import kotlin.math.pow
@@ -24,7 +27,11 @@ import kotlin.math.pow
 public class MaxClientConfig(
     /** Bot access token from [business.max.ru](https://business.max.ru/). Must not be blank. */
     public val token: String,
-    /** Base URL of the API. Override it only for tests or proxies. */
+    /**
+     * Base URL of the API. Override it only for tests or proxies. It must use `https`, so that the token
+     * never goes over the network in plain text; `http` is allowed only for the local host (`localhost`,
+     * loopback addresses, names ending in `.localhost` or `.test`).
+     */
     public val baseUrl: String = DEFAULT_BASE_URL,
     /**
      * Your own `OkHttpClient`, e.g. with a proxy, logging interceptor or custom timeouts.
@@ -32,6 +39,9 @@ public class MaxClientConfig(
      * If it is not set, the client creates one (15 s connect, 60 s read/write timeouts) and shuts it
      * down in [MaxClient.close]. A client you pass in is never closed by the library. In both cases,
      * `getUpdates` automatically uses a longer read timeout so that long polling works.
+     *
+     * A client you build yourself does not trust the Russian Trusted Root CA unless you call
+     * [MaxTls.trustRussianRootCa]; [Builder.httpClient] with an `OkHttpClient.Builder` does that for you.
      */
     public val httpClient: OkHttpClient? = null,
     /**
@@ -77,7 +87,14 @@ public class MaxClientConfig(
     init {
         require(token.isNotBlank()) { "token must not be blank" }
         require(attachmentReadyRetries >= 0) { "attachmentReadyRetries must be >= 0" }
+        val url = requireNotNull(baseUrl.toHttpUrlOrNull()) { "baseUrl is not an http(s) URL: $baseUrl" }
+        require(url.isHttps || isLocal(url.host)) {
+            "baseUrl must use https, otherwise the token goes over the network in plain text: $baseUrl"
+        }
     }
+
+    /** Whether [MaxClient.close] shuts down [httpClient]: the one built by [Builder.httpClient] from a builder. */
+    internal var ownsHttpClient: Boolean = false
 
     /** Never includes the token, so the config is safe to log. */
     override fun toString(): String = "MaxClientConfig(baseUrl=$baseUrl, retryPolicy=$retryPolicy, rateLimit=$rateLimit)"
@@ -86,6 +103,7 @@ public class MaxClientConfig(
     public class Builder(private val token: String) {
         private var baseUrl = DEFAULT_BASE_URL
         private var httpClient: OkHttpClient? = null
+        private var httpClientBuilder: OkHttpClient.Builder? = null
         private var retryPolicy = RetryPolicy.DEFAULT
         private var attachmentReadyRetries = 5
         private var attachmentReadyDelay = Duration.ofSeconds(1)
@@ -95,7 +113,26 @@ public class MaxClientConfig(
         private var trustRussianRootCa = true
 
         public fun baseUrl(value: String): Builder = apply { baseUrl = value }
-        public fun httpClient(value: OkHttpClient): Builder = apply { httpClient = value }
+        public fun httpClient(value: OkHttpClient): Builder = apply {
+            httpClient = value
+            httpClientBuilder = null
+        }
+
+        /**
+         * An `OkHttpClient` built from [value], e.g. with a proxy or other timeouts. Unlike a ready
+         * `OkHttpClient`, it trusts the Russian Trusted Root CA when [trustRussianRootCa] is on (the
+         * default), and [MaxClient.close] shuts it down.
+         *
+         * ```java
+         * MaxClientConfig.builder(token)
+         *         .httpClient(new OkHttpClient.Builder().proxy(proxy))
+         *         .build();
+         * ```
+         */
+        public fun httpClient(value: OkHttpClient.Builder): Builder = apply {
+            httpClientBuilder = value
+            httpClient = null
+        }
         public fun retryPolicy(value: RetryPolicy): Builder = apply { retryPolicy = value }
         public fun attachmentReadyRetries(value: Int): Builder = apply { attachmentReadyRetries = value }
         public fun attachmentReadyDelay(value: Duration): Builder = apply { attachmentReadyDelay = value }
@@ -107,7 +144,7 @@ public class MaxClientConfig(
         public fun build(): MaxClientConfig = MaxClientConfig(
             token = token,
             baseUrl = baseUrl,
-            httpClient = httpClient,
+            httpClient = httpClient ?: httpClientBuilder?.apply { if (trustRussianRootCa) MaxTls.trustRussianRootCa(this) }?.build(),
             retryPolicy = retryPolicy,
             attachmentReadyRetries = attachmentReadyRetries,
             attachmentReadyDelay = attachmentReadyDelay,
@@ -115,7 +152,7 @@ public class MaxClientConfig(
             rateLimit = rateLimit,
             eventListener = eventListener,
             trustRussianRootCa = trustRussianRootCa,
-        )
+        ).also { it.ownsHttpClient = httpClientBuilder != null }
     }
 
     public companion object {
@@ -127,6 +164,14 @@ public class MaxClientConfig(
         /** Starts building a config for Java code. */
         @JvmStatic
         public fun builder(token: String): Builder = Builder(token)
+
+        /** The local host, where `http` cannot leak the token: names reserved for it and loopback addresses. */
+        private fun isLocal(host: String): Boolean =
+            host == "localhost" || host.endsWith(".localhost") || host.endsWith(".test") || try {
+                InetAddress.getAllByName(host).all { it.isLoopbackAddress }
+            } catch (_: UnknownHostException) {
+                false
+            }
     }
 }
 

@@ -267,8 +267,9 @@ class JavaOverloadsTest {
         assertEquals("a.bin", UploadSource.of(new ByteArrayInputStream(new byte[0]), "a.bin").getFileName());
 
         try (MaxBot owning = new MaxBot("token"); MaxBot configured = new MaxBot("token", BotConfig.builder().build())) {
-            assertEquals(4, owning.getConfig().getParallelism());
-            assertEquals(4, configured.getConfig().getParallelism());
+            assertEquals(BotConfig.DEFAULT_PARALLELISM, owning.getConfig().getParallelism());
+            assertEquals(64, configured.getConfig().getParallelism());
+            assertEquals(BotConfig.DEFAULT_HANDLER_TIMEOUT, configured.getConfig().getHandlerTimeout());
         }
 
         MaxBot bot = new MaxBot(client);

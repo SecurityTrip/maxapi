@@ -19,6 +19,10 @@ import ru.securitytrip.maxapi.webapp.WebAppUser
  * header; it is checked with `WebAppData.validate` and the token of the bot. Requests without valid
  * data are answered with 401 before the method is called.
  *
+ * With `max.bot.web-app.source=body` the whole body is `initData`, so a method cannot have a
+ * `@RequestBody` parameter as well, as `order` above does: it would get an empty body. With
+ * `source=parameter`, `initData` in the query string ends up in access logs; the header is the safe choice.
+ *
  * @property required `false` passes `null` when the request has no `initData` at all;
  *   invalid data is still answered with 401.
  */

@@ -65,14 +65,19 @@ public abstract class ru/securitytrip/maxapi/bot/BlockingStateStorage : ru/secur
 
 public final class ru/securitytrip/maxapi/bot/BotConfig {
 	public static final field Companion Lru/securitytrip/maxapi/bot/BotConfig$Companion;
+	public static final field DEFAULT_HANDLER_TIMEOUT Ljava/time/Duration;
+	public static final field DEFAULT_PARALLELISM I
 	public fun <init> ()V
 	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;)V
 	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;Lru/securitytrip/maxapi/bot/ChatStore;)V
 	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;Lru/securitytrip/maxapi/bot/ChatStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;Lru/securitytrip/maxapi/bot/ChatStore;Lru/securitytrip/maxapi/bot/SuspendUpdateDeduplicator;)V
+	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;Lru/securitytrip/maxapi/bot/ChatStore;Lru/securitytrip/maxapi/bot/SuspendUpdateDeduplicator;)V
 	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;Lru/securitytrip/maxapi/bot/ChatStore;Lru/securitytrip/maxapi/bot/SuspendUpdateDeduplicator;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;Lru/securitytrip/maxapi/bot/ChatStore;Lru/securitytrip/maxapi/bot/SuspendUpdateDeduplicator;Z)V
+	public synthetic fun <init> (IIIILjava/time/Duration;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/StateStorage;Ljava/time/Duration;Lru/securitytrip/maxapi/bot/UpdateDeduplicator;Lru/securitytrip/maxapi/bot/MarkerStore;Lru/securitytrip/maxapi/events/MaxEventListener;Lru/securitytrip/maxapi/bot/ChatStore;Lru/securitytrip/maxapi/bot/SuspendUpdateDeduplicator;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun builder ()Lru/securitytrip/maxapi/bot/BotConfig$Builder;
+	public final fun getAutoAnswerCallbacks ()Z
 	public final fun getChatStore ()Lru/securitytrip/maxapi/bot/ChatStore;
 	public final fun getDeduplicator ()Lru/securitytrip/maxapi/bot/UpdateDeduplicator;
 	public final fun getEventListener ()Lru/securitytrip/maxapi/events/MaxEventListener;
@@ -90,6 +95,7 @@ public final class ru/securitytrip/maxapi/bot/BotConfig {
 
 public final class ru/securitytrip/maxapi/bot/BotConfig$Builder {
 	public fun <init> ()V
+	public final fun autoAnswerCallbacks (Z)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
 	public final fun build ()Lru/securitytrip/maxapi/bot/BotConfig;
 	public final fun chatStore (Lru/securitytrip/maxapi/bot/ChatStore;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
 	public final fun deduplicator (Lru/securitytrip/maxapi/bot/UpdateDeduplicator;)Lru/securitytrip/maxapi/bot/BotConfig$Builder;
@@ -315,6 +321,7 @@ public final class ru/securitytrip/maxapi/bot/Filters {
 	public static final fun fromUsers ([J)Lru/securitytrip/maxapi/bot/Filter;
 	public static final fun hasAttachment (Ljava/lang/Class;)Lru/securitytrip/maxapi/bot/Filter;
 	public static final fun hasText ()Lru/securitytrip/maxapi/bot/Filter;
+	public static final fun hasVerifiedContact ()Lru/securitytrip/maxapi/bot/Filter;
 	public static final fun inChats ([J)Lru/securitytrip/maxapi/bot/Filter;
 	public static final fun noState ()Lru/securitytrip/maxapi/bot/Filter;
 	public static final fun of (Ljava/util/function/Predicate;)Lru/securitytrip/maxapi/bot/Filter;
@@ -364,10 +371,21 @@ public final class ru/securitytrip/maxapi/bot/InMemoryMarkerStore : ru/securityt
 }
 
 public final class ru/securitytrip/maxapi/bot/InMemoryStateStorage : ru/securitytrip/maxapi/bot/StateStorage {
+	public static final field Companion Lru/securitytrip/maxapi/bot/InMemoryStateStorage$Companion;
+	public static final field DEFAULT_MAX_SIZE I
+	public static final field DEFAULT_TTL Ljava/time/Duration;
 	public fun <init> ()V
+	public fun <init> (I)V
+	public fun <init> (ILjava/time/Duration;)V
+	public synthetic fun <init> (ILjava/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun get (Lru/securitytrip/maxapi/bot/StateKey;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getMaxSize ()I
 	public final fun getSize ()I
+	public final fun getTtl ()Ljava/time/Duration;
 	public fun set (Lru/securitytrip/maxapi/bot/StateKey;Lru/securitytrip/maxapi/bot/DialogState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class ru/securitytrip/maxapi/bot/InMemoryStateStorage$Companion {
 }
 
 public final class ru/securitytrip/maxapi/bot/InMemoryUpdateDeduplicator : ru/securitytrip/maxapi/bot/UpdateDeduplicator {
@@ -463,6 +481,7 @@ public final class ru/securitytrip/maxapi/bot/MessageContext : ru/securitytrip/m
 	public final fun replyToMessage (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun replyToMessage (Lru/securitytrip/maxapi/model/message/NewMessageBody;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun replyToMessageBlocking (Ljava/lang/String;)Lru/securitytrip/maxapi/model/message/Message;
+	public final fun sharedContact ()Lru/securitytrip/maxapi/bot/VerifiedContact;
 }
 
 public abstract interface class ru/securitytrip/maxapi/bot/Middleware {
@@ -499,6 +518,12 @@ public final class ru/securitytrip/maxapi/bot/Paginator {
 	public final fun rows (Ljava/util/List;ILjava/lang/String;Ljava/util/function/Function;)Ljava/util/List;
 	public final fun rows (Ljava/util/List;ILjava/util/function/Function;)Ljava/util/List;
 	public static synthetic fun rows$default (Lru/securitytrip/maxapi/bot/Paginator;Ljava/util/List;ILjava/lang/String;Ljava/util/function/Function;ILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class ru/securitytrip/maxapi/bot/QueueOverflowException : ru/securitytrip/maxapi/client/MaxException {
+	public fun <init> (Lru/securitytrip/maxapi/model/update/Update;I)V
+	public final fun getCapacity ()I
+	public final fun getUpdate ()Lru/securitytrip/maxapi/model/update/Update;
 }
 
 public final class ru/securitytrip/maxapi/bot/Router : ru/securitytrip/maxapi/bot/BaseRouter {
@@ -664,6 +689,29 @@ public final class ru/securitytrip/maxapi/bot/UpdateDeduplicator$Companion {
 	public final fun keyOf (Lru/securitytrip/maxapi/model/update/Update;)Ljava/lang/String;
 }
 
+public final class ru/securitytrip/maxapi/bot/VerifiedContact {
+	public static final field Companion Lru/securitytrip/maxapi/bot/VerifiedContact$Companion;
+	public fun <init> (JLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;
+	public final fun copy (JLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;)Lru/securitytrip/maxapi/bot/VerifiedContact;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/bot/VerifiedContact;JLjava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;ILjava/lang/Object;)Lru/securitytrip/maxapi/bot/VerifiedContact;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContact ()Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPhone ()Ljava/lang/String;
+	public final fun getUserId ()J
+	public fun hashCode ()I
+	public static final fun of (Lru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;)Lru/securitytrip/maxapi/bot/VerifiedContact;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/bot/VerifiedContact$Companion {
+	public final fun of (Lru/securitytrip/maxapi/model/message/Message;Ljava/lang/String;)Lru/securitytrip/maxapi/bot/VerifiedContact;
+}
+
 public final class ru/securitytrip/maxapi/bot/WebhookHandler {
 	public static final field Companion Lru/securitytrip/maxapi/bot/WebhookHandler$Companion;
 	public static final field SECRET_HEADER Ljava/lang/String;
@@ -673,10 +721,12 @@ public final class ru/securitytrip/maxapi/bot/WebhookHandler {
 	public final fun handleAsync ([BLjava/lang/String;)Z
 	public final fun handleBlocking (Ljava/lang/String;Ljava/lang/String;)Z
 	public final fun handleBlocking ([BLjava/lang/String;)Z
+	public static final fun secretFor (Ljava/lang/String;)Ljava/lang/String;
 	public final fun verifySecret (Ljava/lang/String;)Z
 }
 
 public final class ru/securitytrip/maxapi/bot/WebhookHandler$Companion {
+	public final fun secretFor (Ljava/lang/String;)Ljava/lang/String;
 }
 
 public final class ru/securitytrip/maxapi/client/ForbiddenException : ru/securitytrip/maxapi/client/MaxApiException {
@@ -799,6 +849,7 @@ public final class ru/securitytrip/maxapi/client/MaxClientConfig$Builder {
 	public final fun baseUrl (Ljava/lang/String;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun build ()Lru/securitytrip/maxapi/client/MaxClientConfig;
 	public final fun eventListener (Lru/securitytrip/maxapi/events/MaxEventListener;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
+	public final fun httpClient (Lokhttp3/OkHttpClient$Builder;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun httpClient (Lokhttp3/OkHttpClient;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun rateLimit (Lru/securitytrip/maxapi/client/RateLimit;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
 	public final fun retryPolicy (Lru/securitytrip/maxapi/client/RetryPolicy;)Lru/securitytrip/maxapi/client/MaxClientConfig$Builder;
@@ -961,12 +1012,41 @@ public final class ru/securitytrip/maxapi/dsl/Buttons {
 	public static synthetic fun requestGeoLocation$default (Ljava/lang/String;ZILjava/lang/Object;)Lru/securitytrip/maxapi/model/keyboard/RequestGeoLocationButton;
 }
 
+public final class ru/securitytrip/maxapi/dsl/Html {
+	public static final field INSTANCE Lru/securitytrip/maxapi/dsl/Html;
+	public static final fun builder ()Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public static final fun escape (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class ru/securitytrip/maxapi/dsl/HtmlBuilder {
+	public fun <init> ()V
+	public final fun bold (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun build ()Ljava/lang/String;
+	public final fun code (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun highlighted (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun italic (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun link (Ljava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun mention (Ljava/lang/String;J)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun newline ()Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun quote (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun raw (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun strikethrough (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public final fun text (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+	public fun toString ()Ljava/lang/String;
+	public final fun underline (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/HtmlBuilder;
+}
+
 public final class ru/securitytrip/maxapi/dsl/KeyboardBuilder {
 	public fun <init> ()V
 	public final fun build ()Lru/securitytrip/maxapi/model/attachment/InlineKeyboardAttachmentRequest;
 	public final fun row (Ljava/util/List;)Lru/securitytrip/maxapi/dsl/KeyboardBuilder;
 	public final fun row (Lkotlin/jvm/functions/Function1;)Lru/securitytrip/maxapi/dsl/KeyboardBuilder;
 	public final fun row ([Lru/securitytrip/maxapi/model/keyboard/Button;)Lru/securitytrip/maxapi/dsl/KeyboardBuilder;
+}
+
+public final class ru/securitytrip/maxapi/dsl/Markdown {
+	public static final field INSTANCE Lru/securitytrip/maxapi/dsl/Markdown;
+	public static final fun escape (Ljava/lang/String;)Ljava/lang/String;
 }
 
 public abstract interface annotation class ru/securitytrip/maxapi/dsl/MaxDsl : java/lang/annotation/Annotation {
@@ -980,6 +1060,7 @@ public final class ru/securitytrip/maxapi/dsl/MessageBuilder {
 	public final fun format (Lru/securitytrip/maxapi/model/markup/TextFormat;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
 	public final fun forward (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
 	public final fun html (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
+	public final fun html (Lkotlin/jvm/functions/Function1;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
 	public final fun keyboard (Lkotlin/jvm/functions/Function1;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
 	public final fun keyboardRow ([Lru/securitytrip/maxapi/model/keyboard/Button;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
 	public final fun markdown (Ljava/lang/String;)Lru/securitytrip/maxapi/dsl/MessageBuilder;
@@ -1347,10 +1428,12 @@ public final class ru/securitytrip/maxapi/model/attachment/ContactAttachmentPayl
 	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;)Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;
 	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;Ljava/lang/String;Ljava/lang/String;Lru/securitytrip/maxapi/model/user/User;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/attachment/ContactAttachmentPayload;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun fullName ()Ljava/lang/String;
 	public final fun getHash ()Ljava/lang/String;
 	public final fun getMaxInfo ()Lru/securitytrip/maxapi/model/user/User;
 	public final fun getVcfInfo ()Ljava/lang/String;
 	public fun hashCode ()I
+	public final fun phoneNumber ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 	public final fun verify (Ljava/lang/String;)Z
 }
@@ -3458,11 +3541,19 @@ public final class ru/securitytrip/maxapi/webapp/WebAppPhone {
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public final fun verify (JLjava/lang/String;)Z
+	public final fun verify (JLjava/lang/String;Ljava/time/Duration;)Z
+	public final fun verify (JLjava/lang/String;Ljava/time/Duration;Ljava/time/Instant;)Z
 	public static final fun verify (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;)Z
+	public static final fun verify (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/time/Duration;)Z
+	public static final fun verify (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/time/Duration;Ljava/time/Instant;)Z
+	public static synthetic fun verify$default (Lru/securitytrip/maxapi/webapp/WebAppPhone;JLjava/lang/String;Ljava/time/Duration;Ljava/time/Instant;ILjava/lang/Object;)Z
 }
 
 public final class ru/securitytrip/maxapi/webapp/WebAppPhone$Companion {
 	public final fun verify (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;)Z
+	public final fun verify (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/time/Duration;)Z
+	public final fun verify (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/time/Duration;Ljava/time/Instant;)Z
+	public static synthetic fun verify$default (Lru/securitytrip/maxapi/webapp/WebAppPhone$Companion;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/time/Duration;Ljava/time/Instant;ILjava/lang/Object;)Z
 }
 
 public final class ru/securitytrip/maxapi/webapp/WebAppUser {

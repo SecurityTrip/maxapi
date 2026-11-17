@@ -42,5 +42,7 @@ internal val ROOT_CA: String = "ru/securitytrip/maxapi/client/russian-trusted-ro
 internal val MODEL_MEMBERS: Array<MemberCategory> = arrayOf(
     MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
     MemberCategory.INVOKE_DECLARED_METHODS,
-    MemberCategory.ACCESS_DECLARED_FIELDS,
+    // ACCESS_DECLARED_FIELDS in Spring Framework 7, which keeps this name of 6.
+    @Suppress("DEPRECATION")
+    MemberCategory.DECLARED_FIELDS,
 )

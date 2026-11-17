@@ -156,7 +156,7 @@ class MaxWebAppTest {
 
     @Test
     fun `auto-configuration registers the resolver in servlet applications with a token`() {
-        webRunner.withPropertyValues("max.bot.token=t", "max.bot.web-app.source=body", "max.bot.web-app.max-age=5m").run { context ->
+        webRunner.withPropertyValues("max.bot.token=t", "max.bot.mode=none", "max.bot.web-app.source=body", "max.bot.web-app.max-age=5m").run { context ->
             val resolver = context.getBean(MaxWebAppArgumentResolver::class.java)
             val resolvers = mutableListOf<HandlerMethodArgumentResolver>()
             context.getBeansOfType(WebMvcConfigurer::class.java).values.forEach { it.addArgumentResolvers(resolvers) }
@@ -166,10 +166,10 @@ class MaxWebAppTest {
             assertEquals(Duration.ofMinutes(5), properties.webApp.maxAge)
         }
         webRunner.run { context -> assertTrue(context.getBeansOfType(MaxWebAppArgumentResolver::class.java).isEmpty()) }
-        webRunner.withPropertyValues("max.bot.token=t").withClassLoader(FilteredClassLoader(WebMvcConfigurer::class.java))
+        webRunner.withPropertyValues("max.bot.token=t", "max.bot.mode=none").withClassLoader(FilteredClassLoader(WebMvcConfigurer::class.java))
             .run { context -> assertTrue(context.getBeansOfType(MaxWebAppArgumentResolver::class.java).isEmpty()) }
         ApplicationContextRunner().withConfiguration(AutoConfigurations.of(MaxWebAppAutoConfiguration::class.java))
-            .withPropertyValues("max.bot.token=t")
+            .withPropertyValues("max.bot.token=t", "max.bot.mode=none")
             .run { context -> assertTrue(context.getBeansOfType(MaxWebAppArgumentResolver::class.java).isEmpty()) }
     }
 }

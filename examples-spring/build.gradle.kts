@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     implementation(project(":maxapi-spring-boot-starter"))
-    implementation(platform(libs.spring.boot.dependencies))
+    implementation(platform(libs.spring.boot.dependencies.latest))
     implementation(libs.spring.boot.starter.web)
     // Reads Kotlin classes such as WebAppPhone from request bodies.
     implementation(libs.jackson3.kotlin)

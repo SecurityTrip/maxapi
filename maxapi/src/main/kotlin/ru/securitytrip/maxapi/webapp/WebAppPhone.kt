@@ -1,5 +1,8 @@
 package ru.securitytrip.maxapi.webapp
 
+import java.time.Duration
+import java.time.Instant
+
 /**
  * The result of `window.WebApp.requestContact()` in a mini app: the phone number the user shared,
  * signed by Max. Pass it to the backend and check it there with [verify], together with the user id
@@ -24,19 +27,42 @@ public data class WebAppPhone(
     val hash: String,
 ) {
     /**
-     * `true` if Max signed this phone number for the user [userId] of the mini app of the bot [botToken].
-     * It does not check how old [authDate] is.
-     * @throws IllegalArgumentException if [botToken] is blank.
+     * `true` if Max signed this phone number for the user [userId] of the mini app of the bot [botToken]
+     * no more than [maxAge] before [now]. Without the age check, a phone number and signature intercepted
+     * once could be presented forever.
+     *
+     * @param maxAge how old [authDate] may be, one hour by default as for `initData`; `null` does not check the age.
+     * @param now the current time; tests pass a fixed one.
+     * @throws IllegalArgumentException if [botToken] is blank or [maxAge] is negative.
      */
-    public fun verify(userId: Long, botToken: String): Boolean = verify(phone, authDate, userId, hash, botToken)
+    @JvmOverloads
+    public fun verify(
+        userId: Long,
+        botToken: String,
+        maxAge: Duration? = WebAppData.DEFAULT_MAX_AGE,
+        now: Instant = Instant.now(),
+    ): Boolean = verify(phone, authDate, userId, hash, botToken, maxAge, now)
 
     public companion object {
         /** Same as [WebAppPhone.verify], without creating a [WebAppPhone]. */
         @JvmStatic
-        public fun verify(phone: String, authDate: String, userId: Long, hash: String, botToken: String): Boolean {
+        @JvmOverloads
+        public fun verify(
+            phone: String,
+            authDate: String,
+            userId: Long,
+            hash: String,
+            botToken: String,
+            maxAge: Duration? = WebAppData.DEFAULT_MAX_AGE,
+            now: Instant = Instant.now(),
+        ): Boolean {
             Hmac.requireToken(botToken)
+            require(maxAge == null || !maxAge.isNegative) { "maxAge must not be negative: $maxAge" }
             val message = "authDate=$authDate\nphone=${phone.removePrefix("+")}\nuserId=$userId"
-            return Hmac.matches(Hmac.hex(botToken.toByteArray(), message), hash)
+            if (!Hmac.matches(Hmac.hex(botToken.toByteArray(), message), hash)) return false
+            if (maxAge == null) return true
+            val issued = authDate.toLongOrNull()?.let(Instant::ofEpochSecond) ?: return false
+            return Duration.between(issued, now) <= maxAge
         }
     }
 }

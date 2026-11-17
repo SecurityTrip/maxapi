@@ -184,11 +184,23 @@ public class MessageBuilder {
     /** How to interpret formatting in the text; `null` sends plain text. */
     public fun format(value: TextFormat?): MessageBuilder = apply { format = value }
 
-    /** Sets the text and the [TextFormat.MARKDOWN] format. */
+    /**
+     * Sets the text and the [TextFormat.MARKDOWN] format. Escape text that users wrote with
+     * [Markdown.escape], or better, use [html] with a builder, which escapes it for you.
+     */
     public fun markdown(value: String): MessageBuilder = text(value).format(TextFormat.MARKDOWN)
 
-    /** Sets the text and the [TextFormat.HTML] format. */
+    /** Sets the text and the [TextFormat.HTML] format. Escape text that users wrote with [Html.escape]. */
     public fun html(value: String): MessageBuilder = text(value).format(TextFormat.HTML)
+
+    /**
+     * Sets HTML text built with [HtmlBuilder], which escapes the text passed to it, and the [TextFormat.HTML] format:
+     *
+     * ```kotlin
+     * reply { html { text("Hi, "); bold(user.firstName) } }
+     * ```
+     */
+    public fun html(block: HtmlBuilder.() -> Unit): MessageBuilder = html(HtmlBuilder().apply(block).build())
 
     /** `false` delivers the message silently. Channels reject `false`. */
     public fun notify(value: Boolean): MessageBuilder = apply { notify = value }

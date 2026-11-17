@@ -35,8 +35,9 @@ class WebhookCheckTest {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 requests += "${request.method} ${request.url.encodedPath}"
-                val body = when (request.method) {
-                    "GET" -> subscriptions ?: return MockResponse.Builder().code(500).body("down").build()
+                val body = when {
+                    request.url.encodedPath == "/me" -> """{"user_id":1,"first_name":"Bot","username":"bot","is_bot":true}"""
+                    request.method == "GET" -> subscriptions ?: return MockResponse.Builder().code(500).body("down").build()
                     else -> """{"success":true}""".also { subscribed.incrementAndGet() }
                 }
                 return MockResponse.Builder().addHeader("Content-Type", "application/json").body(body).build()
@@ -108,7 +109,8 @@ class WebhookCheckTest {
         assertFalse(manual.isCheckingWebhook)
         manual.stop()
         Thread.sleep(60)
-        assertEquals(listOf("POST /subscriptions"), requests)
+        // Each lifecycle checks the token of its bot with getMyInfo first.
+        assertEquals(listOf("GET /me", "POST /subscriptions", "GET /me"), requests)
     }
 
     private companion object {

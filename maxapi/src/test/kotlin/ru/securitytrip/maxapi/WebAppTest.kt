@@ -235,16 +235,17 @@ class WebAppTest {
     fun `phone from requestContact`() {
         val hash = phoneHash("1771409719", "79991234567", 67890)
         val phone = WebAppPhone("+79991234567", "1771409719", hash)
-        assertTrue(phone.verify(67890, token))
-        assertTrue(phone.copy(phone = "79991234567").verify(67890, token))
-        assertTrue(WebAppPhone.verify("+79991234567", "1771409719", 67890, hash.uppercase(), token))
-        assertFalse(phone.verify(67891, token))
-        assertFalse(phone.copy(phone = "+79991234568").verify(67890, token))
-        assertFalse(phone.copy(authDate = "1771409720").verify(67890, token))
-        assertFalse(phone.verify(67890, "another-token"))
+        val now = java.time.Instant.ofEpochSecond(1771409719 + 60)
+        assertTrue(phone.verify(67890, token, now = now))
+        assertTrue(phone.copy(phone = "79991234567").verify(67890, token, now = now))
+        assertTrue(WebAppPhone.verify("+79991234567", "1771409719", 67890, hash.uppercase(), token, now = now))
+        assertFalse(phone.verify(67891, token, now = now))
+        assertFalse(phone.copy(phone = "+79991234568").verify(67890, token, now = now))
+        assertFalse(phone.copy(authDate = "1771409720").verify(67890, token, now = now))
+        assertFalse(phone.verify(67890, "another-token", now = now))
         // Not the initData formula: no "WebAppData" key derivation.
         val derived = hex(hmac(hmac("WebAppData".toByteArray(), token), "authDate=1771409719\nphone=79991234567\nuserId=67890"))
-        assertFalse(phone.copy(hash = derived).verify(67890, token))
+        assertFalse(phone.copy(hash = derived).verify(67890, token, now = now))
         assertFailsWith<IllegalArgumentException> { phone.verify(67890, "") }
     }
 

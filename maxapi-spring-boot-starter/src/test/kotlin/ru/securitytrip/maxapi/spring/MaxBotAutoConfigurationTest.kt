@@ -63,6 +63,8 @@ class MaxBotAutoConfigurationTest {
 
     private val SUCCESS_JSON = """{"success":true}"""
 
+    private val ME_JSON = """{"user_id":9,"first_name":"Bot","username":"my_bot","is_bot":true}"""
+
     private fun take(): RecordedRequest = requireNotNull(server.takeRequest(5, TimeUnit.SECONDS)) { "No request" }
 
     private fun props(vararg extra: String) = arrayOf("max.bot.token=t", "max.bot.base-url=${server.url("/")}", *extra)
@@ -104,7 +106,8 @@ class MaxBotAutoConfigurationTest {
                 assertEquals(listOf("first", "second"), log)
                 assertEquals("hi", bot.commands().single().name)
                 bot.processUpdateBlocking(MaxJson.parseUpdate(update))
-                bot.processUpdateBlocking(MaxJson.parseUpdate(update.replace("/hi", "text")))
+                // Another message: the same mid would be dropped as a repeated delivery.
+                bot.processUpdateBlocking(MaxJson.parseUpdate(update.replace("/hi", "text").replace("\"mid\":\"m\"", "\"mid\":\"m2\"")))
                 assertEquals(listOf("first", "second", "hi", "router"), log)
                 assertSame(context.getBean(MaxClient::class.java), bot.client)
                 assertTrue(context.getBean(MaxBotLifecycle::class.java).isRunning)
@@ -113,6 +116,7 @@ class MaxBotAutoConfigurationTest {
 
     @Test
     fun `polling starts with the context and stops with it`() {
+        server.enqueue(json(ME_JSON))
         server.enqueue(json("""{"commands":[]}"""))
         server.enqueue(json("""{"subscriptions":[]}"""))
         server.enqueue(json("""{"updates":[$update],"marker":1}"""))
@@ -120,6 +124,8 @@ class MaxBotAutoConfigurationTest {
             .withBean(BotConfig::class.java, { BotConfig(pollTimeoutSeconds = 0) })
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { bot -> bot.onCommand("hi", "Hi") { log += "handled" } } })
             .run { context ->
+                assertEquals("GET /me", take().let { "${it.method} ${it.url.encodedPath}" })
+                assertEquals("my_bot", context.getBean(MaxBot::class.java).username)
                 assertEquals("PATCH /me/commands", take().let { "${it.method} ${it.url.encodedPath}" })
                 assertEquals("/subscriptions", take().url.encodedPath)
                 assertEquals("/updates", take().url.encodedPath)
@@ -133,12 +139,14 @@ class MaxBotAutoConfigurationTest {
 
     @Test
     fun `webhook mode subscribes and serves the endpoint`() {
+        server.enqueue(json(ME_JSON))
         server.enqueue(json("""{"success":true}"""))
         webRunner.withPropertyValues(
             *props("max.bot.mode=webhook", "max.bot.webhook.url=https://bot.example.com/hook", "max.bot.webhook.secret=s3cret"),
         )
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { bot -> bot.onMessage { log += "webhook" } } })
             .run { context ->
+                assertEquals("/me", take().url.encodedPath)
                 val subscribe = take()
                 assertEquals("/subscriptions", subscribe.url.encodedPath)
                 assertTrue(subscribe.body!!.utf8().contains("\"secret\":\"s3cret\""))
@@ -161,24 +169,30 @@ class MaxBotAutoConfigurationTest {
 
     @Test
     fun `async webhook without a subscription URL`() {
+        server.enqueue(json(ME_JSON))
+        val secret = WebhookHandler.secretFor("t")
         webRunner.withPropertyValues(*props("max.bot.mode=webhook", "max.bot.webhook.async=true", "max.bot.webhook.path=/hook"))
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { bot -> bot.onMessage { log += "async" } } })
             .run { context ->
                 @Suppress("UNCHECKED_CAST")
                 val route = context.getBean("maxBotWebhookEndpoint") as RouterFunction<ServerResponse>
                 val mvc = MockMvcBuilders.routerFunctions(route).build()
-                mvc.perform(post("/hook").content(update)).andExpect(status().isOk)
+                // Without a secret of its own, the endpoint expects the one derived from the token.
+                mvc.perform(post("/hook").content(update)).andExpect(status().isUnauthorized)
+                mvc.perform(post("/hook").content(update).header(WebhookHandler.SECRET_HEADER, secret)).andExpect(status().isOk)
                 val deadline = System.currentTimeMillis() + 5_000
                 while (log.isEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(10)
                 assertEquals(listOf("async"), log)
                 context.getBean(MaxBot::class.java).close()
-                mvc.perform(post("/hook").content(update)).andExpect(status().isServiceUnavailable)
+                mvc.perform(post("/hook").content(update).header(WebhookHandler.SECRET_HEADER, secret))
+                    .andExpect(status().isServiceUnavailable)
             }
-        assertEquals(0, server.requestCount)
+        assertEquals(1, server.requestCount)
     }
 
     @Test
     fun `the endpoint needs a web application`() {
+        server.enqueue(json(ME_JSON))
         runner.withPropertyValues(*props("max.bot.mode=webhook")).run { context ->
             assertFalse(context.containsBean("maxBotWebhookEndpoint"))
             assertNotNull(context.getBean(MaxBot::class.java))
@@ -227,18 +241,18 @@ class MaxBotAutoConfigurationTest {
         assertFalse(properties.webhook.async)
         assertFalse(properties.syncCommands)
         assertTrue(properties.trustRussianRootCa)
-        assertEquals(MaxBotProperties.RateLimitPreset.NONE, properties.rateLimit)
+        assertEquals(MaxBotProperties.RateLimitPreset.MAX, properties.rateLimit)
         assertEquals(java.time.Duration.ofMinutes(10), properties.webhook.checkInterval)
     }
 
     @Test
-    fun `the Max rate limit is opt-in`() {
+    fun `the Max rate limit is on by default`() {
         runner.withPropertyValues(*props("max.bot.mode=none"))
-            .run { assertEquals(null, it.getBean(MaxClient::class.java).config.rateLimit) }
-        runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.rate-limit=max"))
             .run { assertSame(RateLimit.MAX, it.getBean(MaxClient::class.java).config.rateLimit) }
+        runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.rate-limit=none"))
+            .run { assertEquals(null, it.getBean(MaxClient::class.java).config.rateLimit) }
         // A customizer still has the last word.
-        runner.withPropertyValues(*props("max.bot.mode=none", "max.bot.rate-limit=max"))
+        runner.withPropertyValues(*props("max.bot.mode=none"))
             .withBean(MaxClientConfigCustomizer::class.java, { MaxClientConfigCustomizer { it.rateLimit(null) } })
             .run { assertEquals(null, it.getBean(MaxClient::class.java).config.rateLimit) }
     }

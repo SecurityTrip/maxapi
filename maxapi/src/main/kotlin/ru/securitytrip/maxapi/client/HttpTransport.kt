@@ -61,12 +61,15 @@ internal class HttpTransport(
     private val config: MaxClientConfig,
     private val mapper: ObjectMapper,
 ) : Closeable {
-    private val ownsClient = config.httpClient == null
+    private val ownsClient = config.httpClient == null || config.ownsHttpClient
     internal val limiter = config.rateLimit?.let { RateLimiter(it) }
     private val baseUrl = config.baseUrl.toHttpUrl()
 
     /** Chats of button presses, for the per-chat limit of answers. */
     internal val callbackChats = CallbackChats()
+
+    /** Button presses answered with this client, for `BotConfig.autoAnswerCallbacks`. */
+    internal val answeredCallbacks = AnsweredCallbacks()
 
     internal val http: OkHttpClient = config.httpClient ?: OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -132,7 +135,10 @@ internal class HttpTransport(
                 throw MaxNetworkException("$operation failed: ${e.message}", e)
             }
             event(method, path, raw.code, started, attempt, null)
-            if (raw.isSuccessful) return parse(raw.body, responseType, operation)
+            if (raw.isSuccessful) {
+                if (answer) answeredCallbacks.add(query?.value("callback_id"))
+                return parse(raw.body, responseType, operation)
+            }
 
             val error = toApiException(raw)
             // 429 and 503 mean the request was rejected. A gateway error (502, 504) may come after the

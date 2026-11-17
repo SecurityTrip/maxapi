@@ -1,0 +1,3 @@
+org.springframework.boot.diagnostics.FailureAnalyzer=\
+ru.securitytrip.maxapi.spring.MaxStartupFailureAnalyzer,\
+ru.securitytrip.maxapi.spring.MaxTokenFailureAnalyzer
