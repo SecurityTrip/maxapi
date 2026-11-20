@@ -14,7 +14,7 @@ A Kotlin and Java library for building bots for the [Max](https://max.ru) messen
 
 It consists of two layers that can be used separately:
 
-- **API client** (`MaxClient`): every method of the Bot API (specification 0.0.33) with typed models.
+- **API client** (`MaxClient`): every method of the Bot API (specification 0.0.34) with typed models.
   Kotlin gets `suspend` functions; Java gets blocking and `CompletableFuture` facades.
 - **Bot framework** (`MaxBot`): update handlers for commands, messages and button presses,
   long polling with per-chat ordering, and a webhook handler for any HTTP server.
@@ -188,7 +188,7 @@ checked on every build. Coming from 0.x? See [MIGRATION.md](MIGRATION.md).
 |-------------------|--------------------------------------------------------|
 | Java              | 17 or newer                                            |
 | Kotlin            | 1.9.25 or newer (built with the 2.4 compiler for the 2.0 API) |
-| Max Bot API       | specification 0.0.33; newer server features arrive as `Unknown*` objects |
+| Max Bot API       | specification 0.0.34; newer server features arrive as `Unknown*` objects |
 | Spring Boot       | 3.4 and newer, 4.x included (tested on 3.4, 3.5, 4.0 and 4.1) |
 | Ktor              | 3.x (built and tested with 3.6)                        |
 | Micrometer        | 1.14 or newer                                          |
@@ -912,13 +912,13 @@ client.pinMessage(chatId, sent.body!!.mid, notify = false)
 client.close()
 ```
 
-All 33 operations, by area (Max no longer serves `addMembers`, see below):
+All 33 operations, by area:
 
 | Area          | Methods                                                                                                   |
 |---------------|-----------------------------------------------------------------------------------------------------------|
 | Bot           | `getMyInfo`, `editMyCommands`                                                                             |
 | Chats         | `getChat`, `editChat`, `sendAction`, `getPinnedMessage`, `pinMessage`, `unpinMessage`, `leaveChat`        |
-| Members       | `getMembership`, `getMembers`, ~~`addMembers`~~, `removeMember`, `getAdmins`, `postAdmins`, `deleteAdmins` |
+| Members       | `getMembership`, `getMembers`, `addMembers` (restricted), `removeMember`, `getAdmins`, `postAdmins`, `deleteAdmins` |
 | Messages      | `getMessages`, `getMessageById`, `sendMessage`, `editMessage`, `deleteMessage`, `answerOnCallback`, `getVideoAttachmentDetails` |
 | Comments      | `getComments`, `getCommentById`, `sendComment`, `editComment`, `deleteComment`                            |
 | Updates       | `getUpdates`, `getSubscriptions`, `subscribe`, `unsubscribe`                                              |
@@ -928,9 +928,10 @@ On top of them there are convenience methods: `sendMessageToChat`, `sendMessageT
 `sendLongMessage*` (see [Long text](#long-text)), `answerOnCallback(callbackId, notification)`,
 `upload`, `uploadImage`, `uploadVideo`, `uploadAudio` and `uploadFile`.
 
-`addMembers` (`POST /chats/{chatId}/members`) is `@Deprecated`: Max restricted the method on
-2026-09-09 and removed it on 2026-09-30, so the server rejects it. It is kept for compatibility (the
-specification still lists it); there is no replacement.
+`addMembers` (`POST /chats/{chatId}/members`) is `@Deprecated` in the SDK because MAX restricted
+the operation on September 9, 2026. It is documented for group chats and requires the bot to have the
+`add_remove_members` administrator permission. When MAX supplies an error code for `success = false`,
+it is available as `ModifyMembersResult.code`. [MAX documentation](https://dev.max.ru/docs-api/methods/POST/chats/-chatId-/members/)
 
 Optional parameters are Kotlin default arguments:
 
@@ -971,7 +972,7 @@ the HTTP request. Do not use the blocking facade on event loop threads (Netty, V
 val body = message {
     markdown("**Order #42** is ready")
     replyTo(originalMid)          // or forward(mid)
-    notify(false)                 // deliver silently
+    notify(false)                 // request delivery without push notifications in a chat
     attach(photo)                 // any AttachmentRequest
     keyboard { row { callback("Pick up", "pickup:42") } }
 }
@@ -988,6 +989,11 @@ NewMessageBody body = NewMessageBody.builder()
         .keyboardRow(Buttons.callback("Pick up", "pickup:42"))
         .build();
 ```
+
+When sending or editing channel posts, use `notify = true` or omit the field. In direct and group
+chats, the effect of `notify = false` depends on the recipient's app. For example, Android may show
+group notifications while the app is open, and the web client may ignore the setting.
+[MAX notification rules](https://dev.max.ru/docs-api/methods/POST/messages/)
 
 Attachments that are not uploads:
 
@@ -1106,7 +1112,8 @@ client.sendMessageToChat(chatId, message { text("Here is the report"); attach(fi
 ```
 
 `UploadSource` accepts a `File`, a `Path`, a `ByteArray` or an `InputStream` (read once). The content
-type is guessed from the file name.
+type is guessed from the file name. For every upload type, the name including its extension must
+be at most 200 characters long.
 
 Limits of a single upload:
 

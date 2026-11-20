@@ -12,6 +12,20 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+### Added
+
+- Support for Max Bot API 0.0.34. `SimpleQueryResult.code` exposes the optional error code when an
+  operation returns HTTP 200 with `success = false`. `ModifyMembersResult.code` exposes the
+  operation-level code for `addMembers`.
+
+### Fixed
+
+- `bot_added` events parse when `user` is absent. `BotAddedToChatUpdate.user` is now nullable
+  and retains the user from legacy payloads. Kotlin handlers that access it directly need a null check.
+- Uploads reject filenames longer than 200 characters, including the extension, before requesting
+  an upload URL.
+- Updated the documentation for `notify` and `addMembers` to reflect MAX's current restrictions.
+
 ## [1.5.0] - 2026-11-17
 
 Fixes from a review of 1.4.0 in a Spring Boot application: dependency versions that broke on startup,
@@ -244,7 +258,7 @@ health, tracing, a WebFlux webhook, native image and non-blocking deduplication.
 ### Deprecated
 
 - `MaxClient.addMembers` and its blocking and async versions: Max restricted
-  `POST /chats/{chatId}/members` on 2026-09-09 and removed it on 2026-09-30. There is no replacement.
+  `POST /chats/{chatId}/members` on 2026-09-09.
 
 ## [1.3.0] - 2026-10-26
 

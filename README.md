@@ -14,7 +14,7 @@
 
 Она состоит из двух слоёв, которые можно использовать по отдельности:
 
-- **Клиент API** (`MaxClient`): все методы Bot API (спецификация 0.0.33) с типизированными моделями.
+- **Клиент API** (`MaxClient`): все методы Bot API (спецификация 0.0.34) с типизированными моделями.
   В Kotlin это `suspend`-функции, в Java — блокирующий фасад и фасад на `CompletableFuture`.
 - **Фреймворк для ботов** (`MaxBot`): обработчики команд, сообщений и нажатий кнопок, long polling
   с сохранением порядка внутри чата и обработчик вебхуков для любого HTTP-сервера.
@@ -193,7 +193,7 @@ Maven-репозиторий командой `./gradlew publishToMavenLocal` и
 |-------------------|----------------------------------------------------------------|
 | Java              | 17 или новее                                                   |
 | Kotlin            | 1.9.25 или новее (собирается компилятором 2.4 под API 2.0)      |
-| Max Bot API       | спецификация 0.0.33; новые возможности сервера приходят как объекты `Unknown*` |
+| Max Bot API       | спецификация 0.0.34; новые возможности сервера приходят как объекты `Unknown*` |
 | Spring Boot       | 3.4 и новее, включая 4.x (тесты на 3.4, 3.5, 4.0 и 4.1)        |
 | Ktor              | 3.x (собирается и тестируется на 3.6)                          |
 | Micrometer        | 1.14 или новее                                                 |
@@ -922,13 +922,13 @@ client.pinMessage(chatId, sent.body!!.mid, notify = false)
 client.close()
 ```
 
-Все 33 метода по разделам (`addMembers` Max больше не обслуживает, см. ниже):
+Все 33 метода по разделам:
 
 | Раздел        | Методы                                                                                                    |
 |---------------|-----------------------------------------------------------------------------------------------------------|
 | Бот           | `getMyInfo`, `editMyCommands`                                                                             |
 | Чаты          | `getChat`, `editChat`, `sendAction`, `getPinnedMessage`, `pinMessage`, `unpinMessage`, `leaveChat`        |
-| Участники     | `getMembership`, `getMembers`, ~~`addMembers`~~, `removeMember`, `getAdmins`, `postAdmins`, `deleteAdmins` |
+| Участники     | `getMembership`, `getMembers`, `addMembers` (ограничен), `removeMember`, `getAdmins`, `postAdmins`, `deleteAdmins` |
 | Сообщения     | `getMessages`, `getMessageById`, `sendMessage`, `editMessage`, `deleteMessage`, `answerOnCallback`, `getVideoAttachmentDetails` |
 | Комментарии   | `getComments`, `getCommentById`, `sendComment`, `editComment`, `deleteComment`                            |
 | События       | `getUpdates`, `getSubscriptions`, `subscribe`, `unsubscribe`                                              |
@@ -938,9 +938,10 @@ client.close()
 (см. [Длинный текст](#длинный-текст)), `answerOnCallback(callbackId, notification)`, `upload`,
 `uploadImage`, `uploadVideo`, `uploadAudio` и `uploadFile`.
 
-`addMembers` (`POST /chats/{chatId}/members`) помечен `@Deprecated`: Max ограничил этот метод
-9 сентября 2026 года и удалил 30 сентября, поэтому сервер его отклоняет. Метод оставлен ради
-совместимости (в спецификации он ещё есть), замены нет.
+`addMembers` (`POST /chats/{chatId}/members`) помечен `@Deprecated` в SDK из-за ограничения MAX
+с 9 сентября 2026 года. Метод описан для групповых чатов и требует прав администратора
+`add_remove_members`. При `success = false` код ошибки доступен в `ModifyMembersResult.code`,
+если MAX его вернул. [Документация MAX](https://dev.max.ru/docs-api/methods/POST/chats/-chatId-/members/)
 
 Необязательные параметры — аргументы Kotlin по умолчанию:
 
@@ -983,7 +984,7 @@ Android).
 val body = message {
     markdown("**Order #42** is ready")
     replyTo(originalMid)          // или forward(mid)
-    notify(false)                 // доставить без звука
+    notify(false)                 // запросить отправку без push в чате
     attach(photo)                 // любой AttachmentRequest
     keyboard { row { callback("Pick up", "pickup:42") } }
 }
@@ -1000,6 +1001,11 @@ NewMessageBody body = NewMessageBody.builder()
         .keyboardRow(Buttons.callback("Pick up", "pickup:42"))
         .build();
 ```
+
+При отправке и редактировании постов в каналах используйте `notify = true` или опускайте это
+поле. В личных и групповых чатах эффект `notify = false` зависит от приложения получателя.
+Например, в Android уведомление в группе может появиться, если приложение открыто, а веб-версия
+может игнорировать этот параметр. [Правила MAX](https://dev.max.ru/docs-api/methods/POST/messages/)
 
 Вложения, для которых не нужна загрузка:
 
@@ -1119,7 +1125,8 @@ client.sendMessageToChat(chatId, message { text("Here is the report"); attach(fi
 ```
 
 `UploadSource` принимает `File`, `Path`, `ByteArray` или `InputStream` (читается один раз). Тип
-содержимого определяется по имени файла.
+содержимого определяется по имени файла. Для любого типа загрузки имя вместе с расширением
+должно содержать не более 200 символов.
 
 Ограничения одной загрузки:
 
