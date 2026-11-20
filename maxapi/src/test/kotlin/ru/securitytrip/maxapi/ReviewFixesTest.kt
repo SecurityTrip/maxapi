@@ -215,9 +215,13 @@ class ReviewFixesTest {
         FakeApi().use { api ->
             val bot = MaxBot(api.client, BotConfig(queueCapacity = 1))
             val handled = CopyOnWriteArrayList<String?>()
+            val started = CompletableDeferred<Unit>()
             val gate = CompletableDeferred<Unit>()
             bot.onMessage {
-                if (text == "wait") gate.await()
+                if (text == "wait") {
+                    started.complete(Unit)
+                    gate.await()
+                }
                 handled += text
             }
             val handler = bot.webhookHandler(WebhookHandler.secretFor(TOKEN))
@@ -225,16 +229,17 @@ class ReviewFixesTest {
             fun body(text: String, chat: Long) =
                 """{"update_type":"message_created","timestamp":1,"message":${messageJson(chat, text, "mid.$text")}}"""
             assertTrue(handler.handleAsync(body("wait", 1), secret))
-            // The chat has one update waiting at most: one of the next two is refused, so that Max redelivers it.
+            withTimeout(5_000) { started.await() }
+            assertTrue(handler.handleAsync(body("more", 1), secret))
             val refused = assertFailsWith<IllegalStateException> {
-                repeat(2) { handler.handleAsync(body("more$it", 1), secret) }
+                handler.handleAsync(body("overflow", 1), secret)
             }
             assertTrue(refused.message!!.contains("chat 1"))
             assertTrue(handler.handleAsync(body("x", 2), secret))
             withTimeout(5_000) { while ("x" !in handled) delay(10) }
             gate.complete(Unit)
             withTimeout(5_000) { while (handled.size < 3) delay(10) }
-            assertEquals(listOf<String?>("x", "wait"), handled.take(2))
+            assertEquals(listOf<String?>("x", "wait", "more"), handled)
             bot.close()
         }
     }
