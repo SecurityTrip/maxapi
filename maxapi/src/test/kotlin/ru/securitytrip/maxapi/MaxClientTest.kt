@@ -12,11 +12,14 @@ import ru.securitytrip.maxapi.client.TooManyRequestsException
 import ru.securitytrip.maxapi.client.UnauthorizedException
 import ru.securitytrip.maxapi.client.UploadSource
 import ru.securitytrip.maxapi.dsl.message
+import ru.securitytrip.maxapi.model.SimpleQueryResult
 import ru.securitytrip.maxapi.model.attachment.PhotoToken
 import ru.securitytrip.maxapi.model.attachment.UploadType
+import ru.securitytrip.maxapi.model.chat.ModifyMembersResult
 import ru.securitytrip.maxapi.model.chat.SenderAction
 import ru.securitytrip.maxapi.model.message.CallbackAnswer
 import ru.securitytrip.maxapi.model.message.NewMessageBody
+import ru.securitytrip.maxapi.model.update.BotAddedToChatUpdate
 import ru.securitytrip.maxapi.model.update.UpdateType
 import java.time.Duration
 import kotlin.test.AfterTest
@@ -24,6 +27,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -120,6 +125,44 @@ class MaxClientTest {
         assertEquals(403, forbidden.httpStatus)
         assertEquals("chat.denied", forbidden.errorCode)
         assertEquals(3, server.requestCount)
+    }
+
+    @Test
+    fun `an HTTP 200 failure preserves the optional error code`(): Unit = runBlocking {
+        server.enqueue(json("""{"success":false,"message":"Cannot delete message","code":"chat.denied"}"""))
+        server.enqueue(json("""{"success":false,"code":null}"""))
+        server.enqueue(json("""{"success":false}"""))
+
+        val result = client.deleteMessage("mid.1")
+
+        assertFalse(result.success)
+        assertEquals("Cannot delete message", result.message)
+        assertEquals("chat.denied", result.code)
+        assertEquals("chat.denied", result.copy(message = "Updated message").code)
+        assertNull(client.deleteMessage("mid.1").code)
+        assertEquals(SimpleQueryResult(success = false), client.deleteMessage("mid.1"))
+        assertEquals(3, server.requestCount)
+    }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun `addMembers accepts a failure without an error code`(): Unit = runBlocking {
+        server.enqueue(json("""{"success":false}"""))
+
+        assertEquals(ModifyMembersResult(false), client.addMembers(-5, listOf(2)))
+    }
+
+    @Test
+    fun `long polling accepts bot_added without a user`(): Unit = runBlocking {
+        server.enqueue(json("""{"updates":[{"update_type":"bot_added","timestamp":1,"chat_id":-5,"is_channel":true}],"marker":4}"""))
+
+        val updates = client.getUpdates(timeout = 0, types = listOf(UpdateType.BOT_ADDED))
+        val added = assertIs<BotAddedToChatUpdate>(updates.updates.single())
+
+        assertEquals(4L, updates.marker)
+        assertEquals(-5L, added.chatId)
+        assertTrue(added.isChannel)
+        assertNull(added.user)
     }
 
     @Test

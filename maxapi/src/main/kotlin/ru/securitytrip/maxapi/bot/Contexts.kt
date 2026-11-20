@@ -29,7 +29,7 @@ import ru.securitytrip.maxapi.model.user.User
  * In Kotlin the context is the receiver of the handler lambda, so its members are available directly:
  *
  * ```kotlin
- * bot.on<BotAddedToChatUpdate> { reply("Hi everyone! I was added by ${update.user.firstName}") }
+ * bot.on<BotAddedToChatUpdate> { reply("Hi everyone!") }
  * ```
  *
  * Methods without a suffix are `suspend` and meant for Kotlin; the `*Blocking` variants are for Java

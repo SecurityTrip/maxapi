@@ -48,6 +48,29 @@ class UploadsTest {
     private fun takeUpload() = server.take().let { server.take() }
 
     @Test
+    fun `uploads a file with a 200 character name including its extension`(): Unit = runBlocking {
+        val name = "ф".repeat(196) + ".pdf"
+        enqueueEndpoint()
+        server.enqueue(json("""{"token":"file-token"}"""))
+
+        val attachment = client.uploadFile(UploadSource.of(byteArrayOf(1), name))
+
+        assertEquals("file-token", attachment.payload.token)
+        assertTrue(takeUpload().bodyText.contains("""filename="$name""""))
+    }
+
+    @Test
+    fun `rejects oversized filenames before asking for an upload URL`(): Unit = runBlocking {
+        val source = UploadSource.of(byteArrayOf(1), "ф".repeat(197) + ".pdf")
+
+        for (type in listOf(UploadType.IMAGE, UploadType.VIDEO, UploadType.AUDIO, UploadType.FILE)) {
+            val error = assertFailsWith<IllegalArgumentException> { client.upload(type, source) }
+            assertTrue(error.message.orEmpty().contains("200"))
+        }
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
     fun `uploads a file from disk with its name and guessed content type`(): Unit = runBlocking {
         val file = File.createTempFile("report", ".pdf").apply {
             writeText("pdf-content")

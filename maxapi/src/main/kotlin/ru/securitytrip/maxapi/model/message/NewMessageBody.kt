@@ -29,8 +29,9 @@ public data class NewMessageBody @JvmOverloads constructor(
     /** Makes the message a reply to or a forward of another message. */
     val link: NewMessageLink? = null,
     /**
-     * `false` delivers the message silently. Defaults to `true` on the server.
-     * Channels reject `false`.
+     * Controls push notifications when sending or editing. The server defaults to `true`.
+     * For channels, use `true` or omit the field. In direct and group chats, support for
+     * `false` depends on the recipient's app and, on Android in groups, whether the app is open.
      */
     val notify: Boolean? = null,
     /** How to interpret formatting in `text`; `null` sends plain text. */

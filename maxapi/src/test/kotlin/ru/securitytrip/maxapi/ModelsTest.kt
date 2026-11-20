@@ -158,6 +158,7 @@ class ModelsTest {
             """{"update_type":"bot_admin_permissions_changed","timestamp":1,"chat_id":42,"user_id":7,"bot_id":8,"is_channel":false,"is_admin":true,"permissions":["read_all_messages","write"]}""",
             BotAdminPermissionsChangedUpdate::class, 42L to null,
         ),
+        Triple("""{"update_type":"bot_added","timestamp":1,"chat_id":42,"is_channel":true}""", BotAddedToChatUpdate::class, 42L to null),
         Triple("""{"update_type":"something_new","timestamp":1,"chat_id":42,"extra":{"a":1}}""", UnknownUpdate::class, 42L to null),
     )
 

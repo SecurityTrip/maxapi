@@ -91,8 +91,8 @@ public class MaxBlockingClient internal constructor(public val client: MaxClient
         count: Int? = null,
     ): ChatMembersList = runBlocking { client.getMembers(chatId, userIds, marker, count) }
 
-    /** Not served by Max any more; see [MaxClient.addMembers]. */
-    @Deprecated("Max removed POST /chats/{chatId}/members (restricted on 2026-09-09, removed on 2026-09-30), so the server rejects this call. The Bot API has no replacement.")
+    /** Adds members to a group chat subject to MAX restrictions. See [MaxClient.addMembers]. */
+    @Deprecated("Max restricts access to POST /chats/{chatId}/members.")
     public fun addMembers(chatId: Long, userIds: List<Long>): ModifyMembersResult =
         runBlocking { @Suppress("DEPRECATION") client.addMembers(chatId, userIds) }
 

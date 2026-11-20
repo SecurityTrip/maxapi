@@ -200,7 +200,7 @@ class JavaInteropTest {
 
         assertFalse(handler.handleBlocking("{}", "wrong"));
         assertTrue(handler.handleBlocking(
-                "{\"update_type\":\"bot_added\",\"timestamp\":1,\"chat_id\":-3,\"user\":{\"user_id\":1}}", "secret"));
+                "{\"update_type\":\"bot_added\",\"timestamp\":1,\"chat_id\":-3,\"is_channel\":false}", "secret"));
         assertTrue(handler.handleBlocking(
                 "{\"update_type\":\"dialog_cleared\",\"timestamp\":1,\"chat_id\":1,\"user\":{\"user_id\":1}}".getBytes(),
                 "secret"));

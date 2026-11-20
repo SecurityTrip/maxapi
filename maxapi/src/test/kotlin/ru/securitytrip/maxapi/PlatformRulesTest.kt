@@ -92,7 +92,7 @@ class PlatformRulesTest {
     fun `addMembers is deprecated everywhere`() {
         for (facade in listOf(MaxClient::class.java, ru.securitytrip.maxapi.java.MaxBlockingClient::class.java, ru.securitytrip.maxapi.java.MaxAsyncClient::class.java)) {
             val method = facade.methods.single { it.name == "addMembers" }
-            assertContains(method.getAnnotation(Deprecated::class.java).message, "2026-09-30")
+            assertContains(method.getAnnotation(Deprecated::class.java).message, "restricts access")
         }
     }
 

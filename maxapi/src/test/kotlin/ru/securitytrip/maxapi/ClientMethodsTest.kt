@@ -152,11 +152,13 @@ class ClientMethodsTest {
         ),
         Case(
             "addMembers",
-            """{"success":false,"failed_user_ids":[3],"failed_user_details":[{"error_code":"add.participant.privacy","user_ids":[3]}]}""",
+            """{"success":false,"code":"chat.denied","failed_user_ids":[3],"failed_user_details":[{"error_code":"add.participant.privacy","user_ids":[3]}]}""",
             "POST", "/chats/-5/members",
             body = """{"user_ids":[2,3]}""",
             check = {
                 it as ModifyMembersResult
+                assertEquals("chat.denied", it.code)
+                assertEquals(it, it.copy())
                 assertEquals(setOf(3L), it.failedUserIds)
                 assertEquals("add.participant.privacy", it.failedUserDetails!!.single().errorCode)
             },

@@ -213,14 +213,15 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
     )
 
     /**
-     * Adds up to 100 users to a chat. The bot needs the `add_remove_members` permission.
+     * Adds up to 100 users to a group chat. The bot must be a chat administrator with the
+     * `add_remove_members` permission. Adding channel subscribers through this method is unsupported.
      *
-     * Max no longer serves this method: it was restricted on 2026-09-09 and removed on 2026-09-30.
-     * It is kept for compatibility (the API specification still lists it), but the call fails.
+     * Max restricted this method on 2026-09-09. See the
+     * [MAX documentation](https://dev.max.ru/docs-api/methods/POST/chats/-chatId-/members/).
      *
      * @return which users could not be added and why.
      */
-    @Deprecated("Max removed POST /chats/{chatId}/members (restricted on 2026-09-09, removed on 2026-09-30), so the server rejects this call. The Bot API has no replacement.")
+    @Deprecated("Max restricts access to POST /chats/{chatId}/members.")
     public suspend fun addMembers(chatId: Long, userIds: List<Long>): ModifyMembersResult =
         post(ModifyMembersResult::class.java, UserIdsList(userIds), "chats", chatId.toString(), "members")
 
@@ -328,6 +329,7 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
      * ```
      */
     public suspend fun uploadImage(source: UploadSource): PhotoAttachmentRequest {
+        MaxLimits.checkUploadFileName(source.fileName)
         val endpoint = getUploadUrl(UploadType.IMAGE)
         val response = transport.upload(endpoint.url, source.fileName, source.body)
         val node = parseUploadResponse(response)
@@ -635,6 +637,7 @@ public class MaxClient(public val config: MaxClientConfig) : Closeable {
         transport.execute("DELETE", path.asList(), type, query = query)
 
     private suspend fun uploadForToken(type: UploadType, source: UploadSource): String {
+        MaxLimits.checkUploadFileName(source.fileName)
         val endpoint = getUploadUrl(type)
         val response = transport.upload(endpoint.url, source.fileName, source.body)
         // For video and audio the token comes together with the upload URL.

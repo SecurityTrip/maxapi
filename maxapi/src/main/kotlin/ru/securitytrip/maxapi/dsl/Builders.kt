@@ -202,7 +202,7 @@ public class MessageBuilder {
      */
     public fun html(block: HtmlBuilder.() -> Unit): MessageBuilder = html(HtmlBuilder().apply(block).build())
 
-    /** `false` delivers the message silently. Channels reject `false`. */
+    /** Sets [NewMessageBody.notify]. Support for `false` varies by recipient app. */
     public fun notify(value: Boolean): MessageBuilder = apply { notify = value }
 
     /** Makes the message a reply to the message with identifier [mid]. */
