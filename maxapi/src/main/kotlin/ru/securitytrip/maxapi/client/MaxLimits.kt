@@ -14,16 +14,18 @@ import ru.securitytrip.maxapi.model.user.BotCommand
 
 /**
  * Limits of Max on what a bot sends. [MaxClient] checks them before sending a message, a comment,
- * an answer to a button press or the bot commands, and throws [IllegalArgumentException] instead
- * of making a request the server would reject.
+ * an answer to a button press, the bot commands, or an upload. It throws [IllegalArgumentException]
+ * before making a request the server would reject.
  *
- * Lengths are counted like [String.length], in UTF-16 code units, because the server counts them
- * that way: an emoji such as 😀 takes 2 of the 4000 characters of a message, a flag 4. Markup of
- * Markdown and HTML counts too.
+ * Text lengths are counted like [String.length], in UTF-16 code units: an emoji such as 😀 takes
+ * 2 of the 4000 characters of a message, a flag 4. Markdown and HTML markup counts too.
  */
 public object MaxLimits {
     /** Characters in the text of a message or a comment. Split longer text with [TextSplitter]. */
     public const val TEXT_LENGTH: Int = 4000
+
+    /** Unicode characters in an upload filename, including the extension. */
+    public const val UPLOAD_FILE_NAME_LENGTH: Int = 200
 
     /** Buttons in a keyboard. */
     public const val KEYBOARD_BUTTONS: Int = 210
@@ -105,6 +107,13 @@ public object MaxLimits {
 
     internal fun check(answer: CallbackAnswer) {
         answer.message?.let(::check)
+    }
+
+    internal fun checkUploadFileName(fileName: String) {
+        val length = fileName.codePointCount(0, fileName.length)
+        require(length <= UPLOAD_FILE_NAME_LENGTH) {
+            "Upload filename has $length characters. Max allows at most $UPLOAD_FILE_NAME_LENGTH"
+        }
     }
 
     internal fun checkCommands(commands: List<BotCommand>) {

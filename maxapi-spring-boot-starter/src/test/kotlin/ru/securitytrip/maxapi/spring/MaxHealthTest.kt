@@ -1,5 +1,8 @@
 package ru.securitytrip.maxapi.spring
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -115,7 +118,11 @@ class MaxHealthTest {
             .withBean(MaxBotConfigurer::class.java, { MaxBotConfigurer { it.onMessage { }.onError { _, _ -> } } })
             .run { context ->
                 val bot = context.getBean(MaxBot::class.java)
-                while (bot.pollingFailure == null) Thread.sleep(10)
+                runBlocking {
+                    withTimeout(5_000) {
+                        while (bot.pollingFailure == null || bot.isPolling) delay(10)
+                    }
+                }
                 val health = context.bot()
                 assertEquals("DOWN", health.status)
                 assertEquals("failed", health.details["polling"])

@@ -887,6 +887,7 @@ public final class ru/securitytrip/maxapi/client/MaxLimits {
 	public static final field LINK_URL_LENGTH I
 	public static final field OPEN_APP_PAYLOAD_LENGTH I
 	public static final field TEXT_LENGTH I
+	public static final field UPLOAD_FILE_NAME_LENGTH I
 	public static final field WIDE_BUTTONS_PER_ROW I
 	public static final field WIDE_BUTTON_TYPES Ljava/util/Set;
 	public static final fun checkOpenAppPayload (Ljava/lang/String;)V
@@ -1353,11 +1354,17 @@ public final class ru/securitytrip/maxapi/model/ErrorResponse {
 public final class ru/securitytrip/maxapi/model/SimpleQueryResult {
 	public fun <init> (ZLjava/lang/String;)V
 	public synthetic fun <init> (ZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLjava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (ZLjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
 	public final fun copy (ZLjava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public final fun copy (ZLjava/lang/String;Ljava/lang/String;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
 	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/SimpleQueryResult;ZLjava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/SimpleQueryResult;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/SimpleQueryResult;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Ljava/lang/String;
 	public final fun getMessage ()Ljava/lang/String;
 	public final fun getSuccess ()Z
 	public fun hashCode ()I
@@ -2174,13 +2181,19 @@ public final class ru/securitytrip/maxapi/model/chat/Image {
 public final class ru/securitytrip/maxapi/model/chat/ModifyMembersResult {
 	public fun <init> (ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;)V
 	public synthetic fun <init> (ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/util/Set;
 	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/lang/String;
 	public final fun copy (ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;)Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;
+	public final fun copy (ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;Ljava/lang/String;)Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;
 	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;
+	public static synthetic fun copy$default (Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;ZLjava/lang/String;Ljava/util/Set;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lru/securitytrip/maxapi/model/chat/ModifyMembersResult;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Ljava/lang/String;
 	public final fun getFailedUserDetails ()Ljava/util/List;
 	public final fun getFailedUserIds ()Ljava/util/Set;
 	public final fun getMessage ()Ljava/lang/String;

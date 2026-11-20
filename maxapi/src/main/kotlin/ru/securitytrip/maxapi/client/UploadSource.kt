@@ -23,7 +23,8 @@ import java.nio.file.Path
  *
  * The content type is guessed from the file name extension.
  *
- * @property fileName name the file is uploaded under; Max shows it for file attachments.
+ * @property fileName name the file is uploaded under, including its extension. Client upload methods
+ * reject names longer than [MaxLimits.UPLOAD_FILE_NAME_LENGTH] characters.
  */
 public class UploadSource private constructor(
     public val fileName: String,
