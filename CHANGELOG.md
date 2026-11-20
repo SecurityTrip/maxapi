@@ -12,6 +12,8 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-11-20
+
 ### Added
 
 - Support for Max Bot API 0.0.34. `SimpleQueryResult.code` exposes the optional error code when an
@@ -25,6 +27,11 @@ their own section if there is one, and the `x.y.z` section otherwise.
 - Uploads reject filenames longer than 200 characters, including the extension, before requesting
   an upload URL.
 - Updated the documentation for `notify` and `addMembers` to reflect MAX's current restrictions.
+
+### Changed
+
+- Updated the Gradle wrapper to 9.9.1 and enabled the configuration cache.
+- Updated OkHttp, Ktor, Dokka, SLF4J, and the H2 and PostgreSQL test dependencies.
 
 ## [1.5.0] - 2026-11-17
 
@@ -414,7 +421,8 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/SecurityTrip/maxapi/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/SecurityTrip/maxapi/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/SecurityTrip/maxapi/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/SecurityTrip/maxapi/compare/v1.2.0...v1.3.0
