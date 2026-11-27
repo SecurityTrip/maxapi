@@ -1173,8 +1173,9 @@ Unix).
 Добавьте в приложение нужный стартер Spring Boot. Для polling достаточно
 `spring-boot-starter`, для webhook нужен стартер Spring MVC или WebFlux.
 Версия Spring Framework определяется BOM приложения. Для исправлений из бюллетеней Spring
-за ноябрь 2026 года используйте Spring Framework 7.0.11 или новее в ветке 7.x либо
-6.2.21 или новее в ветке 6.2 (Spring Enterprise).
+за ноябрь 2026 года используйте Spring Boot 4.1.3 с Spring Framework 7.0.11 или более новый
+исправленный выпуск. Для Spring Boot 3 исправление доступно в Spring Framework 6.2.21
+и новее через Spring Enterprise.
 
 ```kotlin
 dependencies {
