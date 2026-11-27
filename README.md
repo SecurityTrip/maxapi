@@ -199,13 +199,14 @@ Maven-репозиторий командой `./gradlew publishToMavenLocal` и
 | Micrometer        | 1.14 или новее                                                 |
 | OpenTelemetry     | API 1.43 или новее                                             |
 | GraalVM native    | метаданные в jar `maxapi`, подсказки Spring AOT в стартере; см. [Нативный образ](#нативный-образ) |
-| Lettuce (Redis)   | 6.4 или новее (собирается на 6.4, тестируется с Redis 7.4)     |
+| Lettuce (Redis)   | 6.4 или новее (публикуется с 7.9, тестируется с Redis 7.4)    |
 | JDBC              | любая база со стандартным SQL (тестируется на H2 2.4 и PostgreSQL 17) |
 
-Зависимости (Kotlin, kotlinx.coroutines, Jackson, Micrometer, OpenTelemetry, Lettuce) берутся тех
-версий, которыми управляет BOM самого старого поддерживаемого Spring Boot (3.4): приложение на
-Spring Boot получает их или более новые, но не старые. Стартер при запуске проверяет, что версии
-Kotlin, kotlinx.coroutines и Jackson в приложении не старее нужных.
+Совместимость зависимостей проверяется с BOM Spring Boot 3.4, 3.5, 4.0 и 4.1. Стартер при запуске
+проверяет минимальные версии Kotlin, kotlinx.coroutines и Jackson, необходимые для работы MaxAPI.
+
+MaxAPI публикует Jackson 2.18.12 с исправлениями безопасности. Если BOM приложения управляет
+Jackson, используйте исправленный выпуск в своей ветке Jackson. Для ветки 2.18 это 2.18.12.
 
 В совместимый API не входят: всё `internal`, текст сообщений исключений и логов, а также точные
 ответы `BotTester` по умолчанию.
@@ -1167,10 +1168,18 @@ Unix).
 останавливает бота вместе с приложением. Один и тот же стартер работает со Spring Boot 3.4 и новее,
 включая 4.x (Java 17+): health-индикатор подключается для той версии Actuator, что есть в приложении.
 
+Добавьте в приложение нужный стартер Spring Boot. Для polling достаточно
+`spring-boot-starter`, для webhook нужен стартер Spring MVC или WebFlux.
+Версия Spring Framework определяется BOM приложения. Для исправлений из бюллетеней Spring
+за ноябрь 2026 года используйте Spring Boot 4.1.3 с Spring Framework 7.0.11 или более новый
+исправленный выпуск. Для Spring Boot 3 исправление доступно в Spring Framework 6.2.21
+и новее через Spring Enterprise.
+
 ```kotlin
 dependencies {
     implementation("io.github.securitytrip:maxapi-spring-boot-starter:<version>")
-    implementation("org.springframework.boot:spring-boot-starter-web") // режим webhook: Spring MVC или WebFlux
+    implementation("org.springframework.boot:spring-boot-starter") // polling
+    // Для webhook замените на spring-boot-starter-web или spring-boot-starter-webflux.
 }
 ```
 

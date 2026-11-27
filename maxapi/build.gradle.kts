@@ -17,6 +17,17 @@ dependencies {
     testImplementation(libs.jackson.yaml)
 }
 
+// Compile against the oldest supported Jackson API, while publishing the patched dependencies.
+val jacksonCompatibility = libs.versions.jacksonCompatibility.get()
+configurations.named("compileClasspath") {
+    resolutionStrategy.force(
+        "com.fasterxml.jackson.core:jackson-annotations:$jacksonCompatibility",
+        "com.fasterxml.jackson.core:jackson-core:$jacksonCompatibility",
+        "com.fasterxml.jackson.core:jackson-databind:$jacksonCompatibility",
+        "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonCompatibility",
+    )
+}
+
 dokka {
     dokkaSourceSets.main {
         externalDocumentationLinks.register("kotlinx.coroutines") {
@@ -34,7 +45,7 @@ val dependencyVersions by tasks.registering(WriteProperties::class) {
     destinationFile.set(layout.buildDirectory.file("generated/dependency-versions/ru/securitytrip/maxapi/dependencies.properties"))
     property("kotlin-stdlib", libs.versions.kotlin.stdlib.get())
     property("kotlinx-coroutines", libs.versions.coroutines.get())
-    property("jackson", libs.versions.jackson.get())
+    property("jackson", jacksonCompatibility)
 }
 
 sourceSets.main {
