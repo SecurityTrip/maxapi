@@ -12,6 +12,12 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+### Security
+
+- Publish Jackson 2.18.12, including the fixes for CVE-2026-54516 and CVE-2026-110879.
+- Use the application's Spring Boot dependencies for autoconfiguration. The starter's published
+  dependencies no longer bring in Spring Boot 3.4.0.
+
 ## [1.5.1] - 2026-11-20
 
 ### Added

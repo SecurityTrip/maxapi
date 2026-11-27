@@ -5,7 +5,9 @@
 kotlin = "2.4.21"
 kotlin-stdlib = "1.9.25"
 okhttp = "5.5.1"
-jackson = "2.18.1"
+jackson = "2.18.12"
+# Keep the binary compatibility floor of Spring Boot 3.4.0. The published dependencies use the patched version.
+jacksonCompatibility = "2.18.1"
 coroutines = "1.8.1"
 dokka = "2.3.0"
 kover = "0.9.11"

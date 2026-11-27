@@ -207,6 +207,9 @@ Maven-репозиторий командой `./gradlew publishToMavenLocal` и
 Spring Boot получает их или более новые, но не старые. Стартер при запуске проверяет, что версии
 Kotlin, kotlinx.coroutines и Jackson в приложении не старее нужных.
 
+MaxAPI публикует Jackson 2.18.12 с исправлениями безопасности. Если BOM приложения управляет
+Jackson, используйте исправленный выпуск в своей ветке Jackson. Для ветки 2.18 это 2.18.12.
+
 В совместимый API не входят: всё `internal`, текст сообщений исключений и логов, а также точные
 ответы `BotTester` по умолчанию.
 
@@ -1167,10 +1170,17 @@ Unix).
 останавливает бота вместе с приложением. Один и тот же стартер работает со Spring Boot 3.4 и новее,
 включая 4.x (Java 17+): health-индикатор подключается для той версии Actuator, что есть в приложении.
 
+Добавьте в приложение нужный стартер Spring Boot. Для polling достаточно
+`spring-boot-starter`, для webhook нужен стартер Spring MVC или WebFlux.
+Версия Spring Framework определяется BOM приложения. Для исправлений из бюллетеней Spring
+за ноябрь 2026 года используйте Spring Framework 7.0.11 или новее в ветке 7.x либо
+6.2.21 или новее в ветке 6.2 (Spring Enterprise).
+
 ```kotlin
 dependencies {
     implementation("io.github.securitytrip:maxapi-spring-boot-starter:<version>")
-    implementation("org.springframework.boot:spring-boot-starter-web") // режим webhook: Spring MVC или WebFlux
+    implementation("org.springframework.boot:spring-boot-starter") // polling
+    // Для webhook замените на spring-boot-starter-web или spring-boot-starter-webflux.
 }
 ```
 
