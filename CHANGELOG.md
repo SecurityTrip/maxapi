@@ -12,11 +12,18 @@ their own section if there is one, and the `x.y.z` section otherwise.
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-11-27
+
 ### Security
 
 - Publish Jackson 2.18.12, including the fixes for CVE-2026-54516 and CVE-2026-110879.
 - Use the application's Spring Boot dependencies for autoconfiguration. The starter's published
   dependencies no longer bring in Spring Boot 3.4.0.
+
+### Changed
+
+- Update Lettuce to 7.9.0.RELEASE, Micrometer to 1.17.2, and OpenTelemetry to 1.68.0.
+- Use Spring Boot 4.1.3 for the examples and Boot 4 integration tests.
 
 ## [1.5.1] - 2026-11-20
 
@@ -427,7 +434,8 @@ First release candidate.
   graceful stop, webhook handler with secret verification.
 - Kotlin DSL and Java builders for messages and keyboards.
 
-[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/SecurityTrip/maxapi/compare/v1.5.2...HEAD
+[1.5.2]: https://github.com/SecurityTrip/maxapi/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/SecurityTrip/maxapi/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/SecurityTrip/maxapi/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/SecurityTrip/maxapi/compare/v1.3.0...v1.4.0
