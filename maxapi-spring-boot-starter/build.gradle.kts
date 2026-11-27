@@ -20,7 +20,8 @@ tasks.matching { it.name == "sourcesJar" || it.name == "kotlinSourcesJar" }.conf
 
 dependencies {
     api(project(":maxapi"))
-    api(libs.spring.boot.autoconfigure)
+    // The application supplies Spring Boot and manages its version through its own BOM.
+    compileOnly(libs.spring.boot.autoconfigure)
     // Webhook mode needs Spring MVC; the application brings it with spring-boot-starter-web.
     compileOnly(platform(libs.spring.boot3.dependencies))
     compileOnly(libs.spring.webmvc)
@@ -88,6 +89,7 @@ fun DependencyHandler.springTests(configuration: String, bom: Provider<MinimalEx
 
 dependencies {
     springTests("testImplementation", libs.spring.boot3.dependencies.asProvider())
+    testImplementation(libs.spring.boot.autoconfigure)
     testImplementation(libs.spring.boot.actuator)
     testImplementation(libs.spring.boot.actuator.autoconfigure)
 
